@@ -332,6 +332,13 @@ this._internalRoot = FiberRootNode;
          2. 初始化 FiberNode 的 [UpdateQueue](https://github.com/facebook/react/blob/v18.3.1/packages/react-reconciler/src/ReactFiberClassUpdateQueue.new.js#L184)
 2. 返回一个 [ReactDOMRoot](https://github.com/facebook/react/blob/v18.3.1/packages/react-dom/src/ReactDOMRoot.new.js#L88) 对象，
 
+
+注意一下有两类 Fiber, 为什么需要强制区分为两类？
+
+* FiberRootNode 代表整个应用的根节点
+* FiberNode 代表应用中的一个节点
+
+
 ### [ReactDOMRoot.render](https://github.com/facebook/react/blob/v18.3.1/packages/react-dom/src/client/ReactDOMRoot.js#L92)
 
 挂载 react element 函数到 dom 节点上
