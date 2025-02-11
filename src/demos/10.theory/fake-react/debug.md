@@ -1,8 +1,26 @@
-# 核心对象
+# react 源码分析
+
+## 目标
+
+1. 了解 createRoot 流程 done
+2. render 流程 working
+   1. workInProgress 是在哪个阶段创建和推送的
+3. Fiber 架构的核心对象和功能
+4. 了解生命周期钩子是如何触发的？
+5. 事件代理原理
+6. 更新的流程是怎样的？
+7. 如何做差异比对的？
+
+## 核心包
 
 1. **scheduler** 调度器实现在每帧内执行，避免同步渲染的阻塞问题
-2. **reconciler** 完成 Fiber 树的构建和更新
-3. Fiber 对象，包含如下功能，详细属性如下
+2. **react-reconciler** 完成 Fiber 树的构建和更新
+
+## 核心对象
+
+### Fiber
+
+1. Fiber 对象，包含如下功能，详细属性如下
    -  引用 Element 树结构
    -  作为渲染的基本单位
    -  作为调度的基本单位
@@ -50,9 +68,26 @@ export type Fiber = {
 };
 ```
 
-## 核心代码断点
+2. Element 对象
 
-1. 一些工具函数来处理状态逻辑
+
+3. Update 对象
+
+```js
+export type Update<State> = {
+  lane: Lane, // 优先级
+
+  tag: 0 | 1 | 2 | 3, // 更新类型
+  payload: any, // 负载信息
+  callback: (() => mixed) | null, // 回调函数
+
+  next: Update<State> | null, // 下一个更新
+};
+```
+
+## 代码核心断点
+
+1. 工具函数处理 tag, mode, flags, lanes 等属性对应的含义
 
 ```js
 const TagMap = {
@@ -221,8 +256,8 @@ let convertPropertyValue = (key, value) => {
 };
 ```
 
-1. **ReactElement** 末尾追加 `console.log("ReactElement %O", type);` 查看 ReactElement 的内容
-2. **FiberNode** 追踪 FiberNode 创建和属性变更的过程, 返回节点是添加如下代码
+2. **ReactElement** 末尾追加 `console.log("ReactElement %O", type);` 查看 ReactElement 的内容
+3. **FiberNode** 追踪 FiberNode 创建和属性变更的过程, 返回节点是添加如下代码
 
 ```js
 // 追加 id 标识 fiber
@@ -283,7 +318,7 @@ function FiberNode(tag, pendingProps, key, mode) {
 }
 ```
 
-3. **workInProgress** 重写局部变量，追踪 workInProgress 的推入过程
+4. **workInProgress** 重写局部变量，追踪 workInProgress 的推入过程
 
 ```js
 window._workInProgress = null;
@@ -302,7 +337,7 @@ Object.defineProperty(window, "workInProgress", {
 });
 ```
 
-4. **performUnitOfWork** 开始执行任务时，追踪 workInProgress 的推入过程
+5. **performUnitOfWork** 开始执行任务时，追踪 workInProgress 的推入过程
 
 ```js
 if (unitOfWork) {
@@ -312,7 +347,7 @@ if (unitOfWork) {
 }
 ```
 
-5. **completeUnitOfWork** 完成任务时，追踪 workInProgress 的推出过程
+6. **completeUnitOfWork** 完成任务时，追踪 workInProgress 的推出过程
 
 ```js
 if (unitOfWork) {
@@ -322,13 +357,13 @@ if (unitOfWork) {
 }
 ```
 
-6. **beginWork** 开始任务
+7. **beginWork** 开始任务
 
 ```js
 console.group(`beginWork${workInProgress?._id} ${TagMap[workInProgress?.tag]}`);
 ```
 
-7. **completeWork** 完成任务， 在 runWithFiberInDEV
+8. **completeWork** 完成任务， 在 runWithFiberInDEV
 
 ```js
 function runWithFiberInDEV(fiber, callback, arg0, arg1, arg2, arg3, arg4) {
@@ -352,7 +387,7 @@ function runWithFiberInDEV(fiber, callback, arg0, arg1, arg2, arg3, arg4) {
 }
 ```
 
-8. **commitMutationEffectsOnFiber** 提交任务
+9. **commitMutationEffectsOnFiber** 提交任务
 
 ```js
 // 开始打此点位
@@ -369,5 +404,101 @@ console.groupEnd(
 );
 ```
 
-9. 在 container 上打点追踪 dom 更新。
-10. Function Component 没有 StateNode 是如何关联的？
+10. 在 container 上打点追踪 dom 更新。
+11. Function Component 没有 StateNode 是如何关联的？
+12. 拦截 concurrentQueues 的更新
+
+```js
+window.concurrentQueues = new Proxy( [], {
+   get(target, prop) {
+      debugger
+      console.log(`Reading concurrentQueues[${prop}]:`, target[prop]);
+      return target[prop];
+   },
+   set(target, prop, value) {
+      console.log(`Setting concurrentQueues[${prop}] =`, value);
+      debugger
+      target[prop] = value;
+      return true;
+   }
+})
+```
+13. 拦截初始化更新队列
+```js
+function initializeUpdateQueue(fiber) {
+fiber.updateQueue = {
+   baseState: fiber.memoizedState,
+   firstBaseUpdate: null,
+   lastBaseUpdate: null,
+   shared: new Proxy(
+      { pending: null, lanes: 0, hiddenCallbacks: null },
+      {
+      set(target, prop, value) {
+         if(prop === 'pending') {
+            debugger
+         }
+         target[prop] = value;
+         return true;
+      }
+      }
+   ),
+   callbacks: null  
+};
+}
+```
+
+## 核心流程分析
+
+## CreateRoot 流程
+
+调用 [ReactDOM.createRoot(container)](https://react.dev/reference/react-dom/client/createRoot) 返回 root 节点 ，核心逻辑包括
+
+1. 事件委托，将事件挂载在 container 节点上 ，详见[listenToAllSupportedEvents](https://github.com/facebook/react/blob/main/packages/react-dom-bindings/src/events/DOMPluginEventSystem.js#L416)
+2. 创建 FiberRoot 元素，详见 [ReactFiberRoot](https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberRoot.js#L139)
+3. 返回 [ReactDOMRoot](https://github.com/facebook/react/blob/main/packages/react-dom/src/client/ReactDOMRoot.js) 对象包含
+   * [render(reactNode)](https://react.dev/reference/react-dom/client/createRoot#root-render) 挂载 reactNode 到 container
+   * [unmount()](https://react.dev/reference/react-dom/client/createRoot#root-unmount) 卸载 container
+   * 对象内部属性 `_internalRoot` 指向 FiberRoot
+
+完成上述过程后会形成如下的对象关系结构
+
+
+```plantuml
+@startuml
+
+class "ReactDOMRoot" as root {
+   + _internalRoot: FiberRoot
+   + render()
+   + unmount()
+}
+
+class "FiberRootNode" as fiberRootNode {
+   + containerInfo: container
+   + current: HostRootFiber
+}
+
+class "FiberNode" as fiberNode {
+   + stateNode: FiberRoot
+}
+
+class "container DOM节点" as container {
+   - __reactContainerxx: react 属性
+}
+
+root -down-> fiberRootNode: _internalRoot
+fiberRootNode -down-> fiberNode: current
+fiberRootNode::containerInfo -right-> container:containerInfo
+fiberNode::stateNode --down-> fiberRootNode: stateNode
+container -right-> fiberNode: __reactContainerxx
+
+
+@enduml
+```
+
+
+## render 流程
+
+调用 [`root.render(reactNode`)](https://react.dev/reference/react-dom/client/createRoot#root-render) 渲染组件到 container 中，核心逻辑包括
+
+1. 调用工作循环 performWorkOnRoot
+2. 执行 workLoopSync() 循环
