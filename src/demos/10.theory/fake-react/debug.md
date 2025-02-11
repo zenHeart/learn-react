@@ -4,7 +4,8 @@
 
 1. 了解 createRoot 流程 done
 2. render 流程 working
-   1. workInProgress 是在哪个阶段创建和推送的
+   1. workInProgress 是在哪个阶段创建和推送的 done
+   2. processUpdateQueue 是如何处理的
 3. Fiber 架构的核心对象和功能
 4. 了解生命周期钩子是如何触发的？
 5. 事件代理原理
@@ -76,12 +77,14 @@ export type Fiber = {
 ```js
 export type Update<State> = {
   lane: Lane, // 优先级
-
-  tag: 0 | 1 | 2 | 3, // 更新类型
-  payload: any, // 负载信息
-  callback: (() => mixed) | null, // 回调函数
-
-  next: Update<State> | null, // 下一个更新
+   // 0 (UpdateState): 普通的状态更新（如调用 setState）。
+   // 1 (ReplaceState): 替换当前的状态。
+   // 2 (ForceUpdate): 强制组件重新渲染。
+   // 3 (CaptureUpdate): 用于错误边界，捕获错误相关的更新。
+  tag: 0 | 1 | 2 | 3, // 标识更新的类型
+  payload: any, // 存储与更新相关的数据，可能是新状态的对象或一个返回新状态的函数。
+  callback: (() => mixed) | null, // 在更新完成后执行的回调函数。
+  next: Update<State> | null, // 指向下一个更新，形成链表结构。
 };
 ```
 
@@ -500,5 +503,12 @@ container -right-> fiberNode: __reactContainerxx
 
 调用 [`root.render(reactNode`)](https://react.dev/reference/react-dom/client/createRoot#root-render) 渲染组件到 container 中，核心逻辑包括
 
-1. 调用工作循环 performWorkOnRoot
-2. 执行 workLoopSync() 循环
+1. render 阶段
+   1. 调用 renderRootSync 同步渲染, 推入 Fiber 节点到 workInprogress 中
+   2. 执行 workLoopSync() 循环
+   3. 执行 performUnitOfWork() 开始执行任务
+   4. 执行 beginWork() 开始任务, 不同类型执行不同更新操作
+      1. HostFiberNode 执行跟新队列任务 processUpdateQueue() 完成状态修改
+2. commit 阶段,  commitRoot() 
+   1. 执行 commitMutationEffectsOnFiber() 提交任务
+   2. 渲染完成触发钩子调用完成渲染
