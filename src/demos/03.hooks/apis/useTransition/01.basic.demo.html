@@ -1,0 +1,65 @@
+---
+tags: [useActionState]
+---
+
+<html>
+  <body>
+    <style>
+      .App {
+        font-family: sans-serif;
+        text-align: center;
+      }
+      .text {
+        height: 20px;
+      }
+      .cells {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 50px;
+      }
+      .cell {
+        width: 10px;
+        height: 10px;
+      }
+      .cell.green {
+        background-color: green;
+      }
+      .cell.gray {
+        background-color: #ccc;
+      }
+    </style>
+    <div id="container"></div>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" data-type="module">
+      import React from "https://esm.sh/react@19?dev";
+      import ReactDOMClient from "https://esm.sh/react-dom@19/client?dev";
+
+      // 使用 useActionState 的示例
+      function Counter() {
+        // useActionState 接收一个 reducer 和初始 state
+        const [count, formAction] = React.useActionState(
+          (prevState, action) => prevState + action,
+          0
+        );
+
+        return (
+          <div>
+            <p>You clicked {count} times</p>
+            <form
+              action={async (formData) => {
+                // 每次点击按钮，向 reducer 传递 1，实现加一
+                formAction(1);
+              }}
+            >
+              <button type="submit">Click me</button>
+            </form>
+          </div>
+        );
+      }
+
+      const rootElement = document.getElementById("container");
+      ReactDOMClient.createRoot(rootElement).render(<Counter />);
+    </script>
+  </body>
+</html>
