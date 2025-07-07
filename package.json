@@ -9,13 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@babel/core": "^7.26.0",
-    "@codemirror/lint": "^6.8.2",
-    "@codemirror/state": "^6.4.1",
+    "@babel/core": "^7.28.0",
+    "@codemirror/lint": "^6.8.5",
+    "@codemirror/state": "^6.5.2",
     "@codesandbox/nodebox": "^0.1.9",
     "@codesandbox/sandpack-client": "^2.19.8",
     "@codesandbox/sandpack-react": "^2.20.0",
-    "@headlessui/react": "^2.2.0",
+    "@headlessui/react": "^2.2.4",
     "classnames": "^2.5.1",
     "eslint": "7",
     "eslint-plugin-react-hooks": "^5.0.0",
