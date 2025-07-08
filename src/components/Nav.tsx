@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { NavLink, Route, Routes, useSearchParams, useLocation, Navigate, useNavigate } from 'react-router-dom'
+import { NavLink, Route, Routes, useSearchParams, useLocation, Navigate, useNavigate } from 'react-router'
 import Tags from './Tags'
 
 const styles = {

@@ -62,10 +62,10 @@ function App({}) {
   const updateQuantityAction = async newQuantity => {
     startTransitionHook(async () => {
       const savedQuantity = await updateQuantity(newQuantity);
-      startTransitionHook(() => {
+      // startTransitionHook(() => {
         // 每次数量更新都会触发重新渲染
         setQuantity(savedQuantity);
-      });
+      // });
     })
   };
 

@@ -1,4 +1,4 @@
-import { HashRouter as Router } from 'react-router-dom';
+import { HashRouter as Router } from 'react-router';
 import { TREE_COMPONENTS, TAGS_COLOR } from './const'
 import Nav from './components/Nav';
 
