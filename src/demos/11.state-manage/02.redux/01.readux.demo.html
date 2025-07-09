@@ -1,0 +1,55 @@
+<script type="importmap">
+  {
+    "imports": {
+      "@reduxjs/toolkit": "https://esm.sh/@reduxjs/toolkit?dev"
+    }
+  }
+</script>
+<script type="module" src="https://esm.sh/tsx"></script>
+<script type="text/babel">
+  import { createSlice, configureStore } from "@reduxjs/toolkit";
+
+  // 1. createSlice 创建状态切片
+  const counterSlice = createSlice({
+    // 2. 定义切片的名称
+    // 这个名称会被用作生成的 action 类型的前缀
+    name: "counter",
+    // 3. 定义切片的初始状态
+    // 这个状态会被存储在 Redux store 中
+    initialState: {
+      value: 0,
+    },
+    // 4. 定义切片的 reducers
+    // reducers 是一个对象，其中每个键都是一个 reducer 函数
+    reducers: {
+      incremented: (state) => {
+        // 5. 在 reducer 中直接修改状态
+        // Redux Toolkit 使用 Immer 库来处理不可变状态更新
+        state.value += 1;
+      },
+      decremented: (state) => {
+        // 6. 在 reducer 中直接修改状态
+        state.value -= 1; 
+      },
+    },
+  });
+  // 7. 导出 action creators
+  export const { incremented, decremented } = counterSlice.actions;
+
+  // 8. 创建 Redux store
+  const store = configureStore({
+    reducer: counterSlice.reducer,
+  });
+
+  // 9.  通过 `store.subscribe` 方法，订阅 store 的变化,
+  // 当状态发生变化时，回调函数会被调用， 通过 store.getState() 获取最新的状态
+  store.subscribe(() => console.log(store.getState()));
+
+  // 10. 派发 action 来更新状态
+  store.dispatch(incremented());
+  // {value: 1}
+  store.dispatch(incremented());
+  // {value: 2}
+  store.dispatch(decremented());
+  // {value: 1}
+</script>

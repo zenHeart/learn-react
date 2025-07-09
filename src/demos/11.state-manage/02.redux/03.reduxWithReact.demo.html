@@ -1,0 +1,76 @@
+<script type="importmap">
+  {
+    "imports": {
+      "@reduxjs/toolkit": "https://esm.sh/@reduxjs/toolkit?dev",
+      "react": "https://esm.sh/react@19.1.0?dev",
+      "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev",
+      "react-redux": "https://esm.sh/react-redux?dev"
+    }
+  }
+</script>
+<script type="module" src="https://esm.sh/tsx"></script>
+<div id="app"></div>
+<script type="text/babel">
+  import { createRoot } from "react-dom/client";
+  import { createSlice, configureStore } from "@reduxjs/toolkit";
+  import { Provider, useSelector, useDispatch } from "react-redux";
+
+  // 1. 定义 store
+  const counterSlice = createSlice({
+    name: "counter",
+    initialState: { value: 0 },
+    reducers: {
+      increment: (state) => {
+        state.value += 1;
+      },
+      decrement: (state) => {
+        state.value -= 1;
+      },
+    },
+  });
+
+  const store = configureStore({
+    reducer: {
+      counter: counterSlice.reducer,
+    },
+  });
+
+  console.log(counterSlice, store);
+
+  function App() {
+    return (
+      <div>
+        <h1>Redux with React Example</h1>
+        <Counter />
+      </div>
+    );
+  }
+
+  const root = createRoot(document.getElementById("app"));
+
+  root.render(
+    // 2. 使用 Provider 包裹应用
+    <Provider store={store}>
+      <App />
+    </Provider>
+  );
+
+  function Counter() {
+    // 3. 使用 useSelector 获取状态
+    const count = useSelector((state) => state.counter.value);
+    // 4. 使用 useDispatch 获取 dispatch 函数
+    const dispatch = useDispatch();
+
+    return (
+      <div>
+        <h2>Counter: {count}</h2>
+        <button onClick={() => dispatch(counterSlice.actions.increment())}>
+          Increment
+        </button>
+        <button onClick={() => dispatch(counterSlice.actions.decrement())}>
+          Decrement
+        </button>
+      </div>
+    );
+  }
+</script>

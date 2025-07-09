@@ -1,0 +1,69 @@
+<script type="importmap">
+  {
+    "imports": {
+      "@reduxjs/toolkit": "https://esm.sh/@reduxjs/toolkit?dev"
+    }
+  }
+</script>
+<script type="module" src="https://esm.sh/tsx"></script>
+<script type="text/babel">
+  import { createSlice, configureStore } from "@reduxjs/toolkit";
+
+  // 计数器切片
+  const counterSlice = createSlice({
+    name: "counter",
+    initialState: {
+      value: 0,
+    },
+    reducers: {
+      incremented: (state) => {
+        state.value += 1;
+      },
+      decremented: (state) => {
+        state.value -= 1; 
+      },
+    },
+  });
+
+  // 待办事项切片 - 第二个切片，用于演示多个存储
+  const todoSlice = createSlice({
+    name: "todos",
+    initialState: {
+      items: []
+    },
+    reducers: {
+      addTodo: (state, action) => {
+        state.items.push(action.payload);
+      },
+      removeTodo: (state, action) => {
+        state.items = state.items.filter((_, index) => index !== action.payload);
+      }
+    }
+  });
+
+  // 从两个切片导出 action 创建器
+  export const { incremented, decremented } = counterSlice.actions;
+  export const { addTodo, removeTodo } = todoSlice.actions;
+
+  // 创建带有多个 reducer 的 Redux store
+  const store = configureStore({
+    reducer: {
+      counter: counterSlice.reducer,
+      todos: todoSlice.reducer
+    }
+  });
+
+  // 订阅 store 变化
+  store.subscribe(() => console.log('当前状态:', store.getState()));
+
+  // 派发 action 来更新状态的不同部分
+  console.log('--- 计数器 action ---');
+  store.dispatch(incremented());
+  store.dispatch(incremented());
+  store.dispatch(decremented());
+
+  console.log('--- 待办事项 action ---');
+  store.dispatch(addTodo('学习 Redux'));
+  store.dispatch(addTodo('创建应用程序'));
+  store.dispatch(removeTodo(0));
+</script>

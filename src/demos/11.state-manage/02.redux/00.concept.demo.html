@@ -1,0 +1,41 @@
+<script type="module">
+  import { createStore } from 'https://unpkg.com/redux@5.0.1/dist/redux.browser.mjs'
+
+  // 1. 定义初始状态
+  const initialState = {
+    count: 0
+  }
+
+  // 2. 定义动作列表
+  const Actions = {
+    INCREMENT: 'INCREMENT',
+    DECREMENT: 'DECREMENT'
+  }
+
+  // 3. 定义 reducer
+  function reducer(preState, action) {
+    if(action.type === Actions.INCREMENT) {
+      return { count: preState.count + 1 }
+    } else if(action.type === Actions.DECREMENT) {
+      return { count: preState.count - 1 }
+    } else {
+      return preState
+    }
+  }
+
+  // 4. 创建 store
+  const store = createStore(reducer, initialState)
+
+  // 5. 订阅 store 的变化
+  store.subscribe(() => {
+    console.log('当前状态:', store.getState())
+  })
+
+  // 6. 派发动作来更新状态
+  console.log('--- 派发 INCREMENT 动作 ---')
+  store.dispatch({ type: Actions.INCREMENT })
+
+  console.log('--- 派发 DECREMENT 动作 ---')
+  store.dispatch({ type: Actions.DECREMENT })
+
+</script>
