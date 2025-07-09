@@ -1,0 +1,82 @@
+<script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@19.1.0?dev",
+      "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev",
+      "react-router": "https://esm.sh/react-router@7?dev"
+    }
+  }
+</script>
+<script type="module" src="https://esm.sh/tsx"></script>
+<div id="root"></div>
+<script type="text/babel" lang="jsx">
+  import { createRoot } from "react-dom/client";
+  import React from "react";
+  import { HashRouter, Routes, Route, Link, useParams } from "react-router";
+
+  function User({ label }) {
+    let { id, status } = useParams();
+    return (
+      <div>
+        {!!label && <strong>{label}</strong>}
+        {/* 如果有用户 ID，则显示 */}
+        {!!id && <strong>用户 ID: {id}</strong>}
+      </div>
+    );
+  }
+
+  // 验证 react-router 支持的路由配置
+  const RouteConfig = [
+    {
+      path: "/user/*",
+      to: "/user/any",
+      element: <User label="通配路由" />,
+    },
+    {
+      path: "/user",
+      to: "/user", // 默认重定向到用户 ID 1
+      element: <div>首页</div>,
+    },
+    {
+      path: "/user/:id?",
+      to: "/user/1",
+      element: <User label="可选路由" />,
+    },
+  ];
+
+  function App() {
+    return (
+      <>
+        <nav style={{ display: "flex", gap: "10px" }}>
+          {RouteConfig.map((route, index) =>
+            Array.isArray(route.to) ? (
+              route.to.map((link) => (
+                <Link key={link} to={link}>
+                  {link}
+                </Link>
+              ))
+            ) : (
+              <Link key={index} to={route.to ?? route.path}>
+                {route.to ?? route.path}
+              </Link>
+            )
+          )}
+        </nav>
+        <Routes>
+          {RouteConfig.map(({ path, ...options }, index) => (
+            <Route key={index} path={path} {...options} />
+          ))}
+        </Routes>
+      </>
+    );
+  }
+  function HashRouterApp() {
+    return (
+      <HashRouter>
+        <App />
+      </HashRouter>
+    );
+  }
+
+  createRoot(root).render(<HashRouterApp />);
+</script>

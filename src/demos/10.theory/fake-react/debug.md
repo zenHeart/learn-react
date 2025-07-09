@@ -52,7 +52,7 @@ export type Fiber = {
    flags: Flags, // 描述 Fiber 及其子树的副作用的位字段。
    subtreeFlags: Flags, // 子树的副作用位字段。
    deletions: Array<Fiber> | null, // 要删除的 Fiber 节点数组。
-   lanes: Lanes, // 当前 Fiber 的优先级。
+   lanes: Lanes, // 当前 Fiber 的优先级。 https://github.com/facebook/react/pull/18796
    childLanes: Lanes, // 子树的优先级。
    alternate: Fiber | null, // 备用 Fiber，用于双缓冲机制。
    actualDuration?: number, // 当前更新中渲染该 Fiber 及其子树所花费的时间。
