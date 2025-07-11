@@ -1,0 +1,42 @@
+<script type="module">
+  import {
+    createStore,
+    applyMiddleware,
+  } from "https://unpkg.com/redux@5.0.1/dist/redux.browser.mjs";
+
+  function middle1(store) {
+    return next => action => {
+      console.log('middle1: before action', action);
+      return next(action);
+    }
+  }
+
+
+  function middle2(store) {
+    return next => action => {
+      console.log('middle2: before action', action);
+      return next(action);
+    }
+  }
+
+  const store = createStore(
+    (state = { count: 0 }, action) => {
+      switch (action.type) {
+        case 'INCREMENT':
+          return { ...state, count: state.count + 1 };
+        case 'DECREMENT':
+          return { ...state, count: state.count - 1 };
+        case 'RESET':
+          return { ...state, count: 0 };
+        default:
+          return state;
+      }
+    },
+    applyMiddleware(middle1, middle2)
+  );
+
+  store.subscribe(() => {
+    console.log('State changed:', store.getState());
+  });
+  store.dispatch({ type: 'INCREMENT' });
+</script>

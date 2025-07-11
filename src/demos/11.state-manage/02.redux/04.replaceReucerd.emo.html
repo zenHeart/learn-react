@@ -1,0 +1,123 @@
+<div id="app">
+  <h2>Redux replaceReducer Demo</h2>
+  <div id="count"></div>
+  <div id="status"></div>
+</div>
+
+<script type="module">
+  import { createStore } from "https://unpkg.com/redux@5.0.1/dist/redux.browser.mjs";
+
+  // 1. 定义初始状态
+  const initialState = {
+    count: 0,
+  };
+
+  // 2. 定义动作
+  const Actions = {
+    INCREMENT: "INCREMENT",
+    DECREMENT: "DECREMENT",
+    RESET: "RESET",
+    // 新增的动作类型，将在替换reducer后使用
+    MULTIPLY: "MULTIPLY",
+    DIVIDE: "DIVIDE"
+  };
+
+  // 3. 定义动作创建器
+  const increment = () => ({ type: Actions.INCREMENT });
+  const decrement = () => ({ type: Actions.DECREMENT });
+  const reset = () => ({ type: Actions.RESET });
+  const multiply = (value) => ({ type: Actions.MULTIPLY, payload: value });
+  const divide = (value) => ({ type: Actions.DIVIDE, payload: value });
+
+  // 4. 定义初始reducer
+  function counterReducer(state = initialState, action) {
+    switch (action.type) {
+      case Actions.INCREMENT:
+        return { ...state, count: state.count + 1 };
+      case Actions.DECREMENT:
+        return { ...state, count: state.count - 1 };
+      case Actions.RESET:
+        return { ...state, count: 0 };
+      default:
+        return state;
+    }
+  }
+
+  // 5. 定义增强版reducer（后面会用replaceReducer替换）
+  function enhancedCounterReducer(state = initialState, action) {
+    switch (action.type) {
+      case Actions.INCREMENT:
+        return { ...state, count: state.count + 1 };
+      case Actions.DECREMENT:
+        return { ...state, count: state.count - 1 };
+      case Actions.RESET:
+        return { ...state, count: 0 };
+      case Actions.MULTIPLY:
+        return { ...state, count: state.count * action.payload };
+      case Actions.DIVIDE:
+        return { ...state, count: state.count / action.payload };
+      default:
+        return state;
+    }
+  }
+
+  // 6. 创建 store
+  const store = createStore(counterReducer, initialState);
+
+  // 7. 用于更新UI的函数
+  function updateUI() {
+    const state = store.getState();
+    document.getElementById("count").innerText = `Current count: ${state.count}`;
+  }
+
+  // 8. 订阅 store
+  store.subscribe(updateUI);
+  
+  // 初始化UI
+  updateUI();
+  document.getElementById("status").innerText = "Using original reducer";
+
+  // 9. 异步执行一系列操作演示replaceReducer
+  async function demoReplaceReducer() {
+    // 使用原始reducer执行操作
+    logAction("Incrementing");
+    store.dispatch(increment());
+    await wait(1000);
+    
+    logAction("Incrementing again");
+    store.dispatch(increment());
+    await wait(1000);
+    
+    // 替换reducer
+    logAction("Replacing reducer with enhanced version");
+    store.replaceReducer(enhancedCounterReducer);
+    document.getElementById("status").innerText = "Using enhanced reducer with multiply/divide support";
+    await wait(1000);
+    
+    // 使用新的reducer特有的功能
+    logAction("Multiplying by 3");
+    store.dispatch(multiply(3));
+    await wait(1000);
+    
+    logAction("Dividing by 2");
+    store.dispatch(divide(2));
+    await wait(1000);
+    
+    logAction("Resetting");
+    store.dispatch(reset());
+  }
+  
+  // 辅助函数
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  
+  function logAction(message) {
+    console.log(message);
+    const status = document.getElementById("status");
+    status.innerHTML = `${status.innerHTML}<br>${message}`;
+  }
+  
+  // 启动演示
+  demoReplaceReducer();
+</script>

@@ -1,0 +1,55 @@
+<script type="module">
+  import { createStore } from 'https://unpkg.com/redux@5.0.1/dist/redux.browser.mjs';
+
+  function enhanceDispatch(cs) {
+    return (reducer,initState) => {
+      const store = cs(reducer, initState);
+      const dispatch = store.dispatch;
+      return {
+        ...store,
+        dispatch: (action) => {
+          if(typeof action === 'function') {
+            return action(store);
+          }
+          return dispatch(action);
+        },
+      };
+    };
+  }
+
+  
+
+  const store = createStore((state = { count: 0 }, action) => {
+    switch (action.type) {
+      case 'INCREMENT':
+        return { ...state, count: state.count + 1 };
+      case 'DECREMENT':
+        return { ...state, count: state.count - 1 };
+      case 'RESET':
+        return { ...state, count: 0 };
+      default:
+        return state;
+    }
+  }, enhanceDispatch);
+
+  store.subscribe(() => {
+    console.log('State changed:', store.getState());
+  });
+
+  store.dispatch({ type: 'INCREMENT' });
+  store.dispatch({ type: 'INCREMENT' });
+  store.dispatch({ type: 'DECREMENT' });
+  store.dispatch({ type: 'RESET' });
+  console.log('Final state:', store.getState());
+
+  // 支持传入函数
+  store.dispatch((store) => {
+    console.log('Dispatching a function action');
+    setTimeout(() => {
+      store.dispatch({ type: 'INCREMENT' });
+      console.log('State after function action:', store.getState());
+    }, 1000);
+  });
+
+
+</script>

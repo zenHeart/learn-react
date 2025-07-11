@@ -1,0 +1,101 @@
+<div class="container">
+  <h2>Redux Store Enhancer Demo</h2>
+  <div class="counter">Count: <span id="count">0</span></div>
+  <div class="logs-container">
+    <h3>Action Logs:</h3>
+    <div id="logs" class="logs"></div>
+  </div>
+</div>
+
+<style>
+  .container { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+  .counter { font-size: 24px; margin-bottom: 20px; }
+  .logs { border: 1px solid #ddd; padding: 10px; height: 200px; overflow-y: auto; }
+  .logs div { margin-bottom: 5px; }
+  .action-log { color: blue; }
+  .state-log { color: green; }
+</style>
+
+<script type="module">
+  import { createStore } from "https://unpkg.com/redux@5.0.1/dist/redux.browser.mjs";
+
+  // 1. 定义初始状态
+  const iniitialState = { count: 0 };
+
+  // 2. 定义动作
+  const Actions = {
+    INCREMENT: "INCREMENT",
+    DECREMENT: "DECREMENT",
+    RESET: "RESET",
+  };
+
+  // 3. 定义动作创建器
+  const increment = () => ({ a: Actions.INCREMENT });
+  const decrement = () => ({ a: Actions.DECREMENT });
+  const reset = () => ({ a: Actions.RESET });
+
+  // 4. 定义reducer
+  function reducer(state, action) {
+    switch (action.a) {
+      case Actions.INCREMENT:
+        return { ...state, count: state.count + 1 };
+      case Actions.DECREMENT:
+        return { ...state, count: state.count - 1 };
+      case Actions.RESET:
+        return { ...state, count: 0 };
+      default:
+        return state;
+    }
+  }
+
+  // 5. 创建 store enhancer
+  function loggerEnhancer(createStore) {
+    return function(reducer, initialState, enhancer) {
+      const store = createStore(reducer, initialState, enhancer);
+      
+      function addLog(message, className) {
+        const logsElement = document.getElementById("logs");
+        const logEntry = document.createElement("div");
+        logEntry.textContent = message;
+        logEntry.className = className || "";
+        logsElement.appendChild(logEntry);
+        logsElement.scrollTop = logsElement.scrollHeight;
+      }
+      
+      // 增强版的 dispatch 方法
+      function enhancedDispatch(action) {
+        addLog(`Dispatching action: ${action.a}`, "action-log");
+        const result = store.dispatch(action);
+        addLog(`New state: ${JSON.stringify(store.getState())}`, "state-log");
+        return result;
+      }
+      
+      return {
+        ...store,
+        dispatch: enhancedDispatch
+      };
+    };
+  }
+
+  // 6. 创建 store 并应用 enhancer
+  const store = createStore(reducer, iniitialState, loggerEnhancer);
+
+  // 7. 订阅 store
+  store.subscribe(() => {
+    const state = store.getState();
+    document.getElementById("count").innerText = state.count;
+  });
+
+  // 8. 分发动作
+  async function runActions() {
+    store.dispatch(increment());
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    store.dispatch(increment());
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    store.dispatch(decrement());
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    store.dispatch(reset());
+  }
+  
+  runActions();
+</script>

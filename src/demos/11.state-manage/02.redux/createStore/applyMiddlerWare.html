@@ -1,0 +1,94 @@
+<script type="module">
+  import {
+    createStore,
+
+  } from "https://unpkg.com/redux@5.0.1/dist/redux.browser.mjs";
+
+  function applyMiddleware(...midlleWares) {
+    return (cs) => {
+      return (reducer, initState) => {
+        const store = cs(reducer, initState);
+        let dispatch = store.dispatch;
+
+        const chain = midlleWares.map((middleware) => middleware(store));
+
+        // 通过 compose 函数将中间件链组合起来
+        const composedMiddleware = chain.reduce(
+          (a, b) =>
+            (...args) =>
+              a(b(...args))
+        );
+        // 替换 store 的 dispatch 方法
+        dispatch = composedMiddleware(store.dispatch);
+
+        return {
+          ...store,
+          dispatch
+        };
+      };
+    };
+  }
+
+  function middle1(store) {
+    return (next) => (action) => {
+      console.log("middle1: before action", action);
+
+      const res =  next({ ...action, payload: 1 });
+      console.log("middle1: after action", action, res);
+      return action;
+    };
+  }
+
+  function middle2(store) {
+    return (next) => (action) => {
+      console.log("middle2: before action", action);
+      const res = next({ ...action, payload: 2 });
+      console.log("middle2: after action", action, res);
+      return res;
+    };
+  }
+
+  function middle3(store) {
+    return (next) => (action) => {
+      console.log("middle3: before action", action);
+      const res = next({ ...action, payload: 3, type: 'DECREMENT' });
+      console.log("middle3: after action", action, res);
+      return res;
+    };
+  }
+
+  const store = createStore((state = { count: 0 }, action) => {
+    switch (action.type) {
+      case "INCREMENT":
+        return { ...state, count: state.count + 1 + action?.payload || 0 };
+      case "DECREMENT":
+        return { ...state, count: state.count - 1 };
+      case "RESET":
+        return { ...state, count: 0 };
+      default:
+        return state;
+    }
+  }, applyMiddleware(middle1, middle2, middle3));
+
+  store.subscribe(() => {
+    console.log("State changed:", store.getState());
+  });
+  store.dispatch({ type: "INCREMENT" });
+</script>
+
+模式 1 洋葱模型
+
+m1(action) {
+  action1
+  m2(action) {
+    action2
+    m3(action) {
+      aciton3
+      dispatch(action3)
+    }
+  }
+}
+
+模式2 链式调用
+
+m1(action) => m2(m1action) => m3(m2action) => dispatch(m3action)

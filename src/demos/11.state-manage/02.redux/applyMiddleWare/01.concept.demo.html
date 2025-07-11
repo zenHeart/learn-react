@@ -1,0 +1,154 @@
+<div id="app">
+  <h2>Redux applyMiddleware Demo</h2>
+  <div id="counter"></div>
+  <div id="settings"></div>
+  <div id="status"></div>
+</div>
+
+<script type="module">
+  import { createStore, combineReducers, applyMiddleware } from "https://unpkg.com/redux@5.0.1/dist/redux.browser.mjs";
+
+  // 1. 定义动作类型
+  const Actions = {
+    // Counter actions
+    INCREMENT: "INCREMENT",
+    DECREMENT: "DECREMENT",
+    RESET: "RESET",
+    // Settings actions
+    TOGGLE_DARK_MODE: "TOGGLE_DARK_MODE",
+    CHANGE_LANGUAGE: "CHANGE_LANGUAGE",
+    // Async action
+    DELAYED_INCREMENT: "DELAYED_INCREMENT"
+  };
+
+  // 2. 定义动作创建器
+  const increment = () => ({ type: Actions.INCREMENT });
+  const decrement = () => ({ type: Actions.DECREMENT });
+  const reset = () => ({ type: Actions.RESET });
+  const toggleDarkMode = () => ({ type: Actions.TOGGLE_DARK_MODE });
+  const changeLanguage = (language) => ({ type: Actions.CHANGE_LANGUAGE, payload: language });
+  // 异步动作创建器
+  const delayedIncrement = (delay = 1000) => {
+    return {
+      type: Actions.DELAYED_INCREMENT,
+      payload: { delay }
+    };
+  };
+
+  // 3. 定义多个 reducer
+  const initialCounterState = { count: 0 };
+  function counterReducer(state = initialCounterState, action) {
+    switch (action.type) {
+      case Actions.INCREMENT:
+        return { ...state, count: state.count + 1 };
+      case Actions.DECREMENT:
+        return { ...state, count: state.count - 1 };
+      case Actions.RESET:
+        return { ...state, count: 0 };
+      default:
+        return state;
+    }
+  }
+
+  const initialSettingsState = { darkMode: false, language: 'en' };
+  function settingsReducer(state = initialSettingsState, action) {
+    switch (action.type) {
+      case Actions.TOGGLE_DARK_MODE:
+        return { ...state, darkMode: !state.darkMode };
+      case Actions.CHANGE_LANGUAGE:
+        return { ...state, language: action.payload };
+      default:
+        return state;
+    }
+  }
+
+  // 4. 定义中间件
+  // Logger中间件 - 记录所有动作
+  const loggerMiddleware = store => next => action => {
+    logAction(`Action: ${action.type}${action.payload ? ` (${JSON.stringify(action.payload)})` : ''}`);
+    return next(action);
+  };
+
+  // 计时中间件 - 测量处理动作所需时间
+  const timerMiddleware = store => next => action => {
+    const start = performance.now();
+    const result = next(action);
+    const end = performance.now();
+    logAction(`处理 ${action.type} 用时: ${(end - start).toFixed(2)}ms`);
+    return result;
+  };
+
+  // 异步中间件 - 处理延迟动作
+  const asyncMiddleware = store => next => action => {
+    if (action.type === Actions.DELAYED_INCREMENT) {
+      logAction(`开始延迟 ${action.payload.delay}ms 的递增操作`);
+      setTimeout(() => {
+        store.dispatch(increment());
+        logAction(`延迟递增操作已完成`);
+      }, action.payload.delay);
+      return;
+    }
+    return next(action);
+  };
+
+  // 5. 使用 combineReducers 组合 reducer
+  const rootReducer = combineReducers({
+    counter: counterReducer,
+    settings: settingsReducer
+  });
+
+  // 6. 创建 store，应用中间件
+  const store = createStore(
+    rootReducer,
+    applyMiddleware(loggerMiddleware, timerMiddleware, asyncMiddleware)
+  );
+
+  // 7. 用于更新UI的函数
+  function updateUI() {
+    const state = store.getState();
+    document.getElementById("counter").innerHTML = `
+      <h3>Counter</h3>
+      <p>Current count: ${state.counter.count}</p>
+      <button id="increment">Increment</button>
+      <button id="decrement">Decrement</button>
+      <button id="delayed-increment">Delayed Increment (1s)</button>
+      <button id="reset">Reset</button>
+    `;
+    
+    document.getElementById("settings").innerHTML = `
+      <h3>Settings</h3>
+      <p>Dark Mode: ${state.settings.darkMode ? 'On' : 'Off'}</p>
+      <p>Language: ${state.settings.language}</p>
+      <button id="toggle-dark-mode">Toggle Dark Mode</button>
+      <select id="language-select">
+        <option value="en" ${state.settings.language === 'en' ? 'selected' : ''}>English</option>
+        <option value="es" ${state.settings.language === 'es' ? 'selected' : ''}>Spanish</option>
+        <option value="fr" ${state.settings.language === 'fr' ? 'selected' : ''}>French</option>
+      </select>
+    `;
+
+    // 添加事件监听器
+    document.getElementById("increment").addEventListener("click", () => store.dispatch(increment()));
+    document.getElementById("decrement").addEventListener("click", () => store.dispatch(decrement()));
+    document.getElementById("delayed-increment").addEventListener("click", () => store.dispatch(delayedIncrement(1000)));
+    document.getElementById("reset").addEventListener("click", () => store.dispatch(reset()));
+    document.getElementById("toggle-dark-mode").addEventListener("click", () => store.dispatch(toggleDarkMode()));
+    document.getElementById("language-select").addEventListener("change", (e) => {
+      store.dispatch(changeLanguage(e.target.value));
+    });
+  }
+
+  // 8. 订阅 store
+  store.subscribe(updateUI);
+  
+  // 初始化UI
+  updateUI();
+  document.getElementById("status").innerHTML = "<h3>Middleware Log</h3>";
+
+  // 9. 辅助函数
+  function logAction(message) {
+    console.log(message);
+    const status = document.getElementById("status");
+    status.innerHTML = `${status.innerHTML}<p>${message}</p>`;
+  }
+</script>
