@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 2: Element to Fiber Transformation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .demo-section {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .transformation-container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .element-box, .fiber-box {
+            flex: 1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        .element-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        .fiber-box {
+            background: #f3e5f5;
+            border-left: 4px solid #9c27b0;
+        }
+        .arrow {
+            font-size: 24px;
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .tree-visualization {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            line-height: 1.6;
+        }
+        .fiber-node {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 5px 0;
+        }
+        .element-node {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 5px 0;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #005999;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+        }
+        .fiber-property {
+            color: #9c27b0;
+            font-weight: bold;
+        }
+        .element-property {
+            color: #2196f3;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Step 2: Element to Fiber Transformation</h1>
+    
+    <div class="demo-section">
+        <h2>🎯 The Big Picture</h2>
+        <div class="highlight">
+            <p><strong>React Element:</strong> Simple JavaScript object describing what you want</p>
+            <p><strong>Fiber Node:</strong> Rich internal data structure that React uses to manage your component</p>
+            <p><strong>The Magic:</strong> React transforms elements into fibers to enable advanced features!</p>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔍 Demo 1: Simple Element → Fiber</h2>
+        <p>Let's see how a simple element gets transformed into a fiber node:</p>
+        
+        <button onclick="demonstrateSimpleTransformation()">Show Element → Fiber</button>
+        
+        <div id="simple-transformation" class="transformation-container" style="display: none;">
+            <div class="element-box">
+                <div class="element-property">React Element</div>
+                <div id="simple-element"></div>
+            </div>
+            <div class="arrow">→</div>
+            <div class="fiber-box">
+                <div class="fiber-property">Fiber Node</div>
+                <div id="simple-fiber"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔍 Demo 2: Complex Element Tree → Fiber Tree</h2>
+        <p>Now let's see how a nested structure becomes a fiber tree:</p>
+        
+        <button onclick="demonstrateComplexTransformation()">Show Complex Transformation</button>
+        
+        <div id="complex-transformation" style="display: none;">
+            <h3>Element Tree Structure:</h3>
+            <div class="tree-visualization" id="element-tree"></div>
+            
+            <h3>Fiber Tree Structure:</h3>
+            <div class="tree-visualization" id="fiber-tree"></div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔍 Demo 3: Fiber Tree Navigation</h2>
+        <p>Explore how fibers are linked together:</p>
+        
+        <button onclick="demonstrateFiberNavigation()">Show Fiber Links</button>
+        
+        <div id="fiber-navigation" style="display: none;">
+            <div class="tree-visualization" id="fiber-links"></div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔍 Demo 4: ReactDOM.createRoot Internals (React 19)</h2>
+        <p>Let's explore what ReactDOM.createRoot actually creates:</p>
+        
+        <button onclick="demonstrateCreateRootInternals()">Inspect createRoot Internals</button>
+        
+        <div id="createroot-internals-demo"></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔍 Demo 5: Real React Fiber (Advanced)</h2>
+        <p>Let's inspect an actual React fiber node:</p>
+        
+        <button onclick="demonstrateRealFiber()">Create Real Fiber Node</button>
+        
+        <div id="real-fiber-demo"></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>📚 Key Insights</h2>
+        <div class="highlight">
+            <h3>Why Transform Elements to Fibers?</h3>
+            <ul>
+                <li><strong>Work can be interrupted:</strong> Fibers enable time-slicing</li>
+                <li><strong>Efficient updates:</strong> Fibers track what changed</li>
+                <li><strong>Better error handling:</strong> Fibers maintain component boundaries</li>
+                <li><strong>Concurrent rendering:</strong> Fibers enable React 18's concurrent features</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+          "imports": {
+            "react": "https://esm.sh/react@19.1.0?dev",
+            "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev"
+          }
+        }
+    </script>
+    <script type="module">
+        import React from "react";
+        import ReactDOM from "react-dom/client";
+        
+        function demonstrateSimpleTransformation() {
+            const container = document.getElementById('simple-transformation');
+            const elementDiv = document.getElementById('simple-element');
+            const fiberDiv = document.getElementById('simple-fiber');
+            
+            // Create a simple React element
+            const element = React.createElement('div', 
+                { className: 'container', id: 'my-div' }, 
+                'Hello Fiber!'
+            );
+            
+            // Simulate what a fiber node would look like
+            const simulatedFiber = {
+                type: 'div',
+                elementType: 'div',
+                key: null,
+                ref: null,
+                stateNode: null, // Will be DOM node
+                child: null,
+                sibling: null,
+                return: null,
+                memoizedProps: { className: 'container', id: 'my-div', children: 'Hello Fiber!' },
+                memoizedState: null,
+                pendingProps: { className: 'container', id: 'my-div', children: 'Hello Fiber!' },
+                effectTag: 0,
+                flags: 0,
+                subtreeFlags: 0,
+                tag: 5, // HostComponent
+                mode: 0,
+                lanes: 0,
+                childLanes: 0
+            };
+            
+            elementDiv.textContent = JSON.stringify({
+                type: element.type,
+                props: element.props,
+                key: element.key,
+                ref: element.ref
+            }, null, 2);
+            
+            fiberDiv.textContent = JSON.stringify(simulatedFiber, null, 2);
+            
+            container.style.display = 'flex';
+        }
+        
+        // Make functions available globally
+        window.demonstrateSimpleTransformation = demonstrateSimpleTransformation;
+        
+        function demonstrateComplexTransformation() {
+            const container = document.getElementById('complex-transformation');
+            const elementTreeDiv = document.getElementById('element-tree');
+            const fiberTreeDiv = document.getElementById('fiber-tree');
+            
+            // Show element tree structure
+            elementTreeDiv.innerHTML = `
+<div class="element-node">
+    <strong>div</strong> (className: "app")
+    <div class="element-node" style="margin-left: 20px;">
+        <strong>h1</strong> (children: "Welcome")
+    </div>
+    <div class="element-node" style="margin-left: 20px;">
+        <strong>p</strong> (children: "Hello World")
+    </div>
+</div>
+            `;
+            
+            // Show fiber tree structure
+            fiberTreeDiv.innerHTML = `
+<div class="fiber-node">
+    <strong>Fiber(div)</strong> - tag: 5, type: "div"
+    <div style="margin-left: 20px;">
+        <strong>child:</strong> ↓
+        <div class="fiber-node" style="margin-left: 20px;">
+            <strong>Fiber(h1)</strong> - tag: 5, type: "h1"
+            <div style="margin-left: 20px;">
+                <strong>sibling:</strong> →
+                <div class="fiber-node" style="margin-left: 20px;">
+                    <strong>Fiber(p)</strong> - tag: 5, type: "p"
+                    <div style="margin-left: 20px;">
+                        <strong>return:</strong> ↑ (points back to div)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            `;
+            
+            container.style.display = 'block';
+        }
+        
+        function demonstrateFiberNavigation() {
+            const container = document.getElementById('fiber-navigation');
+            const linksDiv = document.getElementById('fiber-links');
+            
+            linksDiv.innerHTML = `
+<div class="fiber-node">
+    <strong>Root Fiber</strong>
+    <div style="margin: 10px 0;">
+        <strong>child:</strong> Points to first child fiber
+        <div class="fiber-node" style="margin: 10px 0; margin-left: 20px;">
+            <strong>Child Fiber</strong>
+            <div style="margin: 5px 0;">
+                <strong>return:</strong> Points back to parent
+                <strong>sibling:</strong> Points to next sibling
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 6px;">
+    <strong>Fiber Navigation Rules:</strong>
+    <ul>
+        <li><strong>child:</strong> Points to first child fiber</li>
+        <li><strong>sibling:</strong> Points to next sibling fiber</li>
+        <li><strong>return:</strong> Points back to parent fiber</li>
+        <li><strong>This enables:</strong> Depth-first traversal, work interruption, efficient updates</li>
+    </ul>
+</div>
+            `;
+            
+            container.style.display = 'block';
+        }
+        
+        function demonstrateCreateRootInternals() {
+            const container = document.getElementById('createroot-internals-demo');
+            
+            // Create a temporary container to inspect createRoot
+            const tempDiv = document.createElement('div');
+            tempDiv.id = 'temp-inspect-root';
+            document.body.appendChild(tempDiv);
+            
+            // Create the root and inspect its structure
+            const root = ReactDOM.createRoot(tempDiv);
+            
+            // Get the internal root (FiberRootNode)
+            const internalRoot = root._internalRoot;
+            
+            // Find container and fiber keys
+            const reactContainerKey = Object.keys(tempDiv).find(k => k.includes('reactContainer'));
+            const reactFiberKey = Object.keys(tempDiv).find(k => k.includes('reactFiber'));
+            
+            container.innerHTML = `
+                <div class="analysis-section">
+                    <h3>🔍 ReactDOM.createRoot() Deep Analysis</h3>
+                    
+                    <h4>1. Return Object Structure (ReactDOMRoot)</h4>
+                    <div class="fiber-box">
+                        <div><strong>Constructor:</strong> ${root.constructor.name}</div>
+                        <div><strong>Public Methods:</strong></div>
+                        <ul>
+                            <li><strong>render(element):</strong> Renders React elements</li>
+                            <li><strong>unmount():</strong> Unmounts the root</li>
+                        </ul>
+                        <div><strong>Private Properties:</strong></div>
+                        <ul>
+                            <li><strong>_internalRoot:</strong> FiberRootNode (${internalRoot ? 'Present' : 'Not accessible'})</li>
+                        </ul>
+                    </div>
+                    
+                    <h4>2. _internalRoot (FiberRootNode) Structure</h4>
+                    <div class="fiber-box">
+                        ${internalRoot ? `
+                            <div><strong>Type:</strong> FiberRootNode</div>
+                            <div><strong>containerInfo:</strong> ${internalRoot.containerInfo === tempDiv ? 'Points to DOM container' : 'Unknown'}</div>
+                            <div><strong>current:</strong> ${internalRoot.current ? 'HostRoot Fiber' : 'Not found'}</div>
+                            <div><strong>finishedWork:</strong> ${internalRoot.finishedWork || 'null'}</div>
+                            <div><strong>pendingLanes:</strong> ${internalRoot.pendingLanes || 0}</div>
+                            <div><strong>expiredLanes:</strong> ${internalRoot.expiredLanes || 0}</div>
+                            <div><strong>Source:</strong> <a href="../../packages/react-reconciler/src/ReactFiberRoot.js#L100" target="_blank">ReactFiberRoot.js</a></div>
+                        ` : `
+                            <div class="highlight-error">_internalRoot is not accessible in production builds</div>
+                            <div>This is React's internal FiberRootNode that contains:</div>
+                            <ul>
+                                <li>containerInfo: Reference to DOM container</li>
+                                <li>current: HostRoot fiber node</li>
+                                <li>finishedWork: Completed work tree</li>
+                                <li>pendingLanes: Scheduled work priorities</li>
+                                <li>expiredLanes: Expired work priorities</li>
+                            </ul>
+                        `}
+                    </div>
+                    
+                    <h4>3. DOM Container Properties</h4>
+                    <div class="fiber-box">
+                        <div><strong>React Container Key:</strong> ${reactContainerKey || 'Not found'}</div>
+                        <div><strong>React Fiber Key:</strong> ${reactFiberKey || 'Not found'}</div>
+                        ${reactContainerKey ? `
+                            <div><strong>Container Value:</strong> ${tempDiv[reactContainerKey] === internalRoot ? 'Points to FiberRootNode' : 'Unknown'}</div>
+                        ` : ''}
+                        ${reactFiberKey ? `
+                            <div><strong>Fiber Value:</strong> ${tempDiv[reactFiberKey] ? 'Points to HostRoot Fiber' : 'Unknown'}</div>
+                        ` : ''}
+                    </div>
+                    
+                    <h4>4. Key Differences & Relationships</h4>
+                    <div class="highlight" style="margin-top: 15px;">
+                        <div><strong>ReactDOMRoot object:</strong> Public API for users</div>
+                        <div><strong>_internalRoot (FiberRootNode):</strong> Internal container for the entire app</div>
+                        <div><strong>__reactContainer:</strong> DOM element property pointing to FiberRootNode</div>
+                        <div><strong>__reactFiber:</strong> DOM element property pointing to HostRoot Fiber</div>
+                        <div><strong>current fiber:</strong> The actual root fiber node in the tree</div>
+                        
+                        <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                            <strong>Relationship Chain:</strong><br>
+                            ReactDOMRoot → _internalRoot (FiberRootNode) → current (HostRoot Fiber) → child (App Fiber)
+                        </div>
+                    </div>
+                    
+                    <h4>5. Source Code References</h4>
+                    <div class="fiber-box">
+                        <ul>
+                            <li><strong>ReactDOMRoot:</strong> <a href="../../packages/react-dom/src/client/ReactDOMRoot.js#L100" target="_blank">ReactDOMRoot.js</a></li>
+                            <li><strong>FiberRootNode:</strong> <a href="../../packages/react-reconciler/src/ReactFiberRoot.js#L100" target="_blank">ReactFiberRoot.js</a></li>
+                            <li><strong>createRoot:</strong> <a href="../../packages/react-dom/src/client/ReactDOMRoot.js#L200" target="_blank">ReactDOMRoot.js#L200</a></li>
+                            <li><strong>createFiberRoot:</strong> <a href="../../packages/react-reconciler/src/ReactFiberRoot.js#L200" target="_blank">ReactFiberRoot.js#L200</a></li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            // Clean up
+            document.body.removeChild(tempDiv);
+        }
+        
+        function demonstrateRealFiber() {
+            const container = document.getElementById('real-fiber-demo');
+            
+            // Create a real React component and inspect its fiber
+            const tempDiv = document.createElement('div');
+            document.body.appendChild(tempDiv);
+            
+            const root = ReactDOM.createRoot(tempDiv);
+            const element = React.createElement('div', { id: 'test-fiber' }, 'Real Fiber Node');
+            
+            root.render(element);
+            
+            // Try to access the fiber node (this is internal React API)
+            setTimeout(() => {
+                const domNode = document.getElementById('test-fiber');
+                debugger
+
+                if (domNode) {
+                    // Access the fiber node (React internal)
+                    const fiberKey = Object.keys(domNode).find(key => key.startsWith('__reactFiber'));
+                    if (fiberKey) {
+                        const fiber = domNode[fiberKey];
+                        
+                        container.innerHTML = `
+                            <h4>Real React Fiber Node:</h4>
+                            <div class="fiber-box">
+                                <div>Type: ${fiber.type}</div>
+                                <div>Tag: ${fiber.tag}</div>
+                                <div>Key: ${fiber.key}</div>
+                                <div>Mode: ${fiber.mode}</div>
+                                <div>Flags: ${fiber.flags}</div>
+                                <div>Has Child: ${fiber.child ? 'Yes' : 'No'}</div>
+                                <div>Has Sibling: ${fiber.sibling ? 'Yes' : 'No'}</div>
+                                <div>Has Return: ${fiber.return ? 'Yes' : 'No'}</div>
+                                <div>StateNode: ${fiber.stateNode ? 'DOM Element' : 'None'}</div>
+                            </div>
+                            <p><strong>Note:</strong> This is accessing React's internal fiber structure!</p>
+                        `;
+                    }
+                }
+                
+                // Clean up
+                document.body.removeChild(tempDiv);
+            }, 100);
+        }
+        
+        // Safe stringify function to handle circular references
+        function safeStringify(obj, indent = 2) {
+            const seen = new WeakSet();
+            return JSON.stringify(obj, (key, value) => {
+                if (typeof value === 'object' && value !== null) {
+                    if (seen.has(value)) {
+                        return '[Circular Reference]';
+                    }
+                    seen.add(value);
+                }
+                if (typeof value === 'function') {
+                    return '[Function]';
+                }
+                return value;
+            }, indent);
+        }
+        
+        // Make all functions available globally
+        window.demonstrateComplexTransformation = demonstrateComplexTransformation;
+        window.demonstrateFiberNavigation = demonstrateFiberNavigation;
+        window.demonstrateCreateRootInternals = demonstrateCreateRootInternals;
+        window.demonstrateRealFiber = demonstrateRealFiber;
+    </script>
+</body>
+</html> 

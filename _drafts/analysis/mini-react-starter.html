@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Build Your Own React - Mini-React Implementation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .demo-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .code-section {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        
+        .demo-app {
+            border: 2px solid #007acc;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #005a9e;
+        }
+        
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #007acc;
+            background: white;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .step h3 {
+            margin-top: 0;
+            color: #007acc;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .debug-panel {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Build Your Own React - Mini-React Implementation</h1>
+    <p><strong>Goal:</strong> Understand React internals by building a simplified version with core features</p>
+    
+    <div class="container">
+        <div class="demo-section">
+            <h2>🎯 Mini-React Demo</h2>
+            <div id="mini-react-root" class="demo-app">
+                <!-- Mini-React will render here -->
+            </div>
+            <div class="debug-panel" id="debug-output"></div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>📊 Real React Comparison</h2>
+            <div id="real-react-root" class="demo-app">
+                <!-- Real React will render here -->
+            </div>
+            <div class="debug-panel" id="real-react-debug"></div>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Step 1: createElement - Creating Element Objects</h3>
+        <div class="code-section">
+<pre>
+// Mini-React createElement implementation
+function createElement(type, props, ...children) {
+    return {
+        type,
+        props: {
+            ...props,
+            children: children.map(child =>
+                typeof child === "object" ? child : createTextElement(child)
+            ),
+        },
+    };
+}
+
+function createTextElement(text) {
+    return {
+        type: "TEXT_ELEMENT",
+        props: {
+            nodeValue: text,
+            children: [],
+        },
+    };
+}
+</pre>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Step 2: render - Creating DOM Nodes</h3>
+        <div class="code-section">
+<pre>
+// Mini-React render implementation
+function createDom(fiber) {
+    const dom = fiber.type === "TEXT_ELEMENT"
+        ? document.createTextNode("")
+        : document.createElement(fiber.type);
+    
+    updateDom(dom, {}, fiber.props);
+    return dom;
+}
+
+function updateDom(dom, prevProps, nextProps) {
+    // Remove old properties
+    Object.keys(prevProps)
+        .filter(isProperty)
+        .filter(isGone(prevProps, nextProps))
+        .forEach(name => {
+            dom[name] = "";
+        });
+    
+    // Set new or changed properties
+    Object.keys(nextProps)
+        .filter(isProperty)
+        .filter(isNew(prevProps, nextProps))
+        .forEach(name => {
+            dom[name] = nextProps[name];
+        });
+    
+    // Add event listeners
+    Object.keys(nextProps)
+        .filter(isEvent)
+        .filter(isNew(prevProps, nextProps))
+        .forEach(name => {
+            const eventType = name.toLowerCase().substring(2);
+            dom.addEventListener(eventType, nextProps[name]);
+        });
+}
+
+const isEvent = key => key.startsWith("on");
+const isProperty = key => key !== "children" && !isEvent(key);
+const isNew = (prev, next) => key => prev[key] !== next[key];
+const isGone = (prev, next) => key => !(key in next);
+</pre>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Step 3: Reconciliation - The Diff Algorithm</h3>
+        <div class="code-section">
+<pre>
+// Mini-React reconciliation
+function reconcileChildren(wipFiber, elements) {
+    let index = 0;
+    let oldFiber = wipFiber.alternate && wipFiber.alternate.child;
+    let prevSibling = null;
+    
+    while (index < elements.length || oldFiber != null) {
+        const element = elements[index];
+        let newFiber = null;
+        
+        const sameType = oldFiber && element && element.type === oldFiber.type;
+        
+        if (sameType) {
+            // Update the node
+            newFiber = {
+                type: oldFiber.type,
+                props: element.props,
+                dom: oldFiber.dom,
+                parent: wipFiber,
+                alternate: oldFiber,
+                effectTag: "UPDATE",
+            };
+        }
+        
+        if (element && !sameType) {
+            // Add this node
+            newFiber = {
+                type: element.type,
+                props: element.props,
+                dom: null,
+                parent: wipFiber,
+                alternate: null,
+                effectTag: "PLACEMENT",
+            };
+        }
+        
+        if (oldFiber && !sameType) {
+            // Delete the oldFiber's node
+            oldFiber.effectTag = "DELETION";
+            deletions.push(oldFiber);
+        }
+        
+        if (oldFiber) {
+            oldFiber = oldFiber.sibling;
+        }
+        
+        if (index === 0) {
+            wipFiber.child = newFiber;
+        } else if (element) {
+            prevSibling.sibling = newFiber;
+        }
+        
+        prevSibling = newFiber;
+        index++;
+    }
+}
+</pre>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Step 4: Work Loop - Concurrent-like Rendering</h3>
+        <div class="code-section">
+<pre>
+// Mini-React work loop
+let nextUnitOfWork = null;
+let wipRoot = null;
+let currentRoot = null;
+let deletions = null;
+
+function workLoop(deadline) {
+    let shouldYield = false;
+    
+    while (nextUnitOfWork && !shouldYield) {
+        nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
+        shouldYield = deadline.timeRemaining() < 1;
+    }
+    
+    if (!nextUnitOfWork && wipRoot) {
+        commitRoot();
+    }
+    
+    requestIdleCallback(workLoop);
+}
+
+requestIdleCallback(workLoop);
+
+function performUnitOfWork(fiber) {
+    const isFunctionComponent = fiber.type instanceof Function;
+    
+    if (isFunctionComponent) {
+        updateFunctionComponent(fiber);
+    } else {
+        updateHostComponent(fiber);
+    }
+    
+    if (fiber.child) {
+        return fiber.child;
+    }
+    
+    let nextFiber = fiber;
+    while (nextFiber) {
+        if (nextFiber.sibling) {
+            return nextFiber.sibling;
+        }
+        nextFiber = nextFiber.parent;
+    }
+}
+</pre>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Step 5: useState Hook - State Management</h3>
+        <div class="code-section">
+<pre>
+// Mini-React useState implementation
+let wipFiber = null;
+let hookIndex = null;
+
+function useState(initial) {
+    const oldHook = wipFiber.alternate &&
+        wipFiber.alternate.hooks &&
+        wipFiber.alternate.hooks[hookIndex];
+    
+    const hook = {
+        state: oldHook ? oldHook.state : initial,
+        queue: [],
+    };
+    
+    const actions = oldHook ? oldHook.queue : [];
+    actions.forEach(action => {
+        hook.state = action(hook.state);
+    });
+    
+    const setState = action => {
+        hook.queue.push(action);
+        wipRoot = {
+            dom: currentRoot.dom,
+            props: currentRoot.props,
+            alternate: currentRoot,
+        };
+        nextUnitOfWork = wipRoot;
+        deletions = [];
+    };
+    
+    wipFiber.hooks.push(hook);
+    hookIndex++;
+    return [hook.state, setState];
+}
+</pre>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@19.1.0?dev",
+            "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev"
+        }
+    }
+    </script>
+
+    <script type="module">
+        // Import real React for comparison
+        import React from "react";
+        import ReactDOM from "react-dom/client";
+
+        // Debug utilities
+        const debugOutput = document.getElementById("debug-output");
+        const realReactDebug = document.getElementById("real-react-debug");
+        
+        function log(message, isMiniReact = true) {
+            const target = isMiniReact ? debugOutput : realReactDebug;
+            const div = document.createElement('div');
+            div.innerHTML = `${new Date().toLocaleTimeString()}: ${message}`;
+            target.appendChild(div);
+            target.scrollTop = target.scrollHeight;
+        }
+
+        // ===========================================
+        // MINI-REACT IMPLEMENTATION
+        // ===========================================
+
+        function createElement(type, props, ...children) {
+            log(`createElement called: ${type}`);
+            return {
+                type,
+                props: {
+                    ...props,
+                    children: children.map(child =>
+                        typeof child === "object" ? child : createTextElement(child)
+                    ),
+                },
+            };
+        }
+
+        function createTextElement(text) {
+            return {
+                type: "TEXT_ELEMENT",
+                props: {
+                    nodeValue: text,
+                    children: [],
+                },
+            };
+        }
+
+        function createDom(fiber) {
+            const dom = fiber.type === "TEXT_ELEMENT"
+                ? document.createTextNode("")
+                : document.createElement(fiber.type);
+            
+            updateDom(dom, {}, fiber.props);
+            return dom;
+        }
+
+        const isEvent = key => key.startsWith("on");
+        const isProperty = key => key !== "children" && !isEvent(key);
+        const isNew = (prev, next) => key => prev[key] !== next[key];
+        const isGone = (prev, next) => key => !(key in next);
+
+        function updateDom(dom, prevProps, nextProps) {
+            // Remove old or changed event listeners
+            Object.keys(prevProps)
+                .filter(isEvent)
+                .filter(key => !(key in nextProps) || isNew(prevProps, nextProps)(key))
+                .forEach(name => {
+                    const eventType = name.toLowerCase().substring(2);
+                    dom.removeEventListener(eventType, prevProps[name]);
+                });
+
+            // Remove old properties
+            Object.keys(prevProps)
+                .filter(isProperty)
+                .filter(isGone(prevProps, nextProps))
+                .forEach(name => {
+                    dom[name] = "";
+                });
+
+            // Set new or changed properties
+            Object.keys(nextProps)
+                .filter(isProperty)
+                .filter(isNew(prevProps, nextProps))
+                .forEach(name => {
+                    dom[name] = nextProps[name];
+                });
+
+            // Add event listeners
+            Object.keys(nextProps)
+                .filter(isEvent)
+                .filter(isNew(prevProps, nextProps))
+                .forEach(name => {
+                    const eventType = name.toLowerCase().substring(2);
+                    dom.addEventListener(eventType, nextProps[name]);
+                });
+        }
+
+        function commitRoot() {
+            deletions.forEach(commitWork);
+            commitWork(wipRoot.child);
+            currentRoot = wipRoot;
+            wipRoot = null;
+            log("Commit phase completed");
+        }
+
+        function commitWork(fiber) {
+            if (!fiber) {
+                return;
+            }
+
+            let domParentFiber = fiber.parent;
+            while (!domParentFiber.dom) {
+                domParentFiber = domParentFiber.parent;
+            }
+            const domParent = domParentFiber.dom;
+
+            if (fiber.effectTag === "PLACEMENT" && fiber.dom != null) {
+                domParent.appendChild(fiber.dom);
+                log(`DOM appendChild: ${fiber.type}`);
+            } else if (fiber.effectTag === "UPDATE" && fiber.dom != null) {
+                updateDom(fiber.dom, fiber.alternate.props, fiber.props);
+                log(`DOM update: ${fiber.type}`);
+            } else if (fiber.effectTag === "DELETION") {
+                commitDeletion(fiber, domParent);
+            }
+
+            commitWork(fiber.child);
+            commitWork(fiber.sibling);
+        }
+
+        function commitDeletion(fiber, domParent) {
+            if (fiber.dom) {
+                domParent.removeChild(fiber.dom);
+                log(`DOM removeChild: ${fiber.type}`);
+            } else {
+                commitDeletion(fiber.child, domParent);
+            }
+        }
+
+        function render(element, container) {
+            log("render() called");
+            wipRoot = {
+                dom: container,
+                props: {
+                    children: [element],
+                },
+                alternate: currentRoot,
+            };
+            deletions = [];
+            nextUnitOfWork = wipRoot;
+        }
+
+        let nextUnitOfWork = null;
+        let currentRoot = null;
+        let wipRoot = null;
+        let deletions = null;
+
+        function workLoop(deadline) {
+            let shouldYield = false;
+            while (nextUnitOfWork && !shouldYield) {
+                nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
+                shouldYield = deadline.timeRemaining() < 1;
+            }
+
+            if (!nextUnitOfWork && wipRoot) {
+                commitRoot();
+            }
+
+            requestIdleCallback(workLoop);
+        }
+
+        requestIdleCallback(workLoop);
+
+        function performUnitOfWork(fiber) {
+            const isFunctionComponent = fiber.type instanceof Function;
+            if (isFunctionComponent) {
+                updateFunctionComponent(fiber);
+            } else {
+                updateHostComponent(fiber);
+            }
+            if (fiber.child) {
+                return fiber.child;
+            }
+            let nextFiber = fiber;
+            while (nextFiber) {
+                if (nextFiber.sibling) {
+                    return nextFiber.sibling;
+                }
+                nextFiber = nextFiber.parent;
+            }
+        }
+
+        let wipFiber = null;
+        let hookIndex = null;
+
+        function updateFunctionComponent(fiber) {
+            wipFiber = fiber;
+            hookIndex = 0;
+            wipFiber.hooks = [];
+            const children = [fiber.type(fiber.props)];
+            reconcileChildren(fiber, children);
+        }
+
+        function useState(initial) {
+            const oldHook = wipFiber.alternate &&
+                wipFiber.alternate.hooks &&
+                wipFiber.alternate.hooks[hookIndex];
+            const hook = {
+                state: oldHook ? oldHook.state : initial,
+                queue: [],
+            };
+
+            const actions = oldHook ? oldHook.queue : [];
+            actions.forEach(action => {
+                hook.state = action(hook.state);
+            });
+
+            const setState = action => {
+                hook.queue.push(action);
+                wipRoot = {
+                    dom: currentRoot.dom,
+                    props: currentRoot.props,
+                    alternate: currentRoot,
+                };
+                nextUnitOfWork = wipRoot;
+                deletions = [];
+                log(`setState called, scheduling update`);
+            };
+
+            wipFiber.hooks.push(hook);
+            hookIndex++;
+            return [hook.state, setState];
+        }
+
+        function updateHostComponent(fiber) {
+            if (!fiber.dom) {
+                fiber.dom = createDom(fiber);
+            }
+            reconcileChildren(fiber, fiber.props.children);
+        }
+
+        function reconcileChildren(wipFiber, elements) {
+            let index = 0;
+            let oldFiber = wipFiber.alternate && wipFiber.alternate.child;
+            let prevSibling = null;
+
+            while (index < elements.length || oldFiber != null) {
+                const element = elements[index];
+                let newFiber = null;
+
+                const sameType = oldFiber && element && element.type === oldFiber.type;
+
+                if (sameType) {
+                    newFiber = {
+                        type: oldFiber.type,
+                        props: element.props,
+                        dom: oldFiber.dom,
+                        parent: wipFiber,
+                        alternate: oldFiber,
+                        effectTag: "UPDATE",
+                    };
+                }
+                if (element && !sameType) {
+                    newFiber = {
+                        type: element.type,
+                        props: element.props,
+                        dom: null,
+                        parent: wipFiber,
+                        alternate: null,
+                        effectTag: "PLACEMENT",
+                    };
+                }
+                if (oldFiber && !sameType) {
+                    oldFiber.effectTag = "DELETION";
+                    deletions.push(oldFiber);
+                }
+
+                if (oldFiber) {
+                    oldFiber = oldFiber.sibling;
+                }
+
+                if (index === 0) {
+                    wipFiber.child = newFiber;
+                } else if (element) {
+                    prevSibling.sibling = newFiber;
+                }
+
+                prevSibling = newFiber;
+                index++;
+            }
+        }
+
+        // Mini-React API
+        const MiniReact = {
+            createElement,
+            render,
+            useState,
+        };
+
+        // ===========================================
+        // DEMO COMPONENTS
+        // ===========================================
+
+        function Counter() {
+            const [count, setCount] = MiniReact.useState(0);
+            const [name, setName] = MiniReact.useState("Mini-React");
+            
+            return MiniReact.createElement("div", null,
+                MiniReact.createElement("h3", null, name),
+                MiniReact.createElement("p", null, `Count: ${count}`),
+                MiniReact.createElement("button", {
+                    onclick: () => setCount(c => c + 1)
+                }, "Increment"),
+                MiniReact.createElement("button", {
+                    onclick: () => setCount(c => c - 1)
+                }, "Decrement"),
+                MiniReact.createElement("button", {
+                    onclick: () => setName(name === "Mini-React" ? "My React" : "Mini-React")
+                }, "Toggle Name")
+            );
+        }
+
+        function TodoApp() {
+            const [todos, setTodos] = MiniReact.useState(["Learn React", "Build Mini-React"]);
+            const [inputValue, setInputValue] = MiniReact.useState("");
+            
+            const addTodo = () => {
+                if (inputValue.trim()) {
+                    setTodos(todos => [...todos, inputValue]);
+                    setInputValue("");
+                }
+            };
+            
+            return MiniReact.createElement("div", null,
+                MiniReact.createElement("h3", null, "Todo App"),
+                MiniReact.createElement("input", {
+                    value: inputValue,
+                    onchange: (e) => setInputValue(e.target.value),
+                    placeholder: "Add a todo..."
+                }),
+                MiniReact.createElement("button", { onclick: addTodo }, "Add"),
+                MiniReact.createElement("ul", null,
+                    ...todos.map((todo, index) => 
+                        MiniReact.createElement("li", { key: index }, todo)
+                    )
+                )
+            );
+        }
+
+        function App() {
+            const [currentApp, setCurrentApp] = MiniReact.useState("counter");
+            
+            return MiniReact.createElement("div", null,
+                MiniReact.createElement("div", null,
+                    MiniReact.createElement("button", {
+                        onclick: () => setCurrentApp("counter")
+                    }, "Counter Demo"),
+                    MiniReact.createElement("button", {
+                        onclick: () => setCurrentApp("todo")
+                    }, "Todo Demo")
+                ),
+                currentApp === "counter" 
+                    ? MiniReact.createElement(Counter)
+                    : MiniReact.createElement(TodoApp)
+            );
+        }
+
+        // Render Mini-React app
+        const miniReactContainer = document.getElementById("mini-react-root");
+        MiniReact.render(MiniReact.createElement(App), miniReactContainer);
+
+        // ===========================================
+        // REAL REACT COMPARISON
+        // ===========================================
+
+        function RealReactCounter() {
+            const [count, setCount] = React.useState(0);
+            const [name, setName] = React.useState("Real React");
+            
+            React.useEffect(() => {
+                log("Real React: useEffect called", false);
+            }, [count]);
+            
+            return React.createElement("div", null,
+                React.createElement("h3", null, name),
+                React.createElement("p", null, `Count: ${count}`),
+                React.createElement("button", {
+                    onClick: () => {
+                        log("Real React: setState called", false);
+                        setCount(c => c + 1);
+                    }
+                }, "Increment"),
+                React.createElement("button", {
+                    onClick: () => setCount(c => c - 1)
+                }, "Decrement"),
+                React.createElement("button", {
+                    onClick: () => setName(name === "Real React" ? "React 19" : "Real React")
+                }, "Toggle Name")
+            );
+        }
+
+        // Render Real React app for comparison
+        const realReactContainer = document.getElementById("real-react-root");
+        const realReactRoot = ReactDOM.createRoot(realReactContainer);
+        realReactRoot.render(React.createElement(RealReactCounter));
+
+        log("Mini-React initialized!", true);
+        log("Real React initialized!", false);
+    </script>
+</body>
+</html> 

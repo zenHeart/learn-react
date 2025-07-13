@@ -1,0 +1,18 @@
+- Snippet A
+- React
+- just use React.createElement
+- Snippet B
+- ReactDOM
+- ReactDOM to create root react element
+- Snippet C
+- React
+- just use React.useState
+- Snippet D
+- React
+- just use ReactDOM to schedule render
+- Snippet E
+- React
+- just use React to cache something
+- Snippet F
+- ReactDOM
+- just use ReactDOM to immediately render

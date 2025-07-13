@@ -1,0 +1,85 @@
+<div id="root"></div>
+<script type="module">
+    import React from 'https://esm.sh/react@19.1.0?dev';
+    import ReactDOM from 'https://esm.sh/react-dom@19.1.0/client?dev';
+
+    debugger
+    function Counter() {
+      const [count, setCount] = React.useState(0);
+
+      return React.createElement('button', {
+        onClick: () => {
+          setCount(count + 1);
+        },
+      }, `count: ${count}`);
+    }
+
+    class TodoList extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = {
+          todos: [],
+          newTodo: '',
+        };
+      }
+      todoItem = (todo) => {
+        return React.createElement('li', {
+          key: Math.random().toString(36).substring(2, 15),
+        }, todo);
+      }
+      addTodo = (todo) => {
+        this.setState({
+          todos: [...this.state.todos, this.state.newTodo],
+          newTodo: '',
+        });
+      }
+      removeTodo = (index) => {
+        this.setState({
+          todos: this.state.todos.filter((_, i) => i !== index),
+        });
+      }
+
+      render() {
+        return React.createElement('div', null, React.createElement('ul', null, this.state.todos.map(this.todoItem)), React.createElement('button', {
+          onClick: this.addTodo,
+        }, 'Add Todo'), React.createElement('button', {
+          onClick: () => {
+            this.setState({
+              todos: [],
+            });
+          },
+        }, 'Remove All'), React.createElement('input', {
+          type: 'text',
+          value: this.state.newTodo,
+          onChange: (e) => {
+            this.setState({ newTodo: e.target.value });
+          },
+        }));
+      }
+    }
+
+    const App = React.createElement('div', null, [
+      React.createElement(
+        'div',
+        {
+          key: 'todo-list',
+        },
+        React.createElement(TodoList, {
+          key: 'todo-list',
+        })
+      ),
+      React.createElement(
+        'div',
+        {
+          key: 'counter',
+        },
+        React.createElement(Counter, {
+          key: 'counter',
+        })
+      )
+    ]);
+    console.log(App);
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(App);
+    console.dir(root);
+</script>

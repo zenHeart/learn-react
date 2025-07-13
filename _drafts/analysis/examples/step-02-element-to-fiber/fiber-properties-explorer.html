@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔬 Fiber Properties Explorer - React 19 Deep Dive</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .nav-tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6c757d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .nav-tab:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+        .nav-tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+            background: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .property-card {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .property-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .property-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .property-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-right: 10px;
+        }
+        .property-type {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-family: 'Courier New', monospace;
+        }
+        .property-description {
+            color: #6c757d;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .property-example {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .property-demo {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        .demo-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-right: 10px;
+            margin-bottom: 5px;
+        }
+        .demo-button:hover {
+            background: #0056b3;
+        }
+        .demo-result {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+        }
+        .category-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            margin: 20px -30px;
+            border-left: 4px solid #007bff;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .react-app {
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+        }
+        .fiber-tree {
+            font-family: 'Courier New', monospace;
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #ffd700;
+            color: #000;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 Fiber Properties Explorer</h1>
+            <p>Interactive deep dive into React 19 Fiber and FiberRoot properties</p>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('fiber-props')">🌳 Fiber Properties</button>
+            <button class="nav-tab" onclick="showTab('fiberroot-props')">🏗️ FiberRoot Properties</button>
+            <button class="nav-tab" onclick="showTab('live-demo')">🎯 Live Demo</button>
+            <button class="nav-tab" onclick="showTab('property-relationships')">🔗 Relationships</button>
+        </div>
+        
+        <!-- Fiber Properties Tab -->
+        <div id="fiber-props" class="tab-content active">
+            <div class="category-header">🌳 Fiber Node Properties (React 19)</div>
+            
+            <div class="warning">
+                <strong>💡 Understanding Fiber Properties:</strong> Each property serves a specific purpose in React's rendering system. Click the demo buttons to see live examples!
+            </div>
+            
+            <div class="property-grid" id="fiber-properties-grid">
+                <!-- Properties will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- FiberRoot Properties Tab -->
+        <div id="fiberroot-props" class="tab-content">
+            <div class="category-header">🏗️ FiberRoot Properties (React 19)</div>
+            
+            <div class="info">
+                <strong>🎯 FiberRoot Overview:</strong> The FiberRoot is the top-level container that manages the entire React application. It coordinates scheduling, lanes, and the overall rendering process.
+            </div>
+            
+            <div class="property-grid" id="fiberroot-properties-grid">
+                <!-- Properties will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Live Demo Tab -->
+        <div id="live-demo" class="tab-content">
+            <div class="category-header">🎯 Live Property Inspection</div>
+            
+            <div class="react-app">
+                <h3>Demo React App</h3>
+                <div id="demo-root"></div>
+                <button onclick="updateCounter()">Update Counter</button>
+                <button onclick="toggleVisibility()">Toggle Visibility</button>
+                <button onclick="addItem()">Add Item</button>
+            </div>
+            
+            <div class="demo-controls">
+                <button class="demo-button" onclick="inspectFiberTree()">🔍 Inspect Fiber Tree</button>
+                <button class="demo-button" onclick="inspectFiberRoot()">🏗️ Inspect FiberRoot</button>
+                <button class="demo-button" onclick="showPropertyChanges()">📊 Show Property Changes</button>
+                <button class="demo-button" onclick="explainCurrentState()">💡 Explain Current State</button>
+            </div>
+            
+            <div id="live-inspection-result"></div>
+        </div>
+        
+        <!-- Property Relationships Tab -->
+        <div id="property-relationships" class="tab-content">
+            <div class="category-header">🔗 Property Relationships & Workflows</div>
+            
+            <div class="info">
+                <strong>🎯 Understanding Relationships:</strong> Fiber properties work together in complex ways. This section shows how they interact during React's rendering process.
+            </div>
+            
+            <div id="relationships-content">
+                <!-- Relationships will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+          "imports": {
+            "react": "https://esm.sh/react@19.1.0?dev",
+            "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev"
+          }
+        }
+    </script>
+    <script type="module">
+        import React from "react";
+        import ReactDOM from "react-dom/client";
+
+        // Global state for demo
+        let demoState = {
+            counter: 0,
+            visible: true,
+            items: ['Item 1', 'Item 2']
+        };
+        let demoRoot = null;
+
+        // Fiber properties data - Enhanced with React 19 source code accuracy
+        const fiberProperties = [
+            {
+                category: "Core Identity",
+                properties: [
+                    {
+                        name: "type",
+                        type: "any",
+                        description: "The resolved component type or element type. For host components (DOM elements), this is the tag name string. For function components, this is the function itself. For class components, this is the class constructor.",
+                        example: "'div', Button, 'span', null",
+                        demo: "showTypeExamples",
+                        sourceCode: "ReactFiber.js#L543-L663 - createFiberFromTypeAndProps()"
+                    },
+                    {
+                        name: "elementType",
+                        type: "any", 
+                        description: "The original element type before any resolution or hot reloading. Important for React.memo, React.forwardRef, lazy components, and development features like hot reloading.",
+                        example: "'div', React.memo(Button), React.forwardRef(Input)",
+                        demo: "showElementTypeExamples",
+                        sourceCode: "ReactFiber.js#L543-L663 - Preserves original type"
+                    },
+                    {
+                        name: "tag",
+                        type: "WorkTag",
+                        description: "Numeric identifier for the fiber type (0-24). React uses this in beginWork() to determine how to process the fiber during rendering. Each tag corresponds to a specific component type.",
+                        example: "0=FunctionComponent, 1=ClassComponent, 5=HostComponent, 3=HostRoot",
+                        demo: "showTagExamples",
+                        sourceCode: "ReactWorkTags.js#L35-L60 - WorkTag enum definitions"
+                    },
+                    {
+                        name: "key",
+                        type: "string | null",
+                        description: "The React key used for reconciliation. Helps React identify which items have changed, added, or removed in lists. Used in reconcileChildrenArray() for efficient updates.",
+                        example: "'item-1', 'user-123', null",
+                        demo: "showKeyExamples",
+                        sourceCode: "ReactChildFiber.js#L517-L575 - Key-based reconciliation"
+                    }
+                ]
+            },
+            {
+                category: "Tree Structure",
+                properties: [
+                    {
+                        name: "child",
+                        type: "Fiber | null",
+                        description: "Points to the first child fiber. React uses this to traverse down the tree during rendering. Part of the linked list structure that makes React's tree traversal efficient.",
+                        example: "Points to first child fiber node",
+                        demo: "showChildExamples",
+                        sourceCode: "ReactFiber.js#L147-L151 - Tree structure pointers"
+                    },
+                    {
+                        name: "sibling",
+                        type: "Fiber | null",
+                        description: "Points to the next sibling fiber at the same level. Used to traverse siblings after processing a child. Enables efficient iteration through child lists.",
+                        example: "Points to next sibling fiber node",
+                        demo: "showSiblingExamples",
+                        sourceCode: "ReactChildFiber.js#L1745-L1800 - Sibling traversal"
+                    },
+                    {
+                        name: "return",
+                        type: "Fiber | null",
+                        description: "Points to the parent fiber. Used to traverse back up the tree, for error boundaries, context propagation, and completing work phases.",
+                        example: "Points to parent fiber node",
+                        demo: "showReturnExamples",
+                        sourceCode: "ReactFiber.js#L147-L151 - Parent reference"
+                    },
+                    {
+                        name: "index",
+                        type: "number",
+                        description: "The position of this fiber among its siblings (0-based). Used in placeChild() for efficient reconciliation of lists and determining if elements need to be moved.",
+                        example: "0, 1, 2, 3...",
+                        demo: "showIndexExamples",
+                        sourceCode: "ReactChildFiber.js#L450-L480 - placeChild() logic"
+                    }
+                ]
+            },
+            {
+                category: "State & Props",
+                properties: [
+                    {
+                        name: "pendingProps",
+                        type: "any",
+                        description: "The props that will be used for the next render. These are the 'incoming' props before processing. Compared with memoizedProps to determine if bailout is possible.",
+                        example: "{className: 'new-style', onClick: handler}",
+                        demo: "showPendingPropsExamples",
+                        sourceCode: "ReactFiber.js#L158 - Incoming props storage"
+                    },
+                    {
+                        name: "memoizedProps",
+                        type: "any",
+                        description: "The props that were used in the last completed render. Used for comparison with pendingProps to determine if re-render is needed. Part of bailout optimization.",
+                        example: "{className: 'old-style', onClick: handler}",
+                        demo: "showMemoizedPropsExamples",
+                        sourceCode: "ReactFiberBeginWork.js#L4037-L4085 - Bailout logic"
+                    },
+                    {
+                        name: "memoizedState",
+                        type: "any",
+                        description: "The state from the last completed render. For function components, this is the hook list (linked list). For class components, this is the state object. For HostRoot, this is the element.",
+                        example: "Hook list for function components, {count: 5} for class components",
+                        demo: "showMemoizedStateExamples",
+                        sourceCode: "ReactFiberHooks.js#L1920-L2000 - Hook state management"
+                    },
+                    {
+                        name: "updateQueue",
+                        type: "UpdateQueue",
+                        description: "A queue of pending state updates and callbacks. React processes these updates during the render phase. Contains shared pending updates and callback lists.",
+                        example: "Linked list of setState calls and callbacks",
+                        demo: "showUpdateQueueExamples",
+                        sourceCode: "ReactFiberClassUpdateQueue.js#L1-L50 - Update queue structure"
+                    }
+                ]
+            },
+            {
+                category: "Effects & Scheduling",
+                properties: [
+                    {
+                        name: "flags",
+                        type: "Flags",
+                        description: "Bitfield representing side effects that need to be performed for this fiber. These are processed during the commit phase. Each bit represents a specific type of effect (Placement, Update, Deletion, etc.).",
+                        example: "Placement=2, Update=4, ChildDeletion=8, Ref=128",
+                        demo: "showFlagsExamples",
+                        sourceCode: "ReactFiberFlags.js#L18-L51 - Effect flag definitions"
+                    },
+                    {
+                        name: "subtreeFlags",
+                        type: "Flags",
+                        description: "Bitfield representing side effects that need to be performed in the subtree. Bubbles up from children during completeWork phase. Used to skip subtrees with no effects.",
+                        example: "Combined flags from all descendants",
+                        demo: "showSubtreeFlagsExamples",
+                        sourceCode: "ReactFiberCompleteWork.js#L1980-L2040 - Flag bubbling"
+                    },
+                    {
+                        name: "lanes",
+                        type: "Lanes",
+                        description: "Priority lanes for this fiber. React 19's scheduling system uses lanes (bit positions) to prioritize updates. Lower bits = higher priority. Used in scheduling decisions.",
+                        example: "1=SyncLane, 4=InputContinuousLane, 16=DefaultLane",
+                        demo: "showLanesExamples",
+                        sourceCode: "ReactFiberLane.js#L39-L105 - Lane priority system"
+                    },
+                    {
+                        name: "childLanes",
+                        type: "Lanes",
+                        description: "Combined priority lanes from all children. Used to determine if subtree has pending work. Bubbles up during scheduling to avoid traversing subtrees with no work.",
+                        example: "Bitwise OR of all child lanes",
+                        demo: "showChildLanesExamples",
+                        sourceCode: "ReactFiberLane.js#L220-L300 - Child lane management"
+                    }
+                ]
+            },
+            {
+                category: "Double Buffering",
+                properties: [
+                    {
+                        name: "alternate",
+                        type: "Fiber | null",
+                        description: "Work-in-progress counterpart of this fiber. React uses double buffering - current tree (displayed) and alternate tree (being built). They swap roles after commit.",
+                        example: "Points to work-in-progress version",
+                        demo: "showAlternateExamples",
+                        sourceCode: "ReactFiber.js#L327-L410 - createWorkInProgress()"
+                    }
+                ]
+            },
+            {
+                category: "Rendering State",
+                properties: [
+                    {
+                        name: "mode",
+                        type: "TypeOfMode",
+                        description: "Rendering mode flags (ConcurrentMode, StrictMode, ProfileMode). Determines rendering behavior and available features. Inherited from parent during fiber creation.",
+                        example: "ConcurrentMode=1, StrictMode=2, ProfileMode=4",
+                        demo: "showModeExamples",
+                        sourceCode: "ReactTypeOfMode.js#L1-L50 - Mode flag definitions"
+                    },
+                    {
+                        name: "stateNode",
+                        type: "any",
+                        description: "Associated instance - DOM node for host components, class instance for class components, null for function components. The actual 'thing' this fiber represents.",
+                        example: "DOM element, class instance, or null",
+                        demo: "showStateNodeExamples",
+                        sourceCode: "ReactFiberBeginWork.js#L4109-L4176 - State node management"
+                    }
+                ]
+            }
+        ];
+
+        // FiberRoot properties data - Enhanced with React 19 source code accuracy
+        const fiberRootProperties = [
+            {
+                category: "Core Structure",
+                properties: [
+                    {
+                        name: "tag",
+                        type: "RootTag",
+                        description: "The type of root (0=LegacyRoot, 1=ConcurrentRoot). Determines the rendering mode and available features. ConcurrentRoot enables time-slicing, Suspense, and concurrent rendering.",
+                        example: "0=LegacyRoot, 1=ConcurrentRoot",
+                        demo: "showRootTagExamples",
+                        sourceCode: "ReactFiberRoot.js#L60 - Root tag definition"
+                    },
+                    {
+                        name: "containerInfo",
+                        type: "Container",
+                        description: "The DOM element that serves as the container for this React application. This is where React will render your components.",
+                        example: "<div id='root'></div>",
+                        demo: "showContainerInfoExamples",
+                        sourceCode: "ReactFiberRoot.js#L61 - Container reference"
+                    },
+                    {
+                        name: "current",
+                        type: "Fiber",
+                        description: "The currently committed fiber tree (HostRoot). This is what's displayed on screen. Part of React's double buffering system.",
+                        example: "HostRoot fiber node",
+                        demo: "showCurrentExamples",
+                        sourceCode: "ReactFiberRoot.js#L62 - Current tree reference"
+                    }
+                ]
+            },
+            {
+                category: "Lane Management",
+                properties: [
+                    {
+                        name: "pendingLanes",
+                        type: "Lanes",
+                        description: "Lanes that have pending work. React will process these during the next render cycle. Used by getNextLanes() to determine what to work on next.",
+                        example: "1, 3, 7 (bitwise combination)",
+                        demo: "showPendingLanesExamples",
+                        sourceCode: "ReactFiberLane.js#L220-L300 - Pending work tracking"
+                    },
+                    {
+                        name: "suspendedLanes",
+                        type: "Lanes",
+                        description: "Lanes that are currently suspended, usually due to data fetching, code splitting, or other async operations. These lanes are blocked until resumed.",
+                        example: "Lanes waiting for async operations",
+                        demo: "showSuspendedLanesExamples",
+                        sourceCode: "ReactFiberLane.js#L820-L876 - Suspension management"
+                    },
+                    {
+                        name: "expiredLanes",
+                        type: "Lanes",
+                        description: "Lanes that have expired and must be processed synchronously to avoid user-visible delays. These bypass normal scheduling priority.",
+                        example: "High priority lanes that timed out",
+                        demo: "showExpiredLanesExamples",
+                        sourceCode: "ReactFiberLane.js#L546-L593 - Expiration handling"
+                    },
+                    {
+                        name: "pingedLanes",
+                        type: "Lanes",
+                        description: "Lanes that were suspended but have been 'pinged' (resumed) due to data arriving or promises resolving. Ready to be processed again.",
+                        example: "Resumed lanes after data arrives",
+                        demo: "showPendingLanesExamples",
+                        sourceCode: "ReactFiberLane.js#L820-L876 - Ping management"
+                    }
+                ]
+            },
+            {
+                category: "Scheduling",
+                properties: [
+                    {
+                        name: "callbackNode",
+                        type: "any",
+                        description: "The scheduled callback from the React Scheduler. Represents the next rendering task that will be executed. Managed by scheduleCallback() and cancelCallback().",
+                        example: "Scheduler task object",
+                        demo: "showCallbackNodeExamples",
+                        sourceCode: "ReactFiberRootScheduler.js#L694-L722 - Callback scheduling"
+                    },
+                    {
+                        name: "callbackPriority",
+                        type: "Lane",
+                        description: "The priority of the currently scheduled callback. Used to determine if a new callback should replace the current one. Higher priority callbacks can interrupt lower priority ones.",
+                        example: "1, 2, 4, 8 (lane values)",
+                        demo: "showCallbackPriorityExamples",
+                        sourceCode: "ReactFiberRootScheduler.js#L694-L722 - Priority management"
+                    },
+                    {
+                        name: "expirationTimes",
+                        type: "LaneMap<number>",
+                        description: "Map of lane to expiration timestamp. Used to track when work expires and must be processed synchronously. Prevents starvation of low-priority updates.",
+                        example: "Map of lane→timestamp",
+                        demo: "showPendingLanesExamples",
+                        sourceCode: "ReactFiberLane.js#L546-L593 - Expiration tracking"
+                    }
+                ]
+            },
+            {
+                category: "Context & State",
+                properties: [
+                    {
+                        name: "context",
+                        type: "Object | null",
+                        description: "Legacy context object for the root. Used with the old context API (not React.createContext). Mostly for backwards compatibility.",
+                        example: "Legacy context object",
+                        demo: "showCurrentExamples",
+                        sourceCode: "ReactFiberRoot.js#L67-L68 - Legacy context"
+                    },
+                    {
+                        name: "pendingContext",
+                        type: "Object | null",
+                        description: "Pending context changes for the root. Used to batch context updates with the legacy context API.",
+                        example: "Context updates",
+                        demo: "showCurrentExamples",
+                        sourceCode: "ReactFiberRoot.js#L67-L68 - Pending context"
+                    }
+                ]
+            }
+        ];
+
+        // Demo functions - Enhanced with accurate React source code logic
+        const demoFunctions = {
+            // Core Identity Properties
+            showTypeExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber.type Examples:\n\n";
+                    
+                    function traverseAndShowTypes(fiber, depth = 0) {
+                        if (!fiber) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        result += `${indent}${name}: type = ${typeof fiber.type === 'function' ? fiber.type.name || '[Function]' : JSON.stringify(fiber.type)}\n`;
+                        
+                        if (fiber.child) traverseAndShowTypes(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) traverseAndShowTypes(fiber.sibling, depth);
+                    }
+                    
+                    traverseAndShowTypes(hostRoot);
+                    result += "\n💡 Source: ReactFiber.js - type is resolved in createFiberFromTypeAndProps()";
+                    return result;
+                }
+                return "No fiber found. Make sure to render the demo first.";
+            },
+
+            showElementTypeExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber.elementType vs type:\n\n";
+                    
+                    function traverseAndShowElementTypes(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        result += `${indent}${name}:\n`;
+                        result += `${indent}  type: ${typeof fiber.type === 'function' ? fiber.type.name || '[Function]' : JSON.stringify(fiber.type)}\n`;
+                        result += `${indent}  elementType: ${typeof fiber.elementType === 'function' ? fiber.elementType.name || '[Function]' : JSON.stringify(fiber.elementType)}\n`;
+                        result += `${indent}  same: ${fiber.type === fiber.elementType}\n\n`;
+                        
+                        if (fiber.child) traverseAndShowElementTypes(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) traverseAndShowElementTypes(fiber.sibling, depth);
+                    }
+                    
+                    traverseAndShowElementTypes(hostRoot);
+                    result += "💡 Source: ReactFiber.js - elementType preserves original type for hot reloading";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+            
+            showTagExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    const tagNames = {
+                        0: 'FunctionComponent',
+                        1: 'ClassComponent',
+                        2: 'IndeterminateComponent', 
+                        3: 'HostRoot',
+                        5: 'HostComponent',
+                        6: 'HostText',
+                        7: 'Fragment',
+                        13: 'SuspenseComponent',
+                        14: 'MemoComponent'
+                    };
+                    
+                    let result = "🔍 Fiber.tag Examples (WorkTag system):\n\n";
+                    
+                    function traverseAndShowTags(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        result += `${indent}${name}: tag = ${fiber.tag} (${tagNames[fiber.tag] || 'Unknown'})\n`;
+                        
+                        if (fiber.child) traverseAndShowTags(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) traverseAndShowTags(fiber.sibling, depth);
+                    }
+                    
+                    traverseAndShowTags(hostRoot);
+                    result += "\n💡 Source: ReactWorkTags.js - Used in beginWork() for processing decisions";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            showKeyExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber.key Examples (Reconciliation):\n\n";
+                    
+                    function traverseAndShowKeys(fiber, depth = 0) {
+                        if (!fiber || depth > 3) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        result += `${indent}${name}: key = ${fiber.key === null ? 'null' : JSON.stringify(fiber.key)}\n`;
+                        
+                        if (fiber.child) traverseAndShowKeys(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 3) traverseAndShowKeys(fiber.sibling, depth);
+                    }
+                    
+                    traverseAndShowKeys(hostRoot);
+                    result += "\n💡 Source: ReactChildFiber.js - Used in reconcileChildrenArray() for efficient updates";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            // Tree Structure Properties
+            showChildExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber Tree Structure (child pointers):\n\n";
+                    
+                    function showTreeStructure(fiber, depth = 0) {
+                        if (!fiber || depth > 3) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        result += `${indent}${name}\n`;
+                        result += `${indent}  child: ${fiber.child ? getComponentName(fiber.child) : 'null'}\n`;
+                        result += `${indent}  sibling: ${fiber.sibling ? getComponentName(fiber.sibling) : 'null'}\n`;
+                        result += `${indent}  return: ${fiber.return ? getComponentName(fiber.return) : 'null'}\n\n`;
+                        
+                        if (fiber.child) showTreeStructure(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) showTreeStructure(fiber.sibling, depth);
+                    }
+                    
+                    showTreeStructure(hostRoot);
+                    result += "💡 Source: ReactFiber.js - Linked list structure for efficient traversal";
+                    return result;
+                }
+                return "No child fiber found.";
+            },
+
+            showSiblingExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Sibling Chain Traversal:\n\n";
+                    
+                    function showSiblingChain(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        result += `${indent}${name}\n`;
+                        
+                        // Show sibling chain
+                        let sibling = fiber.sibling;
+                        let siblingCount = 0;
+                        while (sibling && siblingCount < 5) {
+                            result += `${indent}  → sibling: ${getComponentName(sibling)}\n`;
+                            sibling = sibling.sibling;
+                            siblingCount++;
+                        }
+                        if (sibling) result += `${indent}  → ... (more siblings)\n`;
+                        
+                        if (fiber.child) showSiblingChain(fiber.child, depth + 1);
+                    }
+                    
+                    showSiblingChain(hostRoot);
+                    result += "\n💡 Source: ReactChildFiber.js - Used in reconcileChildrenArray() for list updates";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            showReturnExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Return Path (Parent Chain):\n\n";
+                    
+                    function findDeepestFiber(fiber) {
+                        while (fiber && fiber.child) {
+                            fiber = fiber.child;
+                        }
+                        return fiber;
+                    }
+                    
+                    const deepest = findDeepestFiber(hostRoot);
+                    if (deepest) {
+                        result += "Path from deepest fiber back to root:\n";
+                        let current = deepest;
+                        let depth = 0;
+                        while (current && depth < 10) {
+                            const indent = "  ".repeat(depth);
+                            result += `${indent}${getComponentName(current)}\n`;
+                            current = current.return;
+                            depth++;
+                        }
+                    }
+                    
+                    result += "\n💡 Source: ReactFiber.js - Used for error boundaries and context propagation";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            showIndexExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber.index Examples (Sibling Position):\n\n";
+                    
+                    function showIndexes(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        result += `${indent}${name}: index = ${fiber.index}\n`;
+                        
+                        // Show all siblings with their indexes
+                        let sibling = fiber.sibling;
+                        while (sibling) {
+                            result += `${indent}${getComponentName(sibling)}: index = ${sibling.index}\n`;
+                            sibling = sibling.sibling;
+                        }
+                        
+                        if (fiber.child) showIndexes(fiber.child, depth + 1);
+                    }
+                    
+                    showIndexes(hostRoot);
+                    result += "\n💡 Source: ReactChildFiber.js - Used in placeChild() for efficient reordering";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            // State & Props Properties
+            showPendingPropsExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber.pendingProps vs memoizedProps:\n\n";
+                    
+                    function showProps(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        result += `${indent}${name}:\n`;
+                        
+                        if (fiber.pendingProps) {
+                            result += `${indent}  pendingProps: ${JSON.stringify(fiber.pendingProps, null, 2).slice(0, 100)}...\n`;
+                        }
+                        if (fiber.memoizedProps) {
+                            result += `${indent}  memoizedProps: ${JSON.stringify(fiber.memoizedProps, null, 2).slice(0, 100)}...\n`;
+                        }
+                        result += `${indent}  props changed: ${fiber.pendingProps !== fiber.memoizedProps}\n\n`;
+                        
+                        if (fiber.child) showProps(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) showProps(fiber.sibling, depth);
+                    }
+                    
+                    showProps(hostRoot);
+                    result += "💡 Source: ReactFiberBeginWork.js - Used in bailout logic to skip unnecessary work";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            showMemoizedPropsExamples: () => {
+                return demoFunctions.showPendingPropsExamples();
+            },
+
+            showMemoizedStateExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber.memoizedState Examples:\n\n";
+                    
+                    function showState(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        
+                        if (fiber.memoizedState !== null) {
+                            result += `${indent}${name}:\n`;
+                            
+                            if (fiber.tag === 0) { // FunctionComponent
+                                result += `${indent}  Hook chain:\n`;
+                                let hook = fiber.memoizedState;
+                                let hookIndex = 0;
+                                while (hook && hookIndex < 3) {
+                                    result += `${indent}    Hook ${hookIndex}: ${JSON.stringify(hook.memoizedState)}\n`;
+                                    hook = hook.next;
+                                    hookIndex++;
+                                }
+                                if (hook) result += `${indent}    ... (more hooks)\n`;
+                            } else if (fiber.tag === 1) { // ClassComponent
+                                result += `${indent}  Class state: ${JSON.stringify(fiber.memoizedState)}\n`;
+                            } else {
+                                result += `${indent}  State: ${JSON.stringify(fiber.memoizedState)}\n`;
+                            }
+                            result += "\n";
+                        }
+                        
+                        if (fiber.child) showState(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) showState(fiber.sibling, depth);
+                    }
+                    
+                    showState(hostRoot);
+                    result += "💡 Source: ReactFiberHooks.js - Hook state stored as linked list";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            showUpdateQueueExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber.updateQueue Examples:\n\n";
+                    
+                    function showUpdateQueue(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        
+                        if (fiber.updateQueue) {
+                            result += `${indent}${name}:\n`;
+                            result += `${indent}  has updateQueue: true\n`;
+                            
+                            if (fiber.updateQueue.shared && fiber.updateQueue.shared.pending) {
+                                result += `${indent}  pending updates: true\n`;
+                            } else {
+                                result += `${indent}  pending updates: false\n`;
+                            }
+                            
+                            if (fiber.updateQueue.callbacks) {
+                                result += `${indent}  callbacks: ${fiber.updateQueue.callbacks.length}\n`;
+                            }
+                            result += "\n";
+                        }
+                        
+                        if (fiber.child) showUpdateQueue(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) showUpdateQueue(fiber.sibling, depth);
+                    }
+                    
+                    showUpdateQueue(hostRoot);
+                    result += "💡 Source: ReactFiberClassUpdateQueue.js - Manages setState and callback queues";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            // Effects & Scheduling Properties
+            showFlagsExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    const flagNames = {
+                        0: 'NoFlags',
+                        1: 'PerformedWork',
+                        2: 'Placement',
+                        4: 'Update',
+                        8: 'ChildDeletion',
+                        16: 'ContentReset',
+                        32: 'Callback',
+                        64: 'DidCapture',
+                        128: 'Ref',
+                        256: 'Snapshot',
+                        512: 'Passive',
+                        1024: 'Hydrating',
+                        2048: 'Visibility'
+                    };
+                    
+                    let result = "🔍 Fiber.flags Examples (Effect System):\n\n";
+                    
+                    function showFlags(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        
+                        if (fiber.flags !== 0) {
+                            result += `${indent}${name}:\n`;
+                            result += `${indent}  flags: ${fiber.flags} (0b${fiber.flags.toString(2)})\n`;
+                            
+                            // Show active flags
+                            for (let flag in flagNames) {
+                                const flagValue = parseInt(flag);
+                                if (fiber.flags & flagValue) {
+                                    result += `${indent}    - ${flagNames[flag]} (${flagValue})\n`;
+                                }
+                            }
+                            result += "\n";
+                        }
+                        
+                        if (fiber.child) showFlags(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) showFlags(fiber.sibling, depth);
+                    }
+                    
+                    showFlags(hostRoot);
+                    result += "💡 Source: ReactFiberFlags.js - Used in commit phase for side effects";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            showSubtreeFlagsExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber.subtreeFlags Examples (Bubbled Effects):\n\n";
+                    
+                    function showSubtreeFlags(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        
+                        result += `${indent}${name}:\n`;
+                        result += `${indent}  flags: ${fiber.flags}\n`;
+                        result += `${indent}  subtreeFlags: ${fiber.subtreeFlags}\n`;
+                        result += `${indent}  has subtree effects: ${fiber.subtreeFlags !== 0}\n\n`;
+                        
+                        if (fiber.child) showSubtreeFlags(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) showSubtreeFlags(fiber.sibling, depth);
+                    }
+                    
+                    showSubtreeFlags(hostRoot);
+                    result += "💡 Source: ReactFiberCompleteWork.js - Bubbled up during completeWork phase";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            showLanesExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    const laneNames = {
+                        0: 'NoLanes',
+                        1: 'SyncLane',
+                        2: 'InputContinuousHydrationLane',
+                        4: 'InputContinuousLane',
+                        8: 'DefaultHydrationLane',
+                        16: 'DefaultLane',
+                        32: 'TransitionHydrationLane',
+                        64: 'TransitionLane1',
+                        128: 'TransitionLane2',
+                        // ... more lanes
+                    };
+                    
+                    let result = "🔍 Fiber.lanes Examples (Priority System):\n\n";
+                    
+                    function showLanes(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        
+                        if (fiber.lanes !== 0 || fiber.childLanes !== 0) {
+                            result += `${indent}${name}:\n`;
+                            result += `${indent}  lanes: ${fiber.lanes} (priority for this fiber)\n`;
+                            result += `${indent}  childLanes: ${fiber.childLanes} (combined child priorities)\n`;
+                            
+                            // Show lane names
+                            for (let lane in laneNames) {
+                                const laneValue = parseInt(lane);
+                                if (fiber.lanes & laneValue) {
+                                    result += `${indent}    - ${laneNames[lane]} (${laneValue})\n`;
+                                }
+                            }
+                            result += "\n";
+                        }
+                        
+                        if (fiber.child) showLanes(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) showLanes(fiber.sibling, depth);
+                    }
+                    
+                    showLanes(hostRoot);
+                    result += "💡 Source: ReactFiberLane.js - Used in scheduler for priority-based rendering";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            showChildLanesExamples: () => {
+                return demoFunctions.showLanesExamples();
+            },
+
+            // FiberRoot Properties
+            showRootTagExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const tagNames = { 0: 'LegacyRoot', 1: 'ConcurrentRoot' };
+                    let result = "🔍 FiberRoot.tag Examples:\n\n";
+                    result += `Root Type: ${fiberRoot.tag} (${tagNames[fiberRoot.tag] || 'Unknown'})\n\n`;
+                    
+                    if (fiberRoot.tag === 1) {
+                        result += "Concurrent Features Enabled:\n";
+                        result += "  - Time slicing\n";
+                        result += "  - Suspense\n";
+                        result += "  - Concurrent rendering\n";
+                        result += "  - Priority-based scheduling\n";
+                    } else {
+                        result += "Legacy Mode:\n";
+                        result += "  - Synchronous rendering\n";
+                        result += "  - No time slicing\n";
+                        result += "  - Blocking updates\n";
+                    }
+                    
+                    result += "\n💡 Source: ReactFiberRoot.js - Set in createFiberRoot()";
+                    return result;
+                }
+                return "No FiberRoot found.";
+            },
+            
+            showContainerInfoExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    let result = "🔍 FiberRoot.containerInfo Examples:\n\n";
+                    result += `Container Element: ${fiberRoot.containerInfo.tagName}\n`;
+                    result += `Container ID: ${fiberRoot.containerInfo.id}\n`;
+                    result += `Container Class: ${fiberRoot.containerInfo.className}\n`;
+                    result += `DOM Node: ${fiberRoot.containerInfo.nodeName}\n`;
+                    result += `Is Connected: ${fiberRoot.containerInfo.isConnected}\n\n`;
+                    
+                    result += "Container Properties:\n";
+                    result += `  - childNodes: ${fiberRoot.containerInfo.childNodes.length}\n`;
+                    result += `  - parentNode: ${fiberRoot.containerInfo.parentNode ? fiberRoot.containerInfo.parentNode.tagName : 'null'}\n`;
+                    
+                    result += "\n💡 Source: ReactFiberRoot.js - DOM container for React application";
+                    return result;
+                }
+                return "No FiberRoot found.";
+            },
+            
+            showCurrentExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    let result = "🔍 FiberRoot.current Examples (Double Buffering):\n\n";
+                    
+                    result += `Current Tree: ${fiberRoot.current ? 'HostRoot fiber' : 'null'}\n`;
+                    result += `Alternate Tree: ${fiberRoot.alternate ? 'HostRoot fiber' : 'null'}\n\n`;
+                    
+                    if (fiberRoot.current) {
+                        const current = fiberRoot.current;
+                        result += "Current Tree Details:\n";
+                        result += `  - tag: ${current.tag} (HostRoot)\n`;
+                        result += `  - child: ${current.child ? getComponentName(current.child) : 'null'}\n`;
+                        result += `  - alternate: ${current.alternate ? 'work-in-progress' : 'null'}\n`;
+                        result += `  - flags: ${current.flags}\n`;
+                        result += `  - lanes: ${current.lanes}\n`;
+                    }
+                    
+                    result += "\n💡 Source: ReactFiberRoot.js - Points to committed fiber tree";
+                    return result;
+                }
+                return "No current fiber found.";
+            },
+            
+            showPendingLanesExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    let result = "🔍 FiberRoot Lane Management:\n\n";
+                    
+                    result += `Pending Lanes: ${fiberRoot.pendingLanes}\n`;
+                    result += `Suspended Lanes: ${fiberRoot.suspendedLanes}\n`;
+                    result += `Pinged Lanes: ${fiberRoot.pingedLanes}\n`;
+                    result += `Expired Lanes: ${fiberRoot.expiredLanes}\n`;
+                    result += `Warm Lanes: ${fiberRoot.warmLanes || 0}\n\n`;
+                    
+                    result += "Lane Status:\n";
+                    result += `  - Has pending work: ${fiberRoot.pendingLanes !== 0}\n`;
+                    result += `  - Has suspended work: ${fiberRoot.suspendedLanes !== 0}\n`;
+                    result += `  - Has expired work: ${fiberRoot.expiredLanes !== 0}\n\n`;
+                    
+                    result += "Scheduling Info:\n";
+                    result += `  - Callback Node: ${fiberRoot.callbackNode ? 'scheduled' : 'null'}\n`;
+                    result += `  - Callback Priority: ${fiberRoot.callbackPriority}\n`;
+                    
+                    result += "\n💡 Source: ReactFiberLane.js - Used in getNextLanes() for scheduling";
+                    return result;
+                }
+                return "No FiberRoot found.";
+            },
+
+            showSuspendedLanesExamples: () => {
+                return demoFunctions.showPendingLanesExamples();
+            },
+
+            showExpiredLanesExamples: () => {
+                return demoFunctions.showPendingLanesExamples();
+            },
+
+            showCallbackNodeExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    let result = "🔍 FiberRoot.callbackNode Examples (Scheduler Integration):\n\n";
+                    
+                    result += `Callback Node: ${fiberRoot.callbackNode ? 'Scheduled Task' : 'null'}\n`;
+                    result += `Callback Priority: ${fiberRoot.callbackPriority}\n`;
+                    
+                    if (fiberRoot.callbackNode) {
+                        result += "\nScheduled Task Details:\n";
+                        result += `  - Has scheduled work: true\n`;
+                        result += `  - Will process lanes: ${fiberRoot.pendingLanes}\n`;
+                        result += `  - Priority level: ${fiberRoot.callbackPriority}\n`;
+                    } else {
+                        result += "\nNo Scheduled Work:\n";
+                        result += `  - All work completed\n`;
+                        result += `  - No pending updates\n`;
+                    }
+                    
+                    result += "\n💡 Source: ReactFiberRootScheduler.js - Manages React Scheduler integration";
+                    return result;
+                }
+                return "No FiberRoot found.";
+            },
+
+            showCallbackPriorityExamples: () => {
+                return demoFunctions.showCallbackNodeExamples();
+            },
+
+            // Additional Fiber Properties
+            showAlternateExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber.alternate Examples (Double Buffering):\n\n";
+                    
+                    function showAlternates(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        
+                        result += `${indent}${name}:\n`;
+                        result += `${indent}  has alternate: ${fiber.alternate ? 'yes' : 'no'}\n`;
+                        if (fiber.alternate) {
+                            result += `${indent}  alternate type: ${getComponentName(fiber.alternate)}\n`;
+                            result += `${indent}  same type: ${fiber.type === fiber.alternate.type}\n`;
+                            result += `${indent}  props same: ${fiber.memoizedProps === fiber.alternate.pendingProps}\n`;
+                        }
+                        result += "\n";
+                        
+                        if (fiber.child) showAlternates(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) showAlternates(fiber.sibling, depth);
+                    }
+                    
+                    showAlternates(hostRoot);
+                    result += "💡 Source: ReactFiber.js - createWorkInProgress() creates alternate fibers";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            showModeExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    const modeNames = {
+                        0: 'NoMode',
+                        1: 'ConcurrentMode',
+                        2: 'StrictLegacyMode',
+                        4: 'StrictEffectsMode',
+                        8: 'ProfileMode'
+                    };
+                    
+                    let result = "🔍 Fiber.mode Examples (Rendering Mode):\n\n";
+                    
+                    function showModes(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        
+                        result += `${indent}${name}:\n`;
+                        result += `${indent}  mode: ${fiber.mode} (0b${fiber.mode.toString(2)})\n`;
+                        
+                        // Show active modes
+                        for (let mode in modeNames) {
+                            const modeValue = parseInt(mode);
+                            if (fiber.mode & modeValue) {
+                                result += `${indent}    - ${modeNames[mode]} (${modeValue})\n`;
+                            }
+                        }
+                        result += "\n";
+                        
+                        if (fiber.child) showModes(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) showModes(fiber.sibling, depth);
+                    }
+                    
+                    showModes(hostRoot);
+                    result += "💡 Source: ReactTypeOfMode.js - Inherited from parent during creation";
+                    return result;
+                }
+                return "No fiber found.";
+            },
+
+            showStateNodeExamples: () => {
+                const container = document.getElementById('demo-root');
+                const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+                if (reactContainerKey) {
+                    const fiberRoot = container[reactContainerKey];
+                    const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                    let result = "🔍 Fiber.stateNode Examples (Associated Instances):\n\n";
+                    
+                    function showStateNodes(fiber, depth = 0) {
+                        if (!fiber || depth > 2) return;
+                        const indent = "  ".repeat(depth);
+                        const name = getComponentName(fiber);
+                        
+                        result += `${indent}${name}:\n`;
+                        if (fiber.stateNode) {
+                            if (fiber.stateNode.nodeType) {
+                                // DOM node
+                                result += `${indent}  stateNode: DOM ${fiber.stateNode.tagName}\n`;
+                                result += `${indent}  id: ${fiber.stateNode.id || 'none'}\n`;
+                                result += `${indent}  className: ${fiber.stateNode.className || 'none'}\n`;
+                            } else if (fiber.tag === 3) {
+                                // HostRoot
+                                result += `${indent}  stateNode: FiberRootNode\n`;
+                                result += `${indent}  containerInfo: ${fiber.stateNode.containerInfo ? fiber.stateNode.containerInfo.tagName : 'none'}\n`;
+                            } else if (fiber.tag === 1) {
+                                // Class component
+                                result += `${indent}  stateNode: Class instance\n`;
+                                result += `${indent}  constructor: ${fiber.stateNode.constructor.name}\n`;
+                            } else {
+                                result += `${indent}  stateNode: ${typeof fiber.stateNode}\n`;
+                            }
+                        } else {
+                            result += `${indent}  stateNode: null\n`;
+                        }
+                        result += "\n";
+                        
+                        if (fiber.child) showStateNodes(fiber.child, depth + 1);
+                        if (fiber.sibling && depth < 2) showStateNodes(fiber.sibling, depth);
+                    }
+                    
+                    showStateNodes(hostRoot);
+                    result += "💡 Source: ReactFiberBeginWork.js - The 'real' thing this fiber represents";
+                    return result;
+                }
+                return "No fiber found.";
+            }
+        };
+
+        // Helper function to get component name
+        function getComponentName(fiber) {
+            if (fiber.type && fiber.type.name) {
+                return fiber.type.name;
+            }
+            if (typeof fiber.type === 'string') {
+                return fiber.type;
+            }
+            const tagNames = {
+                0: 'FunctionComponent',
+                1: 'ClassComponent',
+                3: 'HostRoot',
+                5: 'HostComponent',
+                6: 'HostText'
+            };
+            return tagNames[fiber.tag] || 'Unknown';
+        }
+
+        // Create property cards
+        function createPropertyCard(property, demoFunctions) {
+            const card = document.createElement('div');
+            card.className = 'property-card';
+            
+            card.innerHTML = `
+                <div class="property-header">
+                    <div class="property-name">${property.name}</div>
+                    <div class="property-type">${property.type}</div>
+                </div>
+                <div class="property-description">${property.description}</div>
+                <div class="property-example">Example: ${property.example}</div>
+                ${property.sourceCode ? `
+                    <div class="property-example" style="background: #e8f5e8; border-color: #c3e6cb;">
+                        📍 Source: ${property.sourceCode}
+                    </div>
+                ` : ''}
+                ${property.demo ? `
+                    <div class="property-demo">
+                        <button class="demo-button" onclick="runPropertyDemo('${property.demo}', this)">
+                            🎯 Live Demo
+                        </button>
+                        <div class="demo-result" id="demo-${property.demo}" style="display: none;"></div>
+                    </div>
+                ` : ''}
+            `;
+            
+            return card;
+        }
+
+        // Populate property grids
+        function populatePropertyGrids() {
+            const fiberGrid = document.getElementById('fiber-properties-grid');
+            const fiberRootGrid = document.getElementById('fiberroot-properties-grid');
+            
+            // Clear existing content
+            fiberGrid.innerHTML = '';
+            fiberRootGrid.innerHTML = '';
+            
+            // Add fiber properties
+            fiberProperties.forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category-header';
+                categoryDiv.textContent = category.category;
+                fiberGrid.appendChild(categoryDiv);
+                
+                category.properties.forEach(property => {
+                    const card = createPropertyCard(property, demoFunctions);
+                    fiberGrid.appendChild(card);
+                });
+            });
+            
+            // Add FiberRoot properties
+            fiberRootProperties.forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category-header';
+                categoryDiv.textContent = category.category;
+                fiberRootGrid.appendChild(categoryDiv);
+                
+                category.properties.forEach(property => {
+                    const card = createPropertyCard(property, demoFunctions);
+                    fiberRootGrid.appendChild(card);
+                });
+            });
+        }
+
+        // Enhanced Demo React component with more complex structure
+        function Counter({ label, initialValue = 0 }) {
+            const [count, setCount] = React.useState(initialValue);
+            const [multiplier, setMultiplier] = React.useState(1);
+            
+            return React.createElement('div', { className: 'counter-component', id: `counter-${label}` },
+                React.createElement('h5', null, `${label}: ${count * multiplier}`),
+                React.createElement('button', {
+                    onClick: () => setCount(count + 1)
+                }, '+1'),
+                React.createElement('button', {
+                    onClick: () => setMultiplier(multiplier * 2)
+                }, '×2'),
+                React.createElement('span', { style: { marginLeft: '10px' } }, `(${count} × ${multiplier})`)
+            );
+        }
+
+        function ItemList({ items }) {
+            return React.createElement('div', { className: 'item-list' },
+                React.createElement('h5', null, 'Dynamic List'),
+                React.createElement('ul', null,
+                    items.map((item, index) => 
+                        React.createElement('li', { 
+                            key: `item-${index}`,
+                            className: `list-item-${index}` 
+                        }, 
+                            React.createElement('span', null, item),
+                            React.createElement('button', {
+                                onClick: () => {
+                                    demoState.items.splice(index, 1);
+                                    demoRoot.render(React.createElement(DemoApp));
+                                },
+                                style: { marginLeft: '5px', fontSize: '12px' }
+                            }, '×')
+                        )
+                    )
+                )
+            );
+        }
+
+        function DemoApp() {
+            const [counter, setCounter] = React.useState(demoState.counter);
+            const [visible, setVisible] = React.useState(demoState.visible);
+            const [items, setItems] = React.useState(demoState.items);
+            const [theme, setTheme] = React.useState('light');
+            
+            // Update global state when local state changes
+            React.useEffect(() => {
+                demoState.counter = counter;
+                demoState.visible = visible;
+                demoState.items = items;
+            }, [counter, visible, items]);
+            
+            return React.createElement('div', { 
+                className: `demo-app-content theme-${theme}`,
+                'data-testid': 'demo-app'
+            },
+                React.createElement('h4', null, 'Enhanced Interactive Demo'),
+                React.createElement('div', { className: 'controls' },
+                    React.createElement('button', {
+                        onClick: () => setTheme(theme === 'light' ? 'dark' : 'light')
+                    }, `Theme: ${theme}`),
+                    React.createElement('span', { style: { margin: '0 10px' } }, '|'),
+                    React.createElement('button', {
+                        onClick: () => setVisible(!visible)
+                    }, visible ? 'Hide' : 'Show')
+                ),
+                React.createElement(Counter, { label: 'Main Counter', initialValue: counter }),
+                visible && React.createElement('div', { className: 'conditional-content' },
+                    React.createElement(Counter, { label: 'Nested Counter', initialValue: 5 }),
+                    React.createElement(ItemList, { items: items }),
+                    React.createElement('div', { className: 'nested-structure' },
+                        React.createElement('p', null, 'Deeply nested content'),
+                        React.createElement('div', { className: 'level-2' },
+                            React.createElement('span', null, 'Level 2'),
+                            React.createElement('div', { className: 'level-3' },
+                                React.createElement('em', null, 'Level 3 - Deep nesting for tree exploration')
+                            )
+                        )
+                    )
+                ),
+                React.createElement('footer', { className: 'demo-footer' },
+                    React.createElement('small', null, 'This complex structure helps demonstrate fiber properties')
+                )
+            );
+        }
+
+        // Initialize demo
+        function initializeDemo() {
+            const container = document.getElementById('demo-root');
+            demoRoot = ReactDOM.createRoot(container);
+            demoRoot.render(React.createElement(DemoApp));
+        }
+
+        // Global functions
+        window.showTab = function(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        };
+
+        window.runPropertyDemo = function(demoName, button) {
+            const resultDiv = document.getElementById(`demo-${demoName}`);
+            const demoFunction = demoFunctions[demoName];
+            
+            if (demoFunction) {
+                const result = demoFunction();
+                resultDiv.textContent = result;
+                resultDiv.style.display = 'block';
+                button.textContent = '🔄 Run Again';
+            } else {
+                resultDiv.textContent = `Demo function ${demoName} not implemented yet.`;
+                resultDiv.style.display = 'block';
+            }
+        };
+
+        window.updateCounter = function() {
+            demoState.counter++;
+            demoRoot.render(React.createElement(DemoApp));
+        };
+
+        window.toggleVisibility = function() {
+            demoState.visible = !demoState.visible;
+            demoRoot.render(React.createElement(DemoApp));
+        };
+
+        window.addItem = function() {
+            demoState.items.push(`Item ${demoState.items.length + 1}`);
+            demoRoot.render(React.createElement(DemoApp));
+        };
+
+        window.inspectFiberTree = function() {
+            const container = document.getElementById('demo-root');
+            const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+            const result = document.getElementById('live-inspection-result');
+            
+            if (reactContainerKey) {
+                const fiberRoot = container[reactContainerKey];
+                const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                
+                let output = '🌳 Fiber Tree Structure:\n\n';
+                output += `FiberRoot (${fiberRoot.tag === 1 ? 'ConcurrentRoot' : 'LegacyRoot'})\n`;
+                output += `└── HostRoot (tag: ${hostRoot.tag})\n`;
+                
+                function traverseFiber(fiber, depth = 1) {
+                    if (!fiber) return;
+                    
+                    const indent = '    '.repeat(depth);
+                    const connector = fiber.sibling ? '├── ' : '└── ';
+                    const name = getComponentName(fiber);
+                    
+                    output += `${indent}${connector}${name} (tag: ${fiber.tag})\n`;
+                    
+                    if (fiber.child) {
+                        traverseFiber(fiber.child, depth + 1);
+                    }
+                    if (fiber.sibling) {
+                        traverseFiber(fiber.sibling, depth);
+                    }
+                }
+                
+                if (hostRoot.child) {
+                    traverseFiber(hostRoot.child, 1);
+                }
+                
+                result.innerHTML = `<pre class="fiber-tree">${output}</pre>`;
+            } else {
+                result.innerHTML = '<div class="warning">No React fiber tree found.</div>';
+            }
+        };
+
+        window.inspectFiberRoot = function() {
+            const container = document.getElementById('demo-root');
+            const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+            const result = document.getElementById('live-inspection-result');
+            
+            if (reactContainerKey) {
+                const fiberRoot = container[reactContainerKey];
+                
+                let output = '🏗️ FiberRoot Properties:\n\n';
+                output += `tag: ${fiberRoot.tag} (${fiberRoot.tag === 1 ? 'ConcurrentRoot' : 'LegacyRoot'})\n`;
+                output += `containerInfo: ${fiberRoot.containerInfo.tagName}#${fiberRoot.containerInfo.id}\n`;
+                output += `current: ${fiberRoot.current ? 'HostRoot fiber' : 'null'}\n`;
+                output += `alternate: ${fiberRoot.alternate ? 'HostRoot fiber' : 'null'}\n`;
+                output += `pendingLanes: ${fiberRoot.pendingLanes}\n`;
+                output += `suspendedLanes: ${fiberRoot.suspendedLanes}\n`;
+                output += `expiredLanes: ${fiberRoot.expiredLanes}\n`;
+                output += `callbackNode: ${fiberRoot.callbackNode ? 'Scheduled' : 'null'}\n`;
+                output += `callbackPriority: ${fiberRoot.callbackPriority}\n`;
+                
+                result.innerHTML = `<pre class="fiber-tree">${output}</pre>`;
+            } else {
+                result.innerHTML = '<div class="warning">No React FiberRoot found.</div>';
+            }
+        };
+
+        window.showPropertyChanges = function() {
+            const result = document.getElementById('live-inspection-result');
+            result.innerHTML = `
+                <div class="info">
+                    <h4>📊 Property Changes During Updates</h4>
+                    <p>When you interact with the demo app above, various fiber properties change:</p>
+                    <ul>
+                        <li><strong>pendingProps vs memoizedProps:</strong> New props are stored in pendingProps, old props in memoizedProps</li>
+                        <li><strong>flags:</strong> Update flags are set when components need to re-render</li>
+                        <li><strong>lanes:</strong> Priority lanes are assigned based on the type of update</li>
+                        <li><strong>memoizedState:</strong> Hook states are updated in the fiber's memoizedState</li>
+                    </ul>
+                    <p>Try clicking the buttons above and then inspect the fiber tree to see these changes!</p>
+                </div>
+            `;
+        };
+
+        window.explainCurrentState = function() {
+            const container = document.getElementById('demo-root');
+            const reactContainerKey = Object.keys(container).find(key => key.startsWith('__reactContainer'));
+            const result = document.getElementById('live-inspection-result');
+            
+            if (reactContainerKey) {
+                const fiberRoot = container[reactContainerKey];
+                const hostRoot = fiberRoot.current || fiberRoot.alternate;
+                
+                let explanation = '💡 Current State Explanation:\n\n';
+                explanation += `Application State:\n`;
+                explanation += `- Counter: ${demoState.counter}\n`;
+                explanation += `- Visible: ${demoState.visible}\n`;
+                explanation += `- Items: ${demoState.items.length} items\n\n`;
+                
+                explanation += `Fiber Tree State:\n`;
+                explanation += `- Root Type: ${fiberRoot.tag === 1 ? 'Concurrent' : 'Legacy'}\n`;
+                explanation += `- Pending Work: ${fiberRoot.pendingLanes !== 0 ? 'Yes' : 'No'}\n`;
+                explanation += `- Tree Depth: ${getTreeDepth(hostRoot)} levels\n`;
+                explanation += `- Total Fibers: ${countFibers(hostRoot)} nodes\n`;
+                
+                result.innerHTML = `<pre class="fiber-tree">${explanation}</pre>`;
+            } else {
+                result.innerHTML = '<div class="warning">No React application found.</div>';
+            }
+        };
+
+        function getTreeDepth(fiber, depth = 0) {
+            if (!fiber) return depth;
+            let maxDepth = depth;
+            if (fiber.child) {
+                maxDepth = Math.max(maxDepth, getTreeDepth(fiber.child, depth + 1));
+            }
+            if (fiber.sibling) {
+                maxDepth = Math.max(maxDepth, getTreeDepth(fiber.sibling, depth));
+            }
+            return maxDepth;
+        }
+
+        function countFibers(fiber) {
+            if (!fiber) return 0;
+            let count = 1;
+            if (fiber.child) count += countFibers(fiber.child);
+            if (fiber.sibling) count += countFibers(fiber.sibling);
+            return count;
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            populatePropertyGrids();
+            initializeDemo();
+            
+            // Add relationships content
+            const relationshipsContent = document.getElementById('relationships-content');
+            relationshipsContent.innerHTML = `
+                <div class="property-card">
+                    <h3>🔗 Tree Navigation Relationships</h3>
+                    <pre class="fiber-tree">ParentFiber
+├── child → FirstChildFiber
+│   ├── sibling → SecondChildFiber
+│   └── return → ParentFiber
+└── child.sibling → SecondChildFiber
+    ├── sibling → ThirdChildFiber
+    └── return → ParentFiber</pre>
+                    <p>Each fiber maintains three pointers for tree navigation: <code>child</code> (first child), <code>sibling</code> (next sibling), and <code>return</code> (parent).</p>
+                </div>
+                
+                <div class="property-card">
+                    <h3>⚡ Update Flow Relationships</h3>
+                    <pre class="fiber-tree">1. User Action → setState()
+2. Update enqueued in updateQueue
+3. Scheduler assigns priority lanes
+4. Fiber flags set (Update, Callback)
+5. Reconciliation begins
+6. pendingProps vs memoizedProps comparison
+7. New fiber tree built (work-in-progress)
+8. Commit phase applies changes
+9. memoizedProps = pendingProps
+10. Flags cleared, effects run</pre>
+                </div>
+                
+                <div class="property-card">
+                    <h3>🎯 Priority & Scheduling Relationships</h3>
+                    <pre class="fiber-tree">FiberRoot.pendingLanes = 1 | 4 | 8  // Multiple priorities
+├── Lane 1 (Sync) → Immediate render
+├── Lane 4 (Default) → Normal render  
+└── Lane 8 (Transition) → Background render
+
+Each Fiber inherits lanes from updates:
+- fiber.lanes = assigned priority
+- fiber.childLanes = combined child priorities
+- FiberRoot coordinates all lane scheduling</pre>
+                </div>
+                
+                <div class="property-card">
+                    <h3>🔄 Double Buffering Relationships</h3>
+                    <pre class="fiber-tree">Current Tree (Committed)     Work-in-Progress Tree
+├── FiberA                  ├── FiberA' (alternate)
+│   ├── alternate ←→ ←→ ←→ ←→ │   ├── alternate
+│   └── memoizedProps       │   └── pendingProps
+└── Displayed on screen     └── Being built
+
+After commit: Trees swap roles
+- WIP becomes Current
+- Current becomes WIP
+- All alternates update</pre>
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html> 

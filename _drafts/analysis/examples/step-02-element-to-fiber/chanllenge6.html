@@ -1,0 +1,586 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Challenge 6 Solution - Complete Fiber Tree Inspector</title>
+    <style>
+        .fiber-inspector { margin: 20px 0; padding: 20px; background: #f0f0f0; }
+        .fiber-property { margin: 5px 0; padding: 5px; background: white; }
+        .component-demo { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>🔬 Complete Fiber Tree Inspector</h1>
+    
+    <div class="component-demo">
+        <h2>Demo: Function Components with State</h2>
+        <p>This demo shows how to inspect ALL fiber nodes, not just DOM-bound ones.</p>
+        <div id="demo-root"></div>
+    </div>
+    
+    <div style="background: #e8f5e8; padding: 15px; margin: 20px 0; border-radius: 8px;">
+        <h3>🎯 Key Learning Points</h3>
+        <ul>
+            <li><strong>Complete Tree:</strong> Traverses from FiberRoot to find ALL fibers</li>
+            <li><strong>DOM-bound Only:</strong> Only finds fibers attached to DOM elements</li>
+            <li><strong>Function Components:</strong> Don't have DOM elements, only exist in Fiber tree</li>
+            <li><strong>Hook States:</strong> Stored in function component fibers, not DOM</li>
+            <li><strong>Double Buffering:</strong> React uses current (committed) and alternate (work-in-progress) trees</li>
+        </ul>
+    </div>
+    
+    <div style="background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 8px;">
+        <h3>🔄 React's Double Buffering System</h3>
+        <p><strong>React 使用双缓冲技术来优化渲染性能：</strong></p>
+        <ul>
+            <li><strong>current 树：</strong> 当前显示在屏幕上的已提交的 Fiber 树</li>
+            <li><strong>alternate 树：</strong> 正在构建的工作树（work-in-progress）</li>
+            <li><strong>切换时机：</strong> 渲染完成后，alternate 变成 current，current 变成 alternate</li>
+            <li><strong>为什么有时 current 为空：</strong> 在渲染过程中，可能只有 alternate 树存在</li>
+        </ul>
+    </div>
+    
+    <button onclick="inspectFibers()">🌳 Inspect Complete Fiber Tree</button>
+    <button onclick="inspectDOMFibers()">🔍 Inspect DOM-bound Fibers Only</button>
+    <button onclick="compareApproaches()">⚖️ Compare Both Approaches</button>
+    
+    <div id="fiber-output"></div>
+    
+    <script type="importmap">
+        {
+          "imports": {
+            "react": "https://esm.sh/react@19.1.0?dev",
+            "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev"
+          }
+        }
+    </script>
+    <script type="module">
+        import React from "react";
+        import ReactDOM from "react-dom/client";
+
+        function Counter() {
+            const [count, setCount] = React.useState(0);
+            return React.createElement('div', { className: 'counter' },
+                React.createElement('h3', null, 'Counter: ' + count),
+                React.createElement('button', {
+                    onClick: () => setCount(count + 1)
+                }, 'Increment'),
+                React.createElement('p', null, 'This is a demo component')
+            );
+        }
+        
+        // Create a React component to inspect
+        function DemoComponent() {
+            const [text, setText] = React.useState('Hello');
+            return React.createElement('div', { className: 'demo-app' },
+                React.createElement('h2', null, 'Demo App: ' + text),
+                React.createElement(Counter),
+                React.createElement('span', null, 'End of demo')
+            );
+        }
+        
+        // Render the component
+        const root = ReactDOM.createRoot(document.getElementById('demo-root'));
+        const app = React.createElement(DemoComponent)
+        console.log('app element:', app)
+        root.render(app);
+        
+        // Wait for render to complete
+        setTimeout(() => {
+            console.log('Render should be complete now');
+            const container = document.getElementById('demo-root');
+            const reactContainerKey = Object.keys(container).find(key => 
+                key.startsWith('__reactContainer')
+            );
+            if (reactContainerKey) {
+                const fiberRoot = container[reactContainerKey];
+                console.log('Post-render FiberRoot:', fiberRoot);
+                console.log('Post-render current:', fiberRoot.current);
+                console.log('Post-render current.child:', fiberRoot.current?.child);
+                
+                // Manual tree walk to debug
+                console.log('=== MANUAL TREE WALK ===');
+                let debugHostRoot = fiberRoot.current || fiberRoot.alternate;
+                if (debugHostRoot) {
+                    console.log('1. HostRoot:', debugHostRoot.tag, debugHostRoot.type);
+                    if (debugHostRoot.child) {
+                        console.log('2. First child:', debugHostRoot.child.tag, debugHostRoot.child.type, debugHostRoot.child.elementType);
+                        if (debugHostRoot.child.child) {
+                            console.log('3. Second child:', debugHostRoot.child.child.tag, debugHostRoot.child.child.type, debugHostRoot.child.child.elementType);
+                            if (debugHostRoot.child.child.child) {
+                                console.log('4. Third child:', debugHostRoot.child.child.child.tag, debugHostRoot.child.child.child.type, debugHostRoot.child.child.child.elementType);
+                                
+                                // Check siblings of the third child
+                                let sibling = debugHostRoot.child.child.child.sibling;
+                                let siblingCount = 0;
+                                while (sibling) {
+                                    siblingCount++;
+                                    console.log(`4.${siblingCount} Sibling:`, sibling.tag, sibling.type, sibling.elementType);
+                                    sibling = sibling.sibling;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    console.log('No HostRoot fiber found in current or alternate!');
+                }
+            }
+        }, 100);
+        
+        function inspectFibers() {
+            const output = document.getElementById('fiber-output');
+            output.innerHTML = '<h2>Complete Fiber Tree Inspection</h2>';
+            
+            // Method 1: Find FiberRoot from DOM container
+            const container = document.getElementById('demo-root');
+            const reactContainerKey = Object.keys(container).find(key => 
+                key.startsWith('__reactContainer')
+            );
+            
+            if (reactContainerKey) {
+                const fiberRoot = container[reactContainerKey];
+                const allFibers = [];
+                
+                // Debug info
+                console.log('=== FIBER TREE INSPECTION DEBUG ===');
+                console.log('FiberRoot found:', fiberRoot);
+                console.log('FiberRoot.current:', fiberRoot.current);
+                console.log('FiberRoot.alternate:', fiberRoot.alternate);
+                console.log('FiberRoot.current?.child:', fiberRoot.current?.child);
+                console.log('FiberRoot.alternate?.child:', fiberRoot.alternate?.child);
+                
+                // Add FiberRoot itself as the first node
+                allFibers.push({ 
+                    fiber: fiberRoot, 
+                    depth: 0, 
+                    isFiberRoot: true 
+                });
+                
+                // Traverse the entire fiber tree starting from root
+                function traverseFiberTree(fiber, depth = 0, parentName = '') {
+                    if (!fiber) return;
+                    
+                    const fiberName = getComponentName(fiber);
+                    console.log(`Traversing fiber at depth ${depth}: ${fiberName} (parent: ${parentName})`, fiber);
+                    allFibers.push({ fiber, depth, isFiberRoot: false });
+                    
+                    // First, traverse all children (depth-first)
+                    if (fiber.child) {
+                        console.log(`  -> Found child of ${fiberName}:`, getComponentName(fiber.child));
+                        traverseFiberTree(fiber.child, depth + 1, fiberName);
+                    }
+                    
+                    // Then, traverse siblings at the same level
+                    if (fiber.sibling) {
+                        console.log(`  -> Found sibling of ${fiberName}:`, getComponentName(fiber.sibling));
+                        traverseFiberTree(fiber.sibling, depth, parentName);
+                    }
+                }
+                
+                // Determine which fiber tree to use (current or alternate)
+                // React uses double buffering - current is the committed tree, alternate is work-in-progress
+                let hostRootFiber = null;
+                let treeType = '';
+                
+                if (fiberRoot.current) {
+                    hostRootFiber = fiberRoot.current;
+                    treeType = 'current (committed tree)';
+                    console.log('Using current fiber tree (committed)');
+                } else if (fiberRoot.alternate) {
+                    hostRootFiber = fiberRoot.alternate;
+                    treeType = 'alternate (work-in-progress tree)';
+                    console.log('Using alternate fiber tree (work-in-progress)');
+                } else {
+                    console.log('No fiber tree found!');
+                }
+                
+                // Start traversal from the found fiber tree
+                if (hostRootFiber) {
+                    console.log(`Starting traversal from HostRoot fiber (${treeType})...`);
+                    console.log('HostRoot fiber details:', hostRootFiber);
+                    console.log('HostRoot has child?', !!hostRootFiber.child);
+                    console.log('HostRoot child details:', hostRootFiber.child);
+                    
+                    traverseFiberTree(hostRootFiber, 1, 'FiberRoot');
+                } else {
+                    console.log('No fiber tree found to traverse!');
+                }
+                
+                console.log('Total fibers found:', allFibers.length);
+                
+                // Display all fibers
+                output.innerHTML += `<h3>Found ${allFibers.length} Nodes in Tree (FiberRoot + Fiber Nodes)</h3>`;
+                
+                allFibers.forEach(({ fiber, depth, isFiberRoot }, index) => {
+                    const inspectorDiv = document.createElement('div');
+                    inspectorDiv.className = 'fiber-inspector';
+                    inspectorDiv.style.marginLeft = `${depth * 20}px`;
+                    inspectorDiv.style.borderLeft = `${depth > 0 ? '2px solid #ccc' : 'none'}`;
+                    
+                    if (isFiberRoot) {
+                        // Handle FiberRoot differently
+                        inspectorDiv.style.background = '#e3f2fd';
+                        inspectorDiv.innerHTML = `
+                            <h4>🏗️ FiberRootNode (Depth: ${depth})</h4>
+                            <div class="fiber-property"><strong>Type:</strong> FiberRootNode</div>
+                            <div class="fiber-property"><strong>Tag:</strong> ${fiber.tag} (${fiber.tag === 1 ? 'ConcurrentRoot' : 'LegacyRoot'})</div>
+                            <div class="fiber-property"><strong>Container Info:</strong> ${fiber.containerInfo ? fiber.containerInfo.tagName : 'null'}</div>
+                            <div class="fiber-property"><strong>Current Fiber:</strong> ${fiber.current ? '✅ Yes' : '❌ No'}</div>
+                            <div class="fiber-property"><strong>Pending Lanes:</strong> ${fiber.pendingLanes}</div>
+                            <div class="fiber-property"><strong>Suspended Lanes:</strong> ${fiber.suspendedLanes}</div>
+                            <div class="fiber-property"><strong>Expired Lanes:</strong> ${fiber.expiredLanes}</div>
+                            <div class="fiber-property"><strong>Callback Node:</strong> ${fiber.callbackNode ? 'Has Callback' : 'null'}</div>
+                            <div class="fiber-property"><strong>Callback Priority:</strong> ${fiber.callbackPriority}</div>
+                            <div class="fiber-property"><strong>Context:</strong> ${fiber.context ? 'Has Context' : 'null'}</div>
+                            <div class="fiber-property"><strong>Pending Context:</strong> ${fiber.pendingContext ? 'Has Pending Context' : 'null'}</div>
+                            <div class="fiber-property"><strong>Debug Root Type:</strong> ${fiber._debugRootType || 'N/A'}</div>
+                        `;
+                    } else {
+                        // Handle regular Fiber
+                        const componentName = getComponentName(fiber);
+                        const hasState = fiber.memoizedState !== null;
+                        const stateInfo = hasState ? getStateInfo(fiber) : 'No State';
+                        
+                        inspectorDiv.innerHTML = `
+                            <h4>🌳 ${componentName} (Depth: ${depth})</h4>
+                            <div class="fiber-property"><strong>Type:</strong> ${fiber.type || 'null'}</div>
+                            <div class="fiber-property"><strong>Element Type:</strong> ${fiber.elementType || 'null'}</div>
+                            <div class="fiber-property"><strong>Tag:</strong> ${fiber.tag} (${getTagName(fiber.tag)})</div>
+                            <div class="fiber-property"><strong>Key:</strong> ${fiber.key || 'null'}</div>
+                            <div class="fiber-property"><strong>Mode:</strong> ${fiber.mode}</div>
+                            <div class="fiber-property"><strong>Flags:</strong> ${fiber.flags}</div>
+                            <div class="fiber-property"><strong>Lanes:</strong> ${fiber.lanes}</div>
+                            <div class="fiber-property"><strong>Child Lanes:</strong> ${fiber.childLanes}</div>
+                            <div class="fiber-property"><strong>Has Child:</strong> ${fiber.child ? '✅ Yes' : '❌ No'}</div>
+                            <div class="fiber-property"><strong>Has Sibling:</strong> ${fiber.sibling ? '✅ Yes' : '❌ No'}</div>
+                            <div class="fiber-property"><strong>Has Return:</strong> ${fiber.return ? '✅ Yes' : '❌ No'}</div>
+                            <div class="fiber-property"><strong>Has Alternate:</strong> ${fiber.alternate ? '✅ Yes (Work-in-Progress)' : '❌ No'}</div>
+                            <div class="fiber-property"><strong>State Node:</strong> ${getStateNodeInfo(fiber)}</div>
+                            <div class="fiber-property"><strong>State:</strong> ${stateInfo}</div>
+                            <div class="fiber-property"><strong>Props:</strong> ${safeStringify(fiber.memoizedProps, 1)}</div>
+                        `;
+                    }
+                    
+                    output.appendChild(inspectorDiv);
+                });
+                
+                // Add tree structure visualization
+                output.innerHTML += `
+                    <div class="fiber-inspector" style="background: #e8f5e8; margin-top: 20px;">
+                        <h3>🌳 Complete Tree Structure</h3>
+                        <pre style="font-family: monospace; font-size: 12px;">${generateCompleteTreeVisualization(fiberRoot)}</pre>
+                    </div>
+                `;
+                
+            } else {
+                output.innerHTML += '<p>❌ No React container found. Make sure React is in development mode.</p>';
+            }
+        }
+        
+        function getComponentName(fiber) {
+            if (fiber.type && fiber.type.name) {
+                return fiber.type.name;
+            }
+            if (typeof fiber.type === 'string') {
+                return fiber.type;
+            }
+            return getTagName(fiber.tag);
+        }
+        
+        function getStateNodeInfo(fiber) {
+            if (!fiber.stateNode) return 'null';
+            if (fiber.stateNode.tagName) {
+                return `DOM: ${fiber.stateNode.tagName}`;
+            }
+            if (fiber.tag === 3) { // HostRoot
+                return 'FiberRootNode';
+            }
+            return 'Object';
+        }
+        
+        function getStateInfo(fiber) {
+            if (!fiber.memoizedState) return 'No State';
+            
+            if (fiber.tag === 0) { // FunctionComponent
+                // Count hooks
+                let hookCount = 0;
+                let hook = fiber.memoizedState;
+                while (hook) {
+                    hookCount++;
+                    hook = hook.next;
+                }
+                return `${hookCount} Hook(s)`;
+            }
+            
+            return 'Has State';
+        }
+        
+        function generateTreeVisualization(fiber, prefix = '', isLast = true) {
+            if (!fiber) return '';
+            
+            const componentName = getComponentName(fiber);
+            const connector = isLast ? '└── ' : '├── ';
+            let result = prefix + connector + componentName + '\n';
+            
+            // Collect all children (siblings of the first child)
+            const children = [];
+            let child = fiber.child;
+            while (child) {
+                children.push(child);
+                child = child.sibling;
+            }
+            
+            // Render each child
+            children.forEach((child, index) => {
+                const isLastChild = index === children.length - 1;
+                const newPrefix = prefix + (isLast ? '    ' : '│   ');
+                result += generateTreeVisualization(child, newPrefix, isLastChild);
+            });
+            
+            return result;
+        }
+        
+        function generateCompleteTreeVisualization(fiberRoot) {
+            let result = '🏗️ FiberRootNode\n';
+            
+            // Show FiberRoot properties
+            result += '├── tag: ' + (fiberRoot.tag === 1 ? 'ConcurrentRoot' : 'LegacyRoot') + '\n';
+            result += '├── containerInfo: ' + (fiberRoot.containerInfo ? fiberRoot.containerInfo.tagName : 'null') + '\n';
+            result += '├── pendingLanes: ' + fiberRoot.pendingLanes + '\n';
+            
+            // Determine which tree to show (current or alternate)
+            let hostRootFiber = null;
+            let treeType = '';
+            
+            if (fiberRoot.current) {
+                hostRootFiber = fiberRoot.current;
+                treeType = 'current (committed tree)';
+            } else if (fiberRoot.alternate) {
+                hostRootFiber = fiberRoot.alternate;
+                treeType = 'alternate (work-in-progress tree)';
+            }
+            
+            if (hostRootFiber) {
+                result += `└── ${treeType}: (HostRoot Fiber)\n`;
+                // Generate tree starting from HostRoot's child
+                if (hostRootFiber.child) {
+                    result += generateTreeVisualization(hostRootFiber.child, '    ', true);
+                } else {
+                    result += '    └── (no children)\n';
+                }
+            } else {
+                result += '└── no fiber tree found\n';
+            }
+            
+            return result;
+        }
+        
+        window.inspectFibers = inspectFibers;
+        
+        // Method 2: Only inspect DOM-bound fibers (the old way)
+        function inspectDOMFibers() {
+            const output = document.getElementById('fiber-output');
+            output.innerHTML = '<h2>DOM-bound Fiber Inspection (Limited)</h2>';
+            
+            // Find all DOM nodes with fiber references
+            const allElements = document.querySelectorAll('*');
+            const fibersFound = [];
+            
+            allElements.forEach(element => {
+                const fiberKey = Object.keys(element).find(key => 
+                    key.startsWith('__reactFiber') || key.startsWith('__reactInternalInstance')
+                );
+                
+                if (fiberKey) {
+                    const fiber = element[fiberKey];
+                    fibersFound.push({ element, fiber });
+                }
+            });
+            
+            output.innerHTML += `<h3>Found ${fibersFound.length} DOM-bound Fiber Nodes</h3>`;
+            output.innerHTML += `<div class="fiber-inspector" style="background: #fff3cd; padding: 10px; margin: 10px 0;">
+                <strong>⚠️ Limitation:</strong> This method only finds fibers that are directly bound to DOM elements. 
+                Function components like Counter don't have their own DOM elements, so they won't be found this way.
+            </div>`;
+            
+            fibersFound.forEach(({ element, fiber }, index) => {
+                const inspectorDiv = document.createElement('div');
+                inspectorDiv.className = 'fiber-inspector';
+                inspectorDiv.innerHTML = `
+                    <h4>🏷️ DOM-bound Fiber ${index + 1}: ${element.tagName}</h4>
+                    <div class="fiber-property"><strong>Type:</strong> ${fiber.type}</div>
+                    <div class="fiber-property"><strong>Element Type:</strong> ${fiber.elementType}</div>
+                    <div class="fiber-property"><strong>Tag:</strong> ${fiber.tag} (${getTagName(fiber.tag)})</div>
+                    <div class="fiber-property"><strong>Key:</strong> ${fiber.key || 'null'}</div>
+                    <div class="fiber-property"><strong>Mode:</strong> ${fiber.mode}</div>
+                    <div class="fiber-property"><strong>Flags:</strong> ${fiber.flags}</div>
+                    <div class="fiber-property"><strong>Lanes:</strong> ${fiber.lanes}</div>
+                    <div class="fiber-property"><strong>Child Lanes:</strong> ${fiber.childLanes}</div>
+                    <div class="fiber-property"><strong>Has Child:</strong> ${fiber.child ? '✅ Yes' : '❌ No'}</div>
+                    <div class="fiber-property"><strong>Has Sibling:</strong> ${fiber.sibling ? '✅ Yes' : '❌ No'}</div>
+                    <div class="fiber-property"><strong>Has Return:</strong> ${fiber.return ? '✅ Yes' : '❌ No'}</div>
+                    <div class="fiber-property"><strong>State Node:</strong> ${getStateNodeInfo(fiber)}</div>
+                    <div class="fiber-property"><strong>Props:</strong> ${safeStringify(fiber.memoizedProps, 1)}</div>
+                `;
+                output.appendChild(inspectorDiv);
+            });
+            
+            if (fibersFound.length === 0) {
+                output.innerHTML += '<p>❌ No DOM-bound fibers found. Make sure React is in development mode.</p>';
+            }
+        }
+        
+        // Method 3: Compare both approaches
+        function compareApproaches() {
+            const output = document.getElementById('fiber-output');
+            output.innerHTML = '<h2>🔬 Comparison: Complete Tree vs DOM-bound Only</h2>';
+            
+            // Get complete tree
+            const container = document.getElementById('demo-root');
+            const reactContainerKey = Object.keys(container).find(key => 
+                key.startsWith('__reactContainer')
+            );
+            
+            let completeTreeCount = 0;
+            let domBoundCount = 0;
+            
+            if (reactContainerKey) {
+                const fiberRoot = container[reactContainerKey];
+                
+                // Count complete tree (including FiberRoot)
+                function countFibers(fiber) {
+                    if (!fiber) return 0;
+                    let count = 1;
+                    if (fiber.child) count += countFibers(fiber.child);
+                    if (fiber.sibling) count += countFibers(fiber.sibling);
+                    return count;
+                }
+                
+                // Count FiberRoot + all Fiber nodes (use current or alternate)
+                const hostRootFiber = fiberRoot.current || fiberRoot.alternate;
+                completeTreeCount = 1 + (hostRootFiber ? countFibers(hostRootFiber) : 0);
+                
+                // Count DOM-bound fibers
+                const allElements = document.querySelectorAll('*');
+                allElements.forEach(element => {
+                    const fiberKey = Object.keys(element).find(key => 
+                        key.startsWith('__reactFiber')
+                    );
+                    if (fiberKey) domBoundCount++;
+                });
+                
+                output.innerHTML += `
+                    <div class="fiber-inspector" style="background: #d4edda; margin: 10px 0;">
+                        <h3>📊 Results Comparison</h3>
+                        <div class="fiber-property"><strong>Complete Tree (FiberRoot + Fibers):</strong> ${completeTreeCount} nodes</div>
+                        <div class="fiber-property"><strong>DOM-bound Only:</strong> ${domBoundCount} nodes</div>
+                        <div class="fiber-property"><strong>Missing Nodes:</strong> ${completeTreeCount - domBoundCount} nodes</div>
+                        <div class="fiber-property"><strong>FiberRoot:</strong> 1 node (container for entire app)</div>
+                        <div class="fiber-property"><strong>Fiber Nodes:</strong> ${completeTreeCount - 1} nodes</div>
+                        <div class="fiber-property"><strong>Tree Type:</strong> ${hostRootFiber ? (fiberRoot.current ? 'current (committed)' : 'alternate (work-in-progress)') : 'none'}</div>
+                    </div>
+                    
+                    <div class="fiber-inspector" style="background: #f8d7da; margin: 10px 0;">
+                        <h3>🎯 Key Insights</h3>
+                        <div class="fiber-property"><strong>Why the difference?</strong></div>
+                        <ul>
+                            <li><strong>FiberRoot</strong> - The top-level container, not bound to any DOM element</li>
+                            <li><strong>Function components</strong> (like Counter) don't create DOM elements</li>
+                            <li><strong>HostRoot fiber</strong> - The root fiber node, different from FiberRoot</li>
+                            <li>They only exist in the Fiber tree as work units</li>
+                            <li>Only Host components (div, h3, button, p) get DOM elements</li>
+                            <li>The FiberRoot approach finds ALL nodes, including the root container</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fiber-inspector" style="background: #cce5ff; margin: 10px 0;">
+                        <h3>🔍 What's Missing from DOM-bound Approach?</h3>
+                        <ul>
+                            <li><strong>FiberRootNode</strong> - The top-level container for the entire app</li>
+                            <li><strong>HostRoot fiber</strong> - The root fiber node (tag: 3)</li>
+                            <li><strong>DemoComponent fiber</strong> - The root function component</li>
+                            <li><strong>Counter fiber</strong> - The counter function component</li>
+                            <li><strong>Hook states</strong> - useState hooks attached to function components</li>
+                            <li><strong>Component hierarchy</strong> - The actual component structure</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="fiber-inspector" style="background: #fff3cd; margin: 10px 0;">
+                        <h3>🏗️ Structure Explanation</h3>
+                        <pre style="font-family: monospace; font-size: 12px;">
+FiberRootNode (container.__reactContainer$)
+├── current: HostRoot Fiber (committed tree) 
+│   └── child: DemoComponent Fiber (function component)
+│       └── child: Counter Fiber (function component)
+│           └── child: div (DOM element)
+│               ├── child: h3 (DOM element)
+│               ├── sibling: button (DOM element)
+│               └── sibling: p (DOM element)
+└── alternate: HostRoot Fiber (work-in-progress tree)
+    └── child: DemoComponent Fiber (function component)
+        └── child: Counter Fiber (function component)
+            └── child: div (DOM element)
+                ├── child: h3 (DOM element)
+                ├── sibling: button (DOM element)
+                └── sibling: p (DOM element)
+
+注意：在不同的渲染阶段，current 和 alternate 可能指向不同的树
+有时 current 为空，只有 alternate 存在（正在构建中）
+                        </pre>
+                    </div>
+                `;
+            }
+        }
+        
+        window.inspectDOMFibers = inspectDOMFibers;
+        window.compareApproaches = compareApproaches;
+                 // Safe stringify function to handle circular references
+         function safeStringify(obj, indent = 2) {
+             const seen = new WeakSet();
+             return JSON.stringify(obj, (key, value) => {
+                 if (typeof value === 'object' && value !== null) {
+                     if (seen.has(value)) {
+                         return '[Circular Reference]';
+                     }
+                     seen.add(value);
+                 }
+                 if (typeof value === 'function') {
+                     return '[Function]';
+                 }
+                 return value;
+             }, indent);
+         }
+         
+         function getTagName(tag) {
+             const tagNames = {
+                 0: 'FunctionComponent',
+                 1: 'ClassComponent',
+                 2: 'IndeterminateComponent',
+                 3: 'HostRoot',
+                 4: 'HostPortal',
+                 5: 'HostComponent',
+                 6: 'HostText',
+                 7: 'Fragment',
+                 8: 'Mode',
+                 9: 'ContextConsumer',
+                 10: 'ContextProvider',
+                 11: 'ForwardRef',
+                 12: 'Profiler',
+                 13: 'SuspenseComponent',
+                 14: 'MemoComponent',
+                 15: 'SimpleMemoComponent',
+                 16: 'LazyComponent',
+                 17: 'IncompleteClassComponent',
+                 18: 'DehydratedFragment',
+                 19: 'SuspenseListComponent',
+                 20: 'ScopeComponent',
+                 21: 'OffscreenComponent',
+                 22: 'LegacyHiddenComponent',
+                 23: 'CacheComponent',
+                 24: 'TracingMarkerComponent'
+             };
+             return tagNames[tag] || 'Unknown';
+         }
+    </script>
+</body>
+</html>

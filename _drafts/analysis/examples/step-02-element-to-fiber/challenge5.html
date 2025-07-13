@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Challenge 5 Solution - Real Fiber Inspector</title>
+    <style>
+        .fiber-inspector { margin: 20px 0; padding: 20px; background: #f0f0f0; }
+        .fiber-property { margin: 5px 0; padding: 5px; background: white; }
+        .component-demo { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <script type="importmap">
+        {
+          "imports": {
+            "react": "https://esm.sh/react@19.1.0?dev",
+            "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev"
+          }
+        }
+      </script>
+  <script type="module" src="https://esm.sh/tsx"></script>
+
+    <h1>Real Fiber Inspector</h1>
+    
+    <div class="component-demo">
+        <h2>Demo Component</h2>
+        <div id="demo-root"></div>
+    </div>
+    
+    <button onclick="inspectFibers()">Inspect Fibers</button>
+    
+    <div id="fiber-output"></div>
+    
+    <script type="text/babel" lang="jsx">
+             import React from "react";
+             import ReactDOM from "react-dom/client";
+        // Create a React component to inspect
+        function DemoComponent() {
+            const [count, setCount] = React.useState(0);
+            return React.createElement('div', null,
+                React.createElement('h3', null, 'Counter: ' + count),
+                React.createElement('button', {
+                    onClick: () => setCount(count + 1)
+                }, 'Increment'),
+                React.createElement('p', null, 'This is a demo component')
+            );
+        }
+        
+        // Render the component
+        const root = ReactDOM.createRoot(document.getElementById('demo-root'));
+        root.render(React.createElement(DemoComponent));
+        
+        function inspectFibers() {
+            const output = document.getElementById('fiber-output');
+            output.innerHTML = '<h2>Fiber Inspection Results</h2>';
+            
+            // Find all DOM nodes with fiber references
+            const allElements = document.querySelectorAll('*');
+            const fibersFound = [];
+            
+            allElements.forEach(element => {
+                const fiberKey = Object.keys(element).find(key => 
+                    key.startsWith('__reactFiber') || key.startsWith('__reactInternalInstance')
+                );
+                
+                if (fiberKey) {
+                    const fiber = element[fiberKey];
+                    fibersFound.push({ element, fiber });
+                }
+            });
+            
+            fibersFound.forEach(({ element, fiber }, index) => {
+                const inspectorDiv = document.createElement('div');
+                inspectorDiv.className = 'fiber-inspector';
+                inspectorDiv.innerHTML = `
+                    <h3>Fiber ${index + 1}: ${element.tagName}</h3>
+                    <div class="fiber-property"><strong>Type:</strong> ${fiber.type}</div>
+                    <div class="fiber-property"><strong>Element Type:</strong> ${fiber.elementType}</div>
+                    <div class="fiber-property"><strong>Tag:</strong> ${fiber.tag} (${getTagName(fiber.tag)})</div>
+                    <div class="fiber-property"><strong>Key:</strong> ${fiber.key || 'null'}</div>
+                    <div class="fiber-property"><strong>Mode:</strong> ${fiber.mode}</div>
+                    <div class="fiber-property"><strong>Flags:</strong> ${fiber.flags}</div>
+                    <div class="fiber-property"><strong>Lanes:</strong> ${fiber.lanes}</div>
+                    <div class="fiber-property"><strong>Child Lanes:</strong> ${fiber.childLanes}</div>
+                    <div class="fiber-property"><strong>Has Child:</strong> ${fiber.child ? 'Yes' : 'No'}</div>
+                    <div class="fiber-property"><strong>Has Sibling:</strong> ${fiber.sibling ? 'Yes' : 'No'}</div>
+                    <div class="fiber-property"><strong>Has Return:</strong> ${fiber.return ? 'Yes' : 'No'}</div>
+                    <div class="fiber-property"><strong>State Node:</strong> ${fiber.stateNode ? 'DOM Element' : 'null'}</div>
+                    <div class="fiber-property"><strong>Memoized State:</strong> ${fiber.memoizedState ? 'Has State' : 'No State'}</div>
+                    <div class="fiber-property"><strong>Props:</strong> ${safeStringify(fiber.memoizedProps)}</div>
+                `;
+                output.appendChild(inspectorDiv);
+            });
+            
+            if (fibersFound.length === 0) {
+                output.innerHTML += '<p>No fibers found. Make sure React is in development mode.</p>';
+            }
+        }
+        window.inspectFibers = inspectFibers;
+        
+        // Safe stringify function to handle circular references
+        function safeStringify(obj, indent = 2) {
+            const seen = new WeakSet();
+            return JSON.stringify(obj, (key, value) => {
+                if (typeof value === 'object' && value !== null) {
+                    if (seen.has(value)) {
+                        return '[Circular Reference]';
+                    }
+                    seen.add(value);
+                }
+                if (typeof value === 'function') {
+                    return '[Function]';
+                }
+                return value;
+            }, indent);
+        }
+        
+        function getTagName(tag) {
+            const tagNames = {
+                0: 'FunctionComponent',
+                1: 'ClassComponent',
+                2: 'IndeterminateComponent',
+                3: 'HostRoot',
+                4: 'HostPortal',
+                5: 'HostComponent',
+                6: 'HostText',
+                7: 'Fragment',
+                8: 'Mode',
+                9: 'ContextConsumer',
+                10: 'ContextProvider',
+                11: 'ForwardRef',
+                12: 'Profiler',
+                13: 'SuspenseComponent',
+                14: 'MemoComponent',
+                15: 'SimpleMemoComponent',
+                16: 'LazyComponent',
+                17: 'IncompleteClassComponent',
+                18: 'DehydratedFragment',
+                19: 'SuspenseListComponent',
+                20: 'ScopeComponent',
+                21: 'OffscreenComponent',
+                22: 'LegacyHiddenComponent',
+                23: 'CacheComponent',
+                24: 'TracingMarkerComponent'
+            };
+            return tagNames[tag] || 'Unknown';
+        }
+    </script>
+</body>
+</html>
+

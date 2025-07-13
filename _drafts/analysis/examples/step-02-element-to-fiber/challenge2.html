@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Challenge 2 Solution</title>
+    <style>
+        .tree-node { margin: 10px; padding: 10px; border: 1px solid #ccc; }
+        .fiber-node { background: #f0f8ff; }
+        .element-node { background: #f0fff0; }
+        .connection { color: #666; font-style: italic; }
+        .container { display: flex; flex-direction: row; gap: 20px; }
+    </style>
+</head>
+<body>
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@19.1.0?dev",
+          "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev"
+        }
+      }
+    </script>
+  <script type="module" src="https://esm.sh/tsx"></script>
+
+    <h1>Element to Fiber Tree Transformation</h1>
+    <div class="container">
+      <div>
+        <h1>Mock show fiber tree</h1>
+        <div id="visualization"></div>
+      </div>
+      <div>
+        <h1>React Fiber Tree (real)</h1>
+        <div id="visualization-real"></div>
+        <div id="react-fiber-tree"></div>
+      </div>
+    </div>
+
+    
+
+    <script type="text/babel" lang="jsx">
+      import React from "react";
+      import ReactDOM from "react-dom/client";
+        // Create the element tree
+        const app = React.createElement('div', { className: 'app' },
+            React.createElement('header', null,
+                React.createElement('h1', null, 'My App'),
+                React.createElement('nav', null, 'Navigation')
+            ),
+            React.createElement('main', null,
+                React.createElement('p', null, 'Content')
+            )
+        );
+
+
+        
+        // Simulate fiber creation
+        function createFiberFromElement(element, returnFiber = null) {
+            const fiber = {
+                type: element.type,
+                elementType: element.type,
+                key: element.key,
+                ref: element.ref,
+                child: null,
+                sibling: null,
+                return: returnFiber,
+                memoizedProps: element.props,
+                pendingProps: element.props,
+                memoizedState: null,
+                stateNode: null,
+                tag: 5, // HostComponent
+                mode: 0,
+                flags: 0,
+                subtreeFlags: 0,
+                lanes: 0,
+                childLanes: 0,
+                index: 0
+            };
+            
+            // Handle children
+            if (element.props && element.props.children) {
+                const children = Array.isArray(element.props.children) 
+                    ? element.props.children 
+                    : [element.props.children];
+                
+                let prevSibling = null;
+                children.forEach((child, index) => {
+                    if (typeof child === 'object' && child.type) {
+                        const childFiber = createFiberFromElement(child, fiber);
+                        childFiber.index = index;
+                        
+                        if (index === 0) {
+                            fiber.child = childFiber;
+                        } else {
+                            prevSibling.sibling = childFiber;
+                        }
+                        prevSibling = childFiber;
+                    }
+                });
+            }
+            
+            return fiber;
+        }
+        
+        // Create fiber tree
+        const fiberTree = createFiberFromElement(app);
+        // 
+        
+        // Visualize the transformation
+        function visualizeTree(fiber, container, level = 0) {
+            const div = document.createElement('div');
+            div.className = 'tree-node fiber-node';
+            div.style.marginLeft = (level * 20) + 'px';
+            div.innerHTML = `
+                <strong>Fiber(${fiber.type})</strong><br>
+                <span class="connection">tag: ${fiber.tag}</span><br>
+                <span class="connection">child: ${fiber.child ? 'Fiber(' + fiber.child.type + ')' : 'null'}</span><br>
+                <span class="connection">sibling: ${fiber.sibling ? 'Fiber(' + fiber.sibling.type + ')' : 'null'}</span><br>
+                <span class="connection">return: ${fiber.return ? 'Fiber(' + fiber.return.type + ')' : 'null'}</span>
+            `;
+            container.appendChild(div);
+            
+            if (fiber.child) {
+                visualizeTree(fiber.child, container, level + 1);
+            }
+            if (fiber.sibling) {
+                visualizeTree(fiber.sibling, container, level);
+            }
+        }
+        
+        const container = document.getElementById('visualization');
+
+        const containerReal = document.getElementById('visualization-real');
+        const mountReal = document.getElementById('react-fiber-tree')
+
+        const root = ReactDOM.createRoot(mountReal);
+        const appReal  = root.render(app);
+        setTimeout(() => {
+          const appContainer = mountReal.firstChild
+          const fiberKey = Object.keys(appContainer).find(key => key.startsWith('__reactFiber'));
+          const fiberRoot = appContainer[fiberKey];
+          visualizeTree(fiberRoot, containerReal);
+
+
+        }, 1000);
+
+
+        visualizeTree(fiberTree, container);
+    </script>
+</body>
+</html>
+

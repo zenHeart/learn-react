@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReactDOM.createRoot Deep Dive - React 19 Internals</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .analysis-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .code-box {
+            background: #f1f3f4;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .highlight {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #4caf50;
+            margin: 10px 0;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #ffc107;
+            margin: 10px 0;
+        }
+        
+        .error {
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #dc3545;
+            margin: 10px 0;
+        }
+        
+        .fiber-tree {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        
+        .step-box {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        .demo-container {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .comparison-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .reference-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .reference-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 ReactDOM.createRoot Deep Dive - React 19 Internals</h1>
+    
+    <div class="analysis-section">
+        <h2>💡 Learning Objectives</h2>
+        <p>通过这个深入分析，你将理解：</p>
+        <ul>
+            <li><strong>ReactDOM.createRoot()</strong> 返回的对象结构</li>
+            <li><strong>_internalRoot (FiberRootNode)</strong> 的作用和结构</li>
+            <li><strong>__reactContainer</strong> 和 <strong>__reactFiber</strong> 的区别</li>
+            <li><strong>React 19</strong> 中的新特性和变化</li>
+            <li><strong>源代码位置</strong> 和 <strong>调试技巧</strong></li>
+        </ul>
+    </div>
+
+    <div class="analysis-section">
+        <h2>🚀 Interactive Demo</h2>
+        
+        <div class="demo-container">
+            <button onclick="analyzeCreateRoot()">分析 createRoot 对象</button>
+            <button onclick="analyzeInternalRoot()">分析 _internalRoot</button>
+            <button onclick="analyzeContainerProperties()">分析容器属性</button>
+            <button onclick="analyzeRootFiber()">分析根 Fiber 节点</button>
+            <button onclick="showFullStructure()">显示完整结构</button>
+        </div>
+        
+        <div id="demo-output"></div>
+    </div>
+
+    <div class="analysis-section">
+        <h2>📋 Key Concepts Comparison</h2>
+        
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>概念</th>
+                    <th>类型</th>
+                    <th>位置</th>
+                    <th>作用</th>
+                    <th>访问方式</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>ReactDOMRoot</strong></td>
+                    <td>Class Instance</td>
+                    <td>createRoot() 返回值</td>
+                    <td>公共 API 接口</td>
+                    <td>root.render(), root.unmount()</td>
+                </tr>
+                <tr>
+                    <td><strong>_internalRoot</strong></td>
+                    <td>FiberRootNode</td>
+                    <td>ReactDOMRoot 的私有属性</td>
+                    <td>Fiber 树的根容器</td>
+                    <td>root._internalRoot (dev only)</td>
+                </tr>
+                <tr>
+                    <td><strong>__reactContainer</strong></td>
+                    <td>Property on DOM</td>
+                    <td>DOM 元素上的属性</td>
+                    <td>指向 FiberRootNode</td>
+                    <td>domElement.__reactContainer$[key]</td>
+                </tr>
+                <tr>
+                    <td><strong>__reactFiber</strong></td>
+                    <td>Property on DOM</td>
+                    <td>DOM 元素上的属性</td>
+                    <td>指向对应的 Fiber 节点</td>
+                    <td>domElement.__reactFiber$[key]</td>
+                </tr>
+                <tr>
+                    <td><strong>current</strong></td>
+                    <td>HostRoot Fiber</td>
+                    <td>FiberRootNode.current</td>
+                    <td>当前 Fiber 树的根节点</td>
+                    <td>fiberRoot.current</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="analysis-section">
+        <h2>🔗 Source Code References</h2>
+        
+        <div class="step-box">
+            <h3>React 19 源代码位置</h3>
+            <ul>
+                <li><strong>ReactDOMRoot 实现:</strong> <a href="../../../packages/react-dom/src/client/ReactDOMRoot.js" class="reference-link">ReactDOMRoot.js</a></li>
+                <li><strong>FiberRootNode 创建:</strong> <a href="../../../packages/react-reconciler/src/ReactFiberRoot.js" class="reference-link">ReactFiberRoot.js</a></li>
+                <li><strong>createRoot 函数:</strong> <a href="../../../packages/react-dom/src/client/ReactDOMRoot.js#L200" class="reference-link">ReactDOMRoot.js#L200</a></li>
+                <li><strong>createFiberRoot 函数:</strong> <a href="../../../packages/react-reconciler/src/ReactFiberRoot.js#L200" class="reference-link">ReactFiberRoot.js#L200</a></li>
+                <li><strong>HostRoot Fiber 创建:</strong> <a href="../../../packages/react-reconciler/src/ReactFiber.js#L400" class="reference-link">ReactFiber.js#L400</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="analysis-section">
+        <h2>🧪 Debugging Techniques</h2>
+        
+        <div class="step-box">
+            <h3>在浏览器中调试</h3>
+            <pre class="code-box">// 1. 创建 root 并设置断点
+const root = ReactDOM.createRoot(document.getElementById('root'));
+debugger; // 在此处设置断点
+
+// 2. 检查 root 对象结构
+console.log('Root object:', root);
+console.log('Internal root:', root._internalRoot);
+
+// 3. 检查 DOM 元素上的属性
+const container = document.getElementById('root');
+console.log('Container keys:', Object.keys(container));
+
+// 4. 找到 React 相关的属性
+const reactKeys = Object.keys(container).filter(k => k.includes('react'));
+console.log('React keys:', reactKeys);</pre>
+        </div>
+        
+        <div class="step-box">
+            <h3>生产环境 vs 开发环境</h3>
+            <div class="warning">
+                <strong>注意：</strong> 在生产环境中，_internalRoot 等内部属性可能不可访问或被混淆。
+                调试时请使用开发版本的 React。
+            </div>
+        </div>
+    </div>
+
+    <div class="analysis-section">
+        <h2>🎯 Practice Exercise</h2>
+        
+        <div class="step-box">
+            <h3>挑战任务</h3>
+            <ol>
+                <li>创建一个 React 根实例</li>
+                <li>分析其 _internalRoot 结构</li>
+                <li>找到 DOM 元素上的 React 属性</li>
+                <li>理解它们之间的关系</li>
+            </ol>
+            
+            <button onclick="startExercise()">开始练习</button>
+            <div id="exercise-output"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" data-type="module">
+        import React from "https://esm.sh/react@19";
+        import ReactDOM from "https://esm.sh/react-dom@19/client";
+
+        // 安全的JSON序列化函数
+        function safeStringify(obj, depth = 2) {
+            const seen = new WeakSet();
+            return JSON.stringify(obj, (key, value) => {
+                if (depth <= 0) return '[Max Depth Reached]';
+                if (typeof value === 'object' && value !== null) {
+                    if (seen.has(value)) return '[Circular Reference]';
+                    seen.add(value);
+                }
+                if (typeof value === 'function') return '[Function]';
+                return value;
+            }, 2);
+        }
+
+        // 分析 createRoot 对象
+        window.analyzeCreateRoot = function() {
+            const output = document.getElementById('demo-output');
+            
+            // 创建临时容器
+            const tempContainer = document.createElement('div');
+            document.body.appendChild(tempContainer);
+            
+            // 创建 root
+            const root = ReactDOM.createRoot(tempContainer);
+            
+            const analysis = {
+                constructor: root.constructor.name,
+                methods: Object.getOwnPropertyNames(root).filter(prop => typeof root[prop] === 'function'),
+                properties: Object.getOwnPropertyNames(root).filter(prop => typeof root[prop] !== 'function'),
+                prototype: Object.getOwnPropertyNames(Object.getPrototypeOf(root))
+            };
+            
+            output.innerHTML = `
+                <div class="analysis-section">
+                    <h3>🔍 ReactDOMRoot 对象分析</h3>
+                    <pre class="code-box">构造函数: ${analysis.constructor}
+
+公共方法:
+${analysis.methods.map(method => `  • ${method}()`).join('\n')}
+
+属性:
+${analysis.properties.map(prop => `  • ${prop}: ${typeof root[prop]}`).join('\n')}
+
+原型方法:
+${analysis.prototype.map(method => `  • ${method}`).join('\n')}</pre>
+                    
+                    <div class="highlight">
+                        <strong>关键发现:</strong>
+                        <ul>
+                            <li>ReactDOMRoot 是一个类实例</li>
+                            <li>主要提供 render() 和 unmount() 方法</li>
+                            <li>内部状态通过私有属性管理</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            // 清理
+            document.body.removeChild(tempContainer);
+        };
+
+        // 分析 _internalRoot
+        window.analyzeInternalRoot = function() {
+            const output = document.getElementById('demo-output');
+            
+            const tempContainer = document.createElement('div');
+            document.body.appendChild(tempContainer);
+            
+            const root = ReactDOM.createRoot(tempContainer);
+            const internalRoot = root._internalRoot;
+            
+            if (internalRoot) {
+                output.innerHTML = `
+                    <div class="analysis-section">
+                        <h3>🏗️ _internalRoot (FiberRootNode) 分析</h3>
+                        <pre class="code-box">类型: ${internalRoot.constructor?.name || 'FiberRootNode'}
+
+关键属性:
+  • containerInfo: ${internalRoot.containerInfo === tempContainer ? 'DOM容器引用' : '未知'}
+  • current: ${internalRoot.current ? 'HostRoot Fiber节点' : 'null'}
+  • finishedWork: ${internalRoot.finishedWork || 'null'}
+  • pendingLanes: ${internalRoot.pendingLanes || 0}
+  • suspendedLanes: ${internalRoot.suspendedLanes || 0}
+  • expiredLanes: ${internalRoot.expiredLanes || 0}
+  • tag: ${internalRoot.tag}
+  • callbackNode: ${internalRoot.callbackNode || 'null'}
+  • callbackPriority: ${internalRoot.callbackPriority || 0}</pre>
+                        
+                        <div class="highlight">
+                            <strong>FiberRootNode 的作用:</strong>
+                            <ul>
+                                <li><strong>containerInfo:</strong> 指向真实的 DOM 容器</li>
+                                <li><strong>current:</strong> 指向当前的 Fiber 树根节点</li>
+                                <li><strong>finishedWork:</strong> 指向完成的工作树</li>
+                                <li><strong>pendingLanes:</strong> 待处理的优先级车道</li>
+                                <li><strong>调度相关:</strong> 管理渲染调度和优先级</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="warning">
+                            <strong>源代码位置:</strong> 
+                            <a href="../../../packages/react-reconciler/src/ReactFiberRoot.js" class="reference-link">ReactFiberRoot.js</a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                output.innerHTML = `
+                    <div class="analysis-section">
+                        <h3>🏗️ _internalRoot 分析</h3>
+                        <div class="error">
+                            <strong>无法访问 _internalRoot:</strong> 这通常发生在生产环境中，React 会隐藏内部属性。
+                            请使用开发版本的 React 进行调试。
+                        </div>
+                        
+                        <pre class="code-box">理论上，_internalRoot (FiberRootNode) 包含:
+
+• containerInfo: 指向 DOM 容器元素
+• current: 指向 HostRoot Fiber 节点
+• finishedWork: 完成的工作树
+• pendingLanes: 待处理的优先级车道
+• suspendedLanes: 暂停的优先级车道
+• expiredLanes: 过期的优先级车道
+• callbackNode: 调度回调节点
+• callbackPriority: 调度优先级</pre>
+                    </div>
+                `;
+            }
+            
+            document.body.removeChild(tempContainer);
+        };
+
+        // 分析容器属性
+        window.analyzeContainerProperties = function() {
+            const output = document.getElementById('demo-output');
+            
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'temp-analysis-container';
+            document.body.appendChild(tempContainer);
+            
+            const root = ReactDOM.createRoot(tempContainer);
+            
+            // 渲染一个简单的元素来触发 fiber 创建
+            const element = React.createElement('div', { id: 'test-element' }, 'Test Content');
+            root.render(element);
+            
+            setTimeout(() => {
+                // 查找 React 相关的属性
+                const allKeys = Object.keys(tempContainer);
+                const reactContainerKeys = allKeys.filter(k => k.includes('reactContainer'));
+                const reactFiberKeys = allKeys.filter(k => k.includes('reactFiber'));
+                
+                output.innerHTML = `
+                    <div class="analysis-section">
+                        <h3>🏠 DOM 容器属性分析</h3>
+                        <pre class="code-box">容器元素: ${tempContainer.tagName}#${tempContainer.id}
+
+所有属性 (${allKeys.length}):
+${allKeys.map(key => `  • ${key}: ${typeof tempContainer[key]}`).join('\n')}
+
+React Container 属性:
+${reactContainerKeys.map(key => `  • ${key}: ${tempContainer[key] ? 'FiberRootNode引用' : 'null'}`).join('\n')}
+
+React Fiber 属性:
+${reactFiberKeys.map(key => `  • ${key}: ${tempContainer[key] ? 'Fiber节点引用' : 'null'}`).join('\n')}</pre>
+                        
+                        <div class="highlight">
+                            <strong>属性作用说明:</strong>
+                            <ul>
+                                <li><strong>__reactContainer$[randomKey]:</strong> 指向 FiberRootNode</li>
+                                <li><strong>__reactFiber$[randomKey]:</strong> 指向对应的 Fiber 节点</li>
+                                <li><strong>随机键名:</strong> 防止外部直接访问内部状态</li>
+                                <li><strong>双向引用:</strong> DOM ↔ Fiber 节点相互引用</li>
+                            </ul>
+                        </div>
+                        
+                        <pre class="fiber-tree">关系图:
+DOM容器 ←→ __reactContainer$ ←→ FiberRootNode
+DOM容器 ←→ __reactFiber$ ←→ HostRoot Fiber</pre>
+                    </div>
+                `;
+                
+                document.body.removeChild(tempContainer);
+            }, 100);
+        };
+
+        // 分析根 Fiber 节点
+        window.analyzeRootFiber = function() {
+            const output = document.getElementById('demo-output');
+            
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'temp-fiber-container';
+            document.body.appendChild(tempContainer);
+            
+            const root = ReactDOM.createRoot(tempContainer);
+            const element = React.createElement('div', { className: 'test-app' }, 'Fiber Analysis');
+            root.render(element);
+            
+            setTimeout(() => {
+                const fiberKey = Object.keys(tempContainer).find(k => k.includes('reactFiber'));
+                const fiber = fiberKey ? tempContainer[fiberKey] : null;
+                
+                if (fiber) {
+                    output.innerHTML = `
+                        <div class="analysis-section">
+                            <h3>🌳 HostRoot Fiber 节点分析</h3>
+                            <pre class="code-box">Fiber 节点类型: ${fiber.constructor?.name || 'Fiber'}
+
+核心属性:
+  • tag: ${fiber.tag} (${fiber.tag === 3 ? 'HostRoot' : 'Unknown'})
+  • type: ${fiber.type || 'null'}
+  • stateNode: ${fiber.stateNode === tempContainer ? 'DOM容器引用' : 'Other'}
+  • mode: ${fiber.mode}
+  • key: ${fiber.key || 'null'}
+  • ref: ${fiber.ref || 'null'}
+
+树结构:
+  • child: ${fiber.child ? 'First child fiber' : 'null'}
+  • sibling: ${fiber.sibling ? 'Next sibling fiber' : 'null'}
+  • return: ${fiber.return ? 'Parent fiber' : 'null'}
+
+状态管理:
+  • memoizedState: ${fiber.memoizedState || 'null'}
+  • memoizedProps: ${fiber.memoizedProps ? 'Props object' : 'null'}
+  • pendingProps: ${fiber.pendingProps ? 'Pending props' : 'null'}
+
+React 19 特性:
+  • flags: ${fiber.flags || 0}
+  • subtreeFlags: ${fiber.subtreeFlags || 0}
+  • lanes: ${fiber.lanes || 0}
+  • childLanes: ${fiber.childLanes || 0}</pre>
+                            
+                            <div class="highlight">
+                                <strong>HostRoot Fiber 特点:</strong>
+                                <ul>
+                                    <li><strong>tag: 3</strong> - 标识这是一个 HostRoot 类型的 Fiber</li>
+                                    <li><strong>stateNode</strong> - 指向真实的 DOM 容器</li>
+                                    <li><strong>child</strong> - 指向应用的根组件 Fiber</li>
+                                    <li><strong>无 return</strong> - 作为根节点，没有父节点</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    output.innerHTML = `
+                        <div class="analysis-section">
+                            <h3>🌳 Fiber 节点分析</h3>
+                            <div class="error">
+                                无法访问 Fiber 节点，可能是由于：
+                                <ul>
+                                    <li>React 版本差异</li>
+                                    <li>生产环境限制</li>
+                                    <li>属性名称变化</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                document.body.removeChild(tempContainer);
+            }, 100);
+        };
+
+        // 显示完整结构
+        window.showFullStructure = function() {
+            const output = document.getElementById('demo-output');
+            
+            output.innerHTML = `
+                <div class="analysis-section">
+                    <h3>🔗 React 19 完整结构关系图</h3>
+                    
+                    <pre class="fiber-tree">用户调用:
+ReactDOM.createRoot(container) 
+    ↓
+返回: ReactDOMRoot 对象
+    ├─ render() 方法
+    ├─ unmount() 方法
+    └─ _internalRoot (FiberRootNode)
+        ├─ containerInfo → DOM 容器
+        ├─ current → HostRoot Fiber
+        ├─ pendingLanes → 待处理优先级
+        ├─ suspendedLanes → 暂停优先级
+        └─ expiredLanes → 过期优先级
+
+DOM 容器获得属性:
+    ├─ __reactContainer$[key] → FiberRootNode
+    └─ __reactFiber$[key] → HostRoot Fiber
+
+HostRoot Fiber 结构:
+    ├─ tag: 3 (HostRoot)
+    ├─ stateNode → DOM 容器
+    ├─ child → App Fiber
+    ├─ flags → 副作用标记
+    ├─ lanes → 优先级车道
+    └─ mode → 渲染模式</pre>
+                    
+                    <div class="highlight">
+                        <strong>关键理解点:</strong>
+                        <ul>
+                            <li><strong>ReactDOMRoot:</strong> 用户接口，提供 render/unmount 方法</li>
+                            <li><strong>FiberRootNode:</strong> 内部容器，管理整个 Fiber 树</li>
+                            <li><strong>HostRoot Fiber:</strong> Fiber 树的根节点</li>
+                            <li><strong>DOM 属性:</strong> 建立 DOM 和 Fiber 的双向引用</li>
+                            <li><strong>优先级系统:</strong> React 19 的 lanes 机制</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="step-box">
+                        <h4>源代码跟踪路径</h4>
+                        <ol>
+                            <li><a href="../../../packages/react-dom/src/client/ReactDOMRoot.js#L200" class="reference-link">createRoot()</a> 创建 ReactDOMRoot</li>
+                            <li><a href="../../../packages/react-reconciler/src/ReactFiberRoot.js#L200" class="reference-link">createFiberRoot()</a> 创建 FiberRootNode</li>
+                            <li><a href="../../../packages/react-reconciler/src/ReactFiber.js#L400" class="reference-link">createHostRootFiber()</a> 创建 HostRoot Fiber</li>
+                            <li><a href="../../../packages/react-reconciler/src/ReactFiberWorkLoop.js#L100" class="reference-link">scheduleUpdateOnFiber()</a> 调度更新</li>
+                        </ol>
+                    </div>
+                </div>
+            `;
+        };
+
+        // 开始练习
+        window.startExercise = function() {
+            const output = document.getElementById('exercise-output');
+            
+            output.innerHTML = `
+                <div class="step-box">
+                    <h4>🎯 实践练习：分析你自己的 React 应用</h4>
+                    
+                    <pre class="code-box">// 1. 在你的 React 应用中添加这段代码
+const container = document.getElementById('root');
+const root = ReactDOM.createRoot(container);
+
+// 2. 在浏览器控制台中运行以下代码
+console.log('=== React Root 分析 ===');
+console.log('Root 对象:', root);
+console.log('Internal Root:', root._internalRoot);
+console.log('Container 属性:', Object.keys(container));
+
+// 3. 查找 React 相关属性
+const reactKeys = Object.keys(container).filter(k => k.includes('react'));
+console.log('React 属性:', reactKeys);
+
+// 4. 分析 Fiber 节点
+const fiberKey = reactKeys.find(k => k.includes('Fiber'));
+if (fiberKey) {
+    const fiber = container[fiberKey];
+    console.log('Root Fiber:', fiber);
+    console.log('Fiber tag:', fiber.tag);
+    console.log('Fiber child:', fiber.child);
+}</pre>
+                    
+                    <div class="highlight">
+                        <strong>练习目标:</strong>
+                        <ul>
+                            <li>理解 createRoot 返回的对象结构</li>
+                            <li>找到 FiberRootNode 和 HostRoot Fiber</li>
+                            <li>分析 DOM 元素上的 React 属性</li>
+                            <li>理解各个组件之间的关系</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="warning">
+                        <strong>注意事项:</strong>
+                        <ul>
+                            <li>使用开发版本的 React 进行调试</li>
+                            <li>生产环境中内部属性可能不可访问</li>
+                            <li>不要在生产代码中依赖内部 API</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        };
+    </script>
+</body>
+</html> 
