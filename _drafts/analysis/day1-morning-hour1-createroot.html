@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hour 1: createRoot Deep Dive - Live Debug Session</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .debug-panel {
+            background: #1e1e1e;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .step {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .breakpoint {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 0 3px 3px 0;
+            font-family: monospace;
+        }
+        
+        .demo-app {
+            border: 2px solid #4caf50;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f9f9f9;
+            min-height: 100px;
+        }
+        
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #1976d2;
+        }
+        
+        .highlight {
+            background: #fff59d;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .success {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .info {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Hour 1: React's Foundation - createRoot Deep Dive</h1>
+        <p><strong>Goal:</strong> Master FiberRoot and HostRoot creation with live debugging</p>
+        <p><strong>Time:</strong> 60 minutes | <strong>Skills:</strong> Debugging, Data Structures, React Internals</p>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>🎯 Live React App</h2>
+            <div id="root" class="demo-app">
+                <!-- React will render here -->
+            </div>
+            <div>
+                <button onclick="startDebugging()">🔴 Start Debugging Session</button>
+                <button onclick="inspectStructures()">🔍 Inspect Data Structures</button>
+                <button onclick="clearDebug()">🧹 Clear Debug Log</button>
+            </div>
+            <div class="debug-panel" id="debug-output"></div>
+        </div>
+        
+        <div class="panel">
+            <h2>📊 Step-by-Step Guide</h2>
+            <div class="step">
+                <h3>Step 1: Set Breakpoints</h3>
+                <p>Open DevTools (F12) and set these breakpoints:</p>
+                <div class="breakpoint">
+                    🔴 ReactDOMClient.js:92 - createRoot entry
+                </div>
+                <div class="breakpoint">
+                    🔴 ReactFiberRoot.js:134 - createFiberRoot
+                </div>
+                <div class="breakpoint">
+                    🔴 ReactFiber.js:428 - createHostRootFiber
+                </div>
+            </div>
+            
+            <div class="step">
+                <h3>Step 2: Trace Execution</h3>
+                <p>Click "Start Debugging" and step through each function call</p>
+            </div>
+            
+            <div class="step">
+                <h3>Step 3: Inspect Data</h3>
+                <p>Examine FiberRoot and HostRoot structures in debugger</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>🔬 Key Data Structures Created</h2>
+        
+        <h3>FiberRootNode Structure</h3>
+        <div class="code-block">
+{
+  tag: 1,                           // ConcurrentRoot
+  containerInfo: &lt;div id="root"&gt;,   // Your DOM element
+  current: &lt;HostRootFiber&gt;,         // Root fiber node
+  pendingLanes: 0,                  // No pending work yet
+  finishedLanes: 0,                 // No finished work
+  callbackNode: null,               // No scheduled callback
+  
+  // React 19 specific properties
+  entangledLanes: 0,                // Lane entanglements
+  pooledCache: null,                // Cache pooling
+  transitionCallbacks: null,        // Transition tracking
+  incompleteTransitions: new Map(), // Incomplete transitions
+  
+  // Scheduling properties
+  timeoutHandle: -1,                // Timeout handle
+  cancelPendingCommit: null,        // Cancel function
+  context: null,                    // Legacy context
+  pendingContext: null              // Pending context changes
+}
+        </div>
+
+        <h3>HostRoot Fiber Structure</h3>
+        <div class="code-block">
+{
+  tag: 3,                          // HostRoot
+  key: null,
+  elementType: null,
+  type: null,
+  stateNode: &lt;FiberRootNode&gt;,      // Points back to FiberRoot
+  
+  return: null,                    // No parent (it's the root)
+  child: null,                     // No children yet
+  sibling: null,                   // No siblings
+  index: 0,                        // Index in parent
+  
+  ref: null,                       // No ref
+  pendingProps: null,              // No pending props
+  memoizedProps: null,             // No memoized props
+  
+  updateQueue: {                   // Update queue for root
+    baseState: null,
+    firstBaseUpdate: null,
+    lastBaseUpdate: null,
+    shared: { pending: null }
+  },
+  
+  memoizedState: null,             // No state yet
+  dependencies: null,              // No dependencies
+  
+  mode: 1,                         // ConcurrentMode
+  flags: 0,                        // No side effects
+  subtreeFlags: 0,                 // No subtree effects
+  deletions: null,                 // No deletions
+  
+  lanes: 0,                        // No work scheduled
+  childLanes: 0,                   // No child work
+  alternate: null                  // No work-in-progress yet
+}
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>🎯 Learning Objectives</h2>
+        <div class="success">
+            <h3>✅ After Hour 1, you will:</h3>
+            <ul>
+                <li>Understand the difference between FiberRoot and HostRoot</li>
+                <li>Know how to set breakpoints in React source code</li>
+                <li>Be able to inspect React's internal data structures</li>
+                <li>Trace the complete createRoot execution flow</li>
+                <li>Understand React 19's concurrent features setup</li>
+            </ul>
+        </div>
+        
+        <div class="info">
+            <h3>🎓 Key Insights:</h3>
+            <ul>
+                <li><strong>FiberRoot</strong> is the container for the entire React app</li>
+                <li><strong>HostRoot</strong> is the root fiber node in the fiber tree</li>
+                <li><strong>Lanes</strong> are React 19's priority system for scheduling</li>
+                <li><strong>Mode</strong> determines rendering behavior (concurrent vs legacy)</li>
+                <li><strong>UpdateQueue</strong> manages state updates at the root level</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@19.1.0?dev",
+            "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import React from "react";
+        import ReactDOM from "react-dom/client";
+
+        // Global variables for debugging
+        window.React = React;
+        window.ReactDOM = ReactDOM;
+        let debugStep = 0;
+        let rootInstance = null;
+
+        const debugOutput = document.getElementById("debug-output");
+        
+        function log(message, data = null) {
+            debugStep++;
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>Step ${debugStep}:</strong> ${message}`;
+            if (data) {
+                div.innerHTML += `<pre style="margin: 5px 0; padding: 5px; background: #333; border-radius: 3px;">${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            debugOutput.appendChild(div);
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+        }
+
+        // Intercept createRoot for debugging
+        const originalCreateRoot = ReactDOM.createRoot;
+        ReactDOM.createRoot = function(container, options) {
+            debugger; // 🔴 BREAKPOINT 1: createRoot entry point
+            log("🚀 createRoot() called", { 
+                container: container.id, 
+                options: options || "undefined" 
+            });
+            
+            const result = originalCreateRoot.apply(this, arguments);
+            
+            // Inspect the created structures
+            log("📊 FiberRoot created", {
+                tag: result._internalRoot.tag,
+                containerInfo: result._internalRoot.containerInfo.id,
+                current: {
+                    tag: result._internalRoot.current.tag,
+                    mode: result._internalRoot.current.mode,
+                    lanes: result._internalRoot.current.lanes
+                }
+            });
+            
+            // Store for later inspection
+            window.fiberRoot = result._internalRoot;
+            window.hostRoot = result._internalRoot.current;
+            
+            log("✅ ReactDOMRoot wrapper created", {
+                hasInternalRoot: !!result._internalRoot,
+                renderMethod: typeof result.render,
+                unmountMethod: typeof result.unmount
+            });
+            
+            return result;
+        };
+
+        // Demo component
+        function Counter() {
+            const [count, setCount] = React.useState(0);
+            
+            return React.createElement('div', null,
+                React.createElement('h3', null, 'React Counter'),
+                React.createElement('p', null, `Count: ${count}`),
+                React.createElement('button', {
+                    onClick: () => setCount(count + 1)
+                }, 'Increment'),
+                React.createElement('button', {
+                    onClick: () => setCount(count - 1)
+                }, 'Decrement')
+            );
+        }
+
+        // Global functions for buttons
+        window.startDebugging = function() {
+            log("🎬 Starting React debugging session...");
+            const container = document.getElementById("root");
+            rootInstance = ReactDOM.createRoot(container);
+            
+            setTimeout(() => {
+                log("🎨 Rendering Counter component...");
+                rootInstance.render(React.createElement(Counter));
+            }, 1000);
+        };
+
+        window.inspectStructures = function() {
+            if (!window.fiberRoot) {
+                log("❌ No FiberRoot found. Run debugging session first.");
+                return;
+            }
+            
+            log("🔍 Inspecting FiberRoot structure", {
+                tag: window.fiberRoot.tag,
+                containerInfo: window.fiberRoot.containerInfo.tagName,
+                pendingLanes: window.fiberRoot.pendingLanes,
+                entangledLanes: window.fiberRoot.entangledLanes,
+                mode: window.fiberRoot.current.mode
+            });
+            
+            log("🔍 Inspecting HostRoot Fiber", {
+                tag: window.hostRoot.tag,
+                mode: window.hostRoot.mode,
+                lanes: window.hostRoot.lanes,
+                childLanes: window.hostRoot.childLanes,
+                hasUpdateQueue: !!window.hostRoot.updateQueue,
+                hasChild: !!window.hostRoot.child
+            });
+            
+            if (window.hostRoot.updateQueue) {
+                log("🔍 UpdateQueue structure", {
+                    baseState: window.hostRoot.updateQueue.baseState,
+                    hasSharedPending: !!window.hostRoot.updateQueue.shared.pending
+                });
+            }
+        };
+
+        window.clearDebug = function() {
+            debugOutput.innerHTML = '';
+            debugStep = 0;
+            log("🧹 Debug log cleared");
+        };
+
+        // Initialize
+        log("🎯 Hour 1: createRoot Deep Dive initialized");
+        log("📖 Instructions: Click 'Start Debugging Session' and open DevTools to follow along");
+    </script>
+</body>
+</html> 

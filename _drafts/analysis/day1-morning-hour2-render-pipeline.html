@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hour 2: Render Pipeline Mechanics - Work Loop Deep Dive</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .debug-panel {
+            background: #1e1e1e;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .step {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .flow-diagram {
+            background: #f3e5f5;
+            border: 2px solid #9c27b0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .demo-app {
+            border: 2px solid #ff9800;
+            padding: 15px;
+            border-radius: 5px;
+            background: #fff8e1;
+            min-height: 100px;
+        }
+        
+        button {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #f57c00;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .work-unit {
+            background: #e1f5fe;
+            border: 1px solid #03a9f4;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        
+        .phase {
+            background: #f1f8e9;
+            border-left: 4px solid #4caf50;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚙️ Hour 2: Render Pipeline Mechanics</h1>
+        <p><strong>Goal:</strong> Master root.render() → scheduleUpdate → workLoop execution</p>
+        <p><strong>Time:</strong> 60 minutes | <strong>Skills:</strong> Work Loop, Scheduling, Priority System</p>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>🎯 Live Work Loop Demo</h2>
+            <div id="root" class="demo-app">
+                <!-- React will render here -->
+            </div>
+            <div>
+                <button onclick="traceRender()">🎬 Trace root.render()</button>
+                <button onclick="triggerUpdate()">🔄 Trigger State Update</button>
+                <button onclick="showWorkLoop()">⚙️ Show Work Loop</button>
+                <button onclick="clearDebug()">🧹 Clear Log</button>
+            </div>
+            <div class="debug-panel" id="debug-output"></div>
+        </div>
+        
+        <div class="panel">
+            <h2>📊 Render Pipeline Flow</h2>
+            <div class="flow-diagram">
+                <h3>Complete Render Flow</h3>
+                <div style="text-align: left; font-family: monospace; font-size: 12px;">
+                    root.render(element)<br/>
+                    ↓<br/>
+                    updateContainer()<br/>
+                    ↓<br/>
+                    createUpdate() + enqueueUpdate()<br/>
+                    ↓<br/>
+                    scheduleUpdateOnFiber()<br/>
+                    ↓<br/>
+                    ensureRootIsScheduled()<br/>
+                    ↓<br/>
+                    performWorkOnRoot()<br/>
+                    ↓<br/>
+                    workLoopSync() / workLoopConcurrent()<br/>
+                    ↓<br/>
+                    performUnitOfWork() loop<br/>
+                    ↓<br/>
+                    commitRoot()
+                </div>
+            </div>
+            
+            <div class="step">
+                <h3>Key Functions to Trace</h3>
+                <div class="work-unit">
+                    <strong>updateContainer()</strong><br/>
+                    Creates update object and schedules work
+                </div>
+                <div class="work-unit">
+                    <strong>scheduleUpdateOnFiber()</strong><br/>
+                    Marks root with priority and ensures scheduling
+                </div>
+                <div class="work-unit">
+                    <strong>performWorkOnRoot()</strong><br/>
+                    Chooses sync vs concurrent rendering
+                </div>
+                <div class="work-unit">
+                    <strong>workLoopSync()</strong><br/>
+                    Processes work units until completion
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>🔬 Update Object Structure</h2>
+        <div class="code-block">
+// Update object created by root.render()
+{
+  eventTime: 1703123456789,        // Timestamp when update was created
+  lane: 1,                         // SyncLane (highest priority)
+  tag: 0,                          // UpdateState
+  payload: {                       // The actual update data
+    element: &lt;App /&gt;               // Your React element
+  },
+  callback: null,                  // Optional callback after update
+  next: null                       // Next update in queue
+}
+        </div>
+        
+        <h3>Priority Lanes in React 19</h3>
+        <div class="code-block">
+const SyncLane = 0b0000000000000000000000000000001;        // 1 - Highest
+const InputContinuousLane = 0b0000000000000000000000000000100;  // 4 - User input  
+const DefaultLane = 0b0000000000000000000000000010000;     // 16 - Normal updates
+const TransitionLane = 0b0000000000000000000000001000000;  // 64 - Transitions
+const IdleLane = 0b0100000000000000000000000000000;        // Lowest priority
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>⚙️ Work Loop Mechanics</h2>
+        
+        <div class="phase">
+            <h3>🔄 Synchronous Work Loop</h3>
+            <div class="code-block">
+function workLoopSync() {
+  // Keep working until no more work
+  while (workInProgress !== null) {
+    performUnitOfWork(workInProgress);
+  }
+}
+
+function performUnitOfWork(unitOfWork) {
+  // Process current fiber
+  const next = beginWork(unitOfWork);
+  
+  if (next === null) {
+    // No child, complete this unit
+    completeUnitOfWork(unitOfWork);
+  } else {
+    // Move to child
+    workInProgress = next;
+  }
+}
+            </div>
+        </div>
+        
+        <div class="phase">
+            <h3>⏱️ Concurrent Work Loop</h3>
+            <div class="code-block">
+function workLoopConcurrent() {
+  // Work until we need to yield
+  while (workInProgress !== null && !shouldYield()) {
+    performUnitOfWork(workInProgress);
+  }
+}
+
+function shouldYield() {
+  // Check if we've used our time slice
+  return getCurrentTime() >= deadline;
+}
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>🎯 Learning Objectives</h2>
+        <div style="background: #e8f5e8; border-left: 4px solid #4caf50; padding: 10px; margin: 10px 0;">
+            <h3>✅ After Hour 2, you will:</h3>
+            <ul>
+                <li>Understand how root.render() triggers the render pipeline</li>
+                <li>Know the difference between sync and concurrent work loops</li>
+                <li>Be able to trace update objects through the scheduling system</li>
+                <li>Understand React 19's priority lane system</li>
+                <li>See how performUnitOfWork processes individual fibers</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@19.1.0?dev",
+            "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import React from "react";
+        import ReactDOM from "react-dom/client";
+
+        // Global variables for debugging
+        window.React = React;
+        window.ReactDOM = ReactDOM;
+        let debugStep = 0;
+        let rootInstance = null;
+        let currentComponent = null;
+
+        const debugOutput = document.getElementById("debug-output");
+        
+        function log(message, data = null) {
+            debugStep++;
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>Step ${debugStep}:</strong> ${message}`;
+            if (data) {
+                div.innerHTML += `<pre style="margin: 5px 0; padding: 5px; background: #333; border-radius: 3px;">${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            debugOutput.appendChild(div);
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+        }
+
+        // Demo component with state
+        function CounterApp() {
+            const [count, setCount] = React.useState(0);
+            const [name, setName] = React.useState("Work Loop Demo");
+            
+            // Store setter for global access
+            window.setCount = setCount;
+            window.setName = setName;
+            
+            return React.createElement('div', null,
+                React.createElement('h3', null, name),
+                React.createElement('p', null, `Count: ${count}`),
+                React.createElement('button', {
+                    onClick: () => setCount(c => c + 1)
+                }, 'Increment'),
+                React.createElement('button', {
+                    onClick: () => setName(name === "Work Loop Demo" ? "React Pipeline" : "Work Loop Demo")
+                }, 'Toggle Name'),
+                React.createElement('div', { style: { marginTop: '10px', fontSize: '12px', color: '#666' } },
+                    `Rendered at: ${new Date().toLocaleTimeString()}`
+                )
+            );
+        }
+
+        // Intercept render for debugging
+        let originalRender = null;
+        
+        function interceptRender(root) {
+            if (!originalRender) {
+                originalRender = root.render;
+                root.render = function(element) {
+                    debugger; // 🔴 BREAKPOINT: root.render() called
+                    log("🎬 root.render() called", {
+                        elementType: element.type.name,
+                        elementProps: Object.keys(element.props || {})
+                    });
+                    
+                    log("📦 Creating update object...");
+                    log("⚡ Scheduling update on fiber...");
+                    log("🔄 Ensuring root is scheduled...");
+                    
+                    const result = originalRender.apply(this, arguments);
+                    
+                    log("✅ Render scheduled successfully");
+                    return result;
+                };
+            }
+        }
+
+        // Intercept useState for update tracking
+        const originalUseState = React.useState;
+        React.useState = function(initialState) {
+            const result = originalUseState.apply(this, arguments);
+            
+            // Wrap setState to add debugging
+            const [state, originalSetState] = result;
+            const wrappedSetState = function(newState) {
+                debugger; // 🔴 BREAKPOINT: setState called
+                log("🔄 setState called", {
+                    currentState: state,
+                    newState: typeof newState === 'function' ? 'function' : newState
+                });
+                
+                log("📦 Creating state update...");
+                log("⚡ Scheduling re-render...");
+                
+                return originalSetState.apply(this, arguments);
+            };
+            
+            return [state, wrappedSetState];
+        };
+
+        // Global functions for buttons
+        window.traceRender = function() {
+            log("🎬 Starting render trace...");
+            const container = document.getElementById("root");
+            rootInstance = ReactDOM.createRoot(container);
+            
+            // Intercept render method
+            interceptRender(rootInstance);
+            
+            setTimeout(() => {
+                log("🎨 Calling root.render() with CounterApp...");
+                rootInstance.render(React.createElement(CounterApp));
+            }, 500);
+        };
+
+        window.triggerUpdate = function() {
+            if (!window.setCount) {
+                log("❌ No component mounted. Run render trace first.");
+                return;
+            }
+            
+            log("🚀 Triggering state update...");
+            window.setCount(c => c + 1);
+        };
+
+        window.showWorkLoop = function() {
+            log("⚙️ Work Loop Mechanics:");
+            log("📋 Work loop processes fibers one by one");
+            log("🔄 Each performUnitOfWork() call processes one fiber");
+            log("📈 beginWork() creates/updates fiber children");
+            log("✅ completeWork() finalizes fiber and bubbles effects");
+            log("🎯 Process continues until workInProgress is null");
+            
+            if (window.setName) {
+                log("🎪 Triggering name change to see work loop in action...");
+                window.setName("Work Loop Active!");
+            }
+        };
+
+        window.clearDebug = function() {
+            debugOutput.innerHTML = '';
+            debugStep = 0;
+            log("🧹 Debug log cleared");
+        };
+
+        // Initialize
+        log("⚙️ Hour 2: Render Pipeline Mechanics initialized");
+        log("📖 Instructions: Click 'Trace root.render()' to start debugging");
+        log("🔍 Open DevTools and watch the call stack during execution");
+    </script>
+</body>
+</html> 
