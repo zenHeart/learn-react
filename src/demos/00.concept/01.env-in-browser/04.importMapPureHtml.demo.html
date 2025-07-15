@@ -1,0 +1,45 @@
+<script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@19.1.0?dev",
+      "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev",
+      "react-router": "https://esm.sh/react-router@7?dev"
+    }
+  }
+</script>
+<script type="module" src="https://esm.sh/tsx"></script>
+<div id="root"></div>
+<script type="text/babel">
+  import { createRoot } from "react-dom/client";
+  import React from "react";
+  import { HashRouter, Routes, Route, Link, useLocation } from "react-router";
+
+  function App() {
+    // eslint-disable-next-line
+    let location = useLocation();
+    React.useEffect(() => {
+      console.log("✅ 路由变化，当前地址为：", window?.location?.href);
+    }, [location]);
+    return (
+      <>
+        <nav style={{ display: "flex", gap: "10px" }}>
+          <Link to="/">首页</Link>
+          <Link to="/about/1">关于</Link>
+        </nav>
+        <Routes>
+          <Route path="/" element={<div>首页</div>} />
+          <Route path="/about/:id" element={<div>关于</div>} />
+        </Routes>
+      </>
+    );
+  }
+  function HashRouterApp() {
+    return (
+      <HashRouter>
+        <App />
+      </HashRouter>
+    );
+  }
+
+  createRoot(root).render(<HashRouterApp />);
+</script>
