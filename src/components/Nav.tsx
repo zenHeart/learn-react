@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { NavLink, Route, Routes, useSearchParams, useLocation, Navigate, useNavigate } from 'react-router'
 import Tags from './Tags'
+import { DemoWithMarkdown } from './DemoWithMarkdown'
 
 const styles = {
   layout: {
@@ -83,9 +84,22 @@ interface NavItem {
   component?: any;
   tags: string[];
   children?: NavItem[];
+  hasMarkdown?: boolean;
+  markdownContent?: string;
 }
 
-function formatComponent(component: any) {
+function formatComponent(component: any, itemMeta?: any) {
+  // 检查是否有 markdown 文档
+  if (itemMeta?.hasMarkdown && itemMeta?.markdownContent) {
+    return (
+      <DemoWithMarkdown 
+        demoComponent={component}
+        markdownContent={itemMeta.markdownContent}
+      />
+    );
+  }
+  
+  // 原有逻辑保持不变
   // html 组件使用 iframe
   if (typeof component === 'string') {
     // @ts-ignore
@@ -265,7 +279,7 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
       .filter(Boolean);
   }
 
-  const flattenRoutes = (items: NavItem[], parentPath = ''): Array<{ name: string, path: string, component: any, tags: string[] }> => {
+  const flattenRoutes = (items: NavItem[], parentPath = ''): Array<{ name: string, path: string, component: any, tags: string[], hasMarkdown?: boolean, markdownContent?: string }> => {
     return items.reduce((acc, item) => {
       const currentPath = parentPath ? `${parentPath}/${item.name}` : item.name;
 
@@ -289,11 +303,13 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
           name: item.name,
           path: currentPath,
           component: item.component,
-          tags: item.tags || []
+          tags: item.tags || [],
+          hasMarkdown: item.hasMarkdown,
+          markdownContent: item.markdownContent
         }];
       }
       return acc;
-    }, [] as Array<{ name: string, path: string, component: any, tags: string[] }>);
+    }, [] as Array<{ name: string, path: string, component: any, tags: string[], hasMarkdown?: boolean, markdownContent?: string }>);
   }
 
   // Update getFirstAvailableRoute to handle filtered routes
@@ -367,11 +383,11 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
       </nav>
       <main style={styles.content}>
         <Routes>
-          {flattenRoutes(children).map(({ path, component }) => (
+          {flattenRoutes(children).map(({ path, component, hasMarkdown, markdownContent }) => (
             <Route
               key={path}
               path={path}
-              element={formatComponent(component)}
+              element={formatComponent(component, { hasMarkdown, markdownContent })}
             />
           ))}
           <Route
@@ -422,6 +438,94 @@ styleSheet.textContent = `
 
   * {
     box-sizing: border-box;
+  }
+
+  /* Markdown 样式 */
+  .markdown-content {
+    line-height: 1.6;
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4 {
+    color: var(--text-primary);
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+  }
+
+  .markdown-content h1 {
+    font-size: 1.5em;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.3em;
+  }
+
+  .markdown-content h2 {
+    font-size: 1.3em;
+  }
+
+  .markdown-content h3 {
+    font-size: 1.1em;
+  }
+
+  .markdown-content h4 {
+    font-size: 1em;
+  }
+
+  .markdown-content code {
+    background-color: var(--bg-hover);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  }
+
+  .markdown-content pre {
+    background-color: var(--bg-hover);
+    padding: 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+  }
+
+  .markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .markdown-content a {
+    color: var(--link-color);
+    text-decoration: none;
+  }
+
+  .markdown-content a:hover {
+    text-decoration: underline;
+  }
+
+  .markdown-content strong {
+    font-weight: 600;
+  }
+
+  .markdown-content em {
+    font-style: italic;
+  }
+
+  .markdown-content p {
+    margin-bottom: 1em;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+    margin-bottom: 1em;
+    padding-left: 1.5em;
+  }
+
+  .markdown-content li {
+    margin-bottom: 0.5em;
   }
 `;
 document.head.appendChild(styleSheet);

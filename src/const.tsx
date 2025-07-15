@@ -6,6 +6,9 @@ interface ComponentMeta {
   tags?: string[];
   title?: string;
   description?: string;
+  hasMarkdown?: boolean;
+  markdownPath?: string;
+  markdownContent?: string;
   [key: string]: any;
 }
 
@@ -14,6 +17,25 @@ interface ComponentWithMeta extends React.FC {
   meta?: ComponentMeta;
 }
 
+// 添加检查 markdown 文件的函数
+function findCorrespondingMarkdown(demoPath: string): { path: string; content: string } | null {
+  // 移除 .demo.{ext} 后缀，添加 .md 后缀
+  const basePath = demoPath.replace(/\.demo\.(jsx|tsx|html)$/, '').replace(/^\.\/demos\//, '');
+  const mdPath = `${basePath}.md`;
+  
+  // 检查文件是否存在
+  const allMdFiles = import.meta.glob('./demos/**/*.md', { eager: true, as: 'raw' });
+  const fullMdPath = `./demos/${mdPath}`;
+  
+  if (allMdFiles[fullMdPath]) {
+    return {
+      path: mdPath,
+      content: allMdFiles[fullMdPath] as string
+    };
+  }
+  
+  return null;
+}
 
 // Create a map of all demo-related files
 function createRawFilesMap(demosRaw: Record<string, string>): Record<string, string> {
@@ -117,11 +139,30 @@ function createNestedStructure(components: Component[]): NestedComponent[] {
   return result;
 }
 
-function extractComponentMetaInfo(type: DemoType, component: ComponentWithMeta | string) {
+function extractComponentMetaInfo(type: DemoType, component: ComponentWithMeta | string, demoPath: string) {
+  let baseMeta = {};
+  
   if (type === DemoType.HTML) {
-    return parserHtml(component as string);
+    baseMeta = parserHtml(component as string);
+  } else if (type === DemoType.REACT) {
+    baseMeta = (component as ComponentWithMeta).meta || {};
   }
-  return (component as ComponentWithMeta).meta || {};
+  
+  // 检查是否有对应的 markdown 文件
+  const markdownFile = findCorrespondingMarkdown(demoPath);
+  if (markdownFile) {
+    const mdMeta = parserHtml(markdownFile.content);
+    // markdown meta 优先级更高
+    return {
+      ...baseMeta,
+      ...mdMeta,
+      hasMarkdown: true,
+      markdownPath: markdownFile.path,
+      markdownContent: markdownFile.content
+    };
+  }
+  
+  return baseMeta;
 }
 
 export function getFlatComponents(): Component[] {
@@ -146,7 +187,7 @@ export function getFlatComponents(): Component[] {
     const name = filename
       .replace(/^\.\/demos\//, '')
       .replace(/\.demo\.\w+$/, '');
-    const componentMetaInfo = extractComponentMetaInfo(componentType, DemoComponent);
+    const componentMetaInfo = extractComponentMetaInfo(componentType, DemoComponent, filename);
     const sandpackComponent = wrapDemoWithSandpack(componentType, rawContent, filename, rawFilesMap);
     flatComponents.push({
       ...componentMetaInfo,
