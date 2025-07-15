@@ -2,27 +2,27 @@
  * Copyright (c) Facebook, Inc. and its affiliates.
  */
 
-import {memo} from 'react';
-import cn from 'classnames';
+import { memo, JSX } from "react";
+import cn from "classnames";
 
 export const IconChevron = memo<
-  JSX.IntrinsicElements['svg'] & {
+  JSX.IntrinsicElements["svg"] & {
     /**
      * The direction the arrow should point.
      * `start` and `end` are relative to the current locale.
      * for example, in LTR, `start` is left and `end` is right.
      */
-    displayDirection: 'start' | 'end' | 'right' | 'left' | 'up' | 'down';
+    displayDirection: "start" | "end" | "right" | "left" | "up" | "down";
   }
->(function IconChevron({className, displayDirection}) {
+>(function IconChevron({ className, displayDirection }) {
   const classes = cn(
     {
-      'rotate-0': displayDirection === 'down',
-      'rotate-90': displayDirection === 'left',
-      'rotate-180': displayDirection === 'up',
-      '-rotate-90': displayDirection === 'right',
-      'rotate-90 rtl:-rotate-90': displayDirection === 'start',
-      '-rotate-90 rtl:rotate-90': displayDirection === 'end',
+      "rotate-0": displayDirection === "down",
+      "rotate-90": displayDirection === "left",
+      "rotate-180": displayDirection === "up",
+      "-rotate-90": displayDirection === "right",
+      "rotate-90 rtl:-rotate-90": displayDirection === "start",
+      "-rotate-90 rtl:rotate-90": displayDirection === "end",
     },
     className
   );
@@ -32,7 +32,8 @@ export const IconChevron = memo<
       xmlns="http://www.w3.org/2000/svg"
       width="20"
       height="20"
-      viewBox="0 0 20 20">
+      viewBox="0 0 20 20"
+    >
       <g fill="none" fillRule="evenodd" transform="translate(-446 -398)">
         <path
           fill="currentColor"

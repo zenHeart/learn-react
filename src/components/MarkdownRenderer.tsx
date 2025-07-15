@@ -19,14 +19,16 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         // 配置 marked
         marked.setOptions({
           breaks: true,
-          gfm: true,
-          highlight: function(code: string, lang: string) {
-            return code; // 可以后续集成代码高亮
-          }
+          gfm: true
         });
-        
+
         const renderedHtml = marked(contentWithoutFrontMatter);
-        setHtml(renderedHtml);
+        // 如果 marked 返回 Promise，则等待其解析
+        if (renderedHtml instanceof Promise) {
+          renderedHtml.then((htmlString) => setHtml(htmlString));
+        } else {
+          setHtml(renderedHtml);
+        }
       } catch (error) {
         console.warn('Failed to load marked, using simple parser', error);
         // 使用简单的 markdown 解析器作为后备

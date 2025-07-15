@@ -6,7 +6,6 @@ import { useState, useRef, useEffect } from 'react';
 import { IconChevron } from './IconChevron';
 
 import {
-  SandpackCodeViewer,
   useSandpack,
 } from '@codesandbox/sandpack-react/unstyled';
 import type { SandpackMessageConsoleMethods } from '@codesandbox/sandpack-client';

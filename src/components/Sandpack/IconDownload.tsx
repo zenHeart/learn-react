@@ -2,10 +2,10 @@
  * Copyright (c) Facebook, Inc. and its affiliates.
  */
 
-import {memo} from 'react';
+import { memo, JSX } from "react";
 
-export const IconDownload = memo<JSX.IntrinsicElements['svg']>(
-  function IconDownload({className}) {
+export const IconDownload = memo<JSX.IntrinsicElements["svg"]>(
+  function IconDownload({ className }) {
     return (
       <svg
         width="1em"
@@ -13,7 +13,8 @@ export const IconDownload = memo<JSX.IntrinsicElements['svg']>(
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className={className}>
+        className={className}
+      >
         <path
           d="M20.5 22H3.5C3.10218 22 2.72064 21.842 2.43934 21.5607C2.15804 21.2794 2 20.8978 2 20.5V15.5C2 15.3674 2.05268 15.2402 2.14645 15.1464C2.24021 15.0527 2.36739 15 2.5 15H3.5C3.63261 15 3.75979 15.0527 3.85355 15.1464C3.94732 15.2402 4 15.3674 4 15.5V20H20V15.5C20 15.3674 20.0527 15.2402 20.1464 15.1464C20.2402 15.0527 20.3674 15 20.5 15H21.5C21.6326 15 21.7598 15.0527 21.8536 15.1464C21.9473 15.2402 22 15.3674 22 15.5V20.5C22 20.8978 21.842 21.2794 21.5607 21.5607C21.2794 21.842 20.8978 22 20.5 22Z"
           fill="currentColor"

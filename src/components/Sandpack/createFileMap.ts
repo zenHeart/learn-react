@@ -18,6 +18,7 @@ export const createFileMap = (codeSnippets: any) => {
         return result;
       }
 
+      //@ts-ignore
       const { props } = codeSnippet.props.children;
       let filePath;
       let fileHidden = false;

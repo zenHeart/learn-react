@@ -2,11 +2,10 @@
  * Copyright (c) Facebook, Inc. and its affiliates.
  */
 
-import {memo} from 'react';
+import {memo, SVGProps} from 'react';
 
-export const IconNewPage = memo<JSX.IntrinsicElements['svg']>(
-  function IconNewPage(props) {
-    return (
+export const IconNewPage = memo<SVGProps<SVGSVGElement>>(function IconNewPage(props) {
+  return (
       <svg
         width="1em"
         height="1em"

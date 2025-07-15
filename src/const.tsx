@@ -168,7 +168,7 @@ function extractComponentMetaInfo(type: DemoType, component: ComponentWithMeta |
 export function getFlatComponents(): Component[] {
   let flatComponents: Component[] = [];
 
-  const reactDemos: Record<string, ComponentWithMeta | string> = import.meta.glob('./demos/**/*.demo.{jsx,tsx}', {
+  const reactDemos: any = import.meta.glob('./demos/**/*.demo.{jsx,tsx}', {
     eager: true,
     query: { raw: true },
     import: 'default'

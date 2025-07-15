@@ -1,11 +1,11 @@
-import {useState} from 'react';
+import { useState, JSX } from "react";
 
 import {
   LoadingOverlayState,
   OpenInCodeSandboxButton,
   useSandpack,
-} from '@codesandbox/sandpack-react/unstyled';
-import {useEffect} from 'react';
+} from "@codesandbox/sandpack-react/unstyled";
+import { useEffect } from "react";
 
 const FADE_ANIMATION_DURATION = 200;
 
@@ -24,28 +24,30 @@ export const LoadingOverlay = ({
     forceLoading
   );
 
-  if (loadingOverlayState === 'HIDDEN') {
+  if (loadingOverlayState === "HIDDEN") {
     return null;
   }
 
-  if (loadingOverlayState === 'TIMEOUT') {
+  if (loadingOverlayState === "TIMEOUT") {
     return (
       <div className="sp-overlay sp-error">
         <div className="sp-error-message">
           Unable to establish connection with the sandpack bundler. Make sure
           you are online or try again later. If the problem persists, please
-          report it via{' '}
+          report it via{" "}
           <a
             className="sp-error-message"
-            href="mailto:hello@codesandbox.io?subject=Sandpack Timeout Error">
+            href="mailto:hello@codesandbox.io?subject=Sandpack Timeout Error"
+          >
             email
-          </a>{' '}
-          or submit an issue on{' '}
+          </a>{" "}
+          or submit an issue on{" "}
           <a
             className="sp-error-message"
             href="https://github.com/codesandbox/sandpack/issues"
             rel="noreferrer noopener"
-            target="_blank">
+            target="_blank"
+          >
             GitHub.
           </a>
         </div>
@@ -54,7 +56,7 @@ export const LoadingOverlay = ({
   }
 
   const stillLoading =
-    loadingOverlayState === 'LOADING' || loadingOverlayState === 'PRE_FADING';
+    loadingOverlayState === "LOADING" || loadingOverlayState === "PRE_FADING";
 
   return (
     <div
@@ -62,7 +64,8 @@ export const LoadingOverlay = ({
       style={{
         opacity: stillLoading ? 1 : 0,
         transition: `opacity ${FADE_ANIMATION_DURATION}ms ease-out`,
-      }}>
+      }}
+    >
       <div className="sp-cube-wrapper" title="Open in CodeSandbox">
         <OpenInCodeSandboxButton />
         <div className="sp-cube">
@@ -85,22 +88,22 @@ const useLoadingOverlayState = (
   dependenciesLoading: boolean,
   forceLoading: boolean
 ): LoadingOverlayState => {
-  const {sandpack, listen} = useSandpack();
-  const [state, setState] = useState<LoadingOverlayState>('HIDDEN');
+  const { sandpack, listen } = useSandpack();
+  const [state, setState] = useState<LoadingOverlayState>("HIDDEN");
 
-  if (state !== 'LOADING' && forceLoading) {
-    setState('LOADING');
+  if (state !== "LOADING" && forceLoading) {
+    setState("LOADING");
   }
 
   /**
    * Sandpack listener
    */
-  const sandpackIdle = sandpack.status === 'idle';
+  const sandpackIdle = sandpack.status === "idle";
   useEffect(() => {
     const unsubscribe = listen((message) => {
-      if (message.type === 'done') {
+      if (message.type === "done") {
         setState((prev) => {
-          return prev === 'LOADING' ? 'PRE_FADING' : 'HIDDEN';
+          return prev === "LOADING" ? "PRE_FADING" : "HIDDEN";
         });
       }
     }, clientId);
@@ -116,11 +119,11 @@ const useLoadingOverlayState = (
   useEffect(() => {
     let fadeTimeout: ReturnType<typeof setTimeout>;
 
-    if (state === 'PRE_FADING' && !dependenciesLoading) {
-      setState('FADING');
-    } else if (state === 'FADING') {
+    if (state === "PRE_FADING" && !dependenciesLoading) {
+      setState("FADING");
+    } else if (state === "FADING") {
       fadeTimeout = setTimeout(
-        () => setState('HIDDEN'),
+        () => setState("HIDDEN"),
         FADE_ANIMATION_DURATION
       );
     }
@@ -130,12 +133,12 @@ const useLoadingOverlayState = (
     };
   }, [state, dependenciesLoading]);
 
-  if (sandpack.status === 'timeout') {
-    return 'TIMEOUT';
+  if (sandpack.status === "timeout") {
+    return "TIMEOUT";
   }
 
-  if (sandpack.status !== 'running') {
-    return 'HIDDEN';
+  if (sandpack.status !== "running") {
+    return "HIDDEN";
   }
 
   return state;
