@@ -1,6 +1,10 @@
 import React from "react";
+
+let a = 1
+
 export function Counter() {
    const [count, setCount] = React.useState(0);
+   
 
    React.useEffect(() => {
       debugger;
@@ -15,6 +19,8 @@ export function Counter() {
    const add = () => {
       debugger
       setCount(count + 1);
+      a++;
+      console.log("add count :%d, a:%d", count, a);
    };
 
    const add1 = () => {
@@ -123,6 +129,7 @@ class App extends React.Component {
          <div>
             <Counter />
             {this.state.time}
+            <p>a: {a}</p>
          </div>
       );
    }

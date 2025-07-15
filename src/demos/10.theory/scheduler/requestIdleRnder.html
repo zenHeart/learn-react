@@ -1,0 +1,162 @@
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>React-like Task Scheduling</title>
+      <style>
+        body {
+          font-family: sans-serif;
+          padding: 20px;
+        }
+        #status {
+          margin-top: 20px;
+          font-weight: bold;
+          color: blue;
+        }
+        .urgent-task-button {
+          background-color: #4caf50; /* Green */
+          border: none;
+          color: white;
+          padding: 15px 32px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          margin: 4px 2px;
+          cursor: pointer;
+        }
+        .non-urgent-task-button {
+          background-color: #f44336; /* Red */
+          border: none;
+          color: white;
+          padding: 15px 32px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          margin: 4px 2px;
+          cursor: pointer;
+        }
+        .button-container {
+          margin-bottom: 20px;
+          position: fixed;
+          top: 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div id="root"></div>
+      <div class="button-container">
+        <button class="non-urgent-task-button" id="startRender">
+          Start Large Render
+        </button>
+        <button class="urgent-task-button" id="clickMe">
+          Click Me (Urgent Task)
+        </button>
+      </div>
+      <div id="status"></div>
+
+      <script>
+        const root = document.getElementById("root");
+        const statusDisplay = document.getElementById("status");
+        const startRenderButton = document.getElementById("startRender");
+        const clickMeButton = document.getElementById("clickMe");
+
+        // --- Simulated React-like Scheduler ---
+        let taskQueue = []; // Our queue of tasks
+        let isPerformingWork = false;
+        let isUrgentWorkPending = false;
+
+        const scheduleWork = (task, isUrgent = false) => {
+          if (isUrgent) {
+            // Urgent tasks get higher priority and can interrupt ongoing non-urgent work
+            isUrgentWorkPending = true;
+            taskQueue.unshift(task); // Add to the front of the queue
+            statusDisplay.textContent = "Urgent task scheduled!";
+          } else {
+            taskQueue.push(task); // Add to the back for non-urgent work
+            statusDisplay.textContent = "Non-urgent task scheduled.";
+          }
+
+          if (!isPerformingWork) {
+            requestIdleCallback(workloop, { timeout: 1000 });
+            isPerformingWork = true;
+          }
+        };
+
+        const performUnitOfWork = () => {
+          if (taskQueue.length > 0) {
+            const task = taskQueue.shift();
+            task();
+            return true; // Indicate a task was performed
+          }
+          return false; // No tasks left
+        };
+
+        const workloop = (deadline) => {
+          let tasksProcessedInThisFrame = 0;
+          // Simulate React's ability to yield if urgent work comes in or time runs out
+          while (
+            taskQueue.length > 0 &&
+            (deadline.timeRemaining() > 0 ||
+              deadline.didTimeout ||
+              isUrgentWorkPending) &&
+            tasksProcessedInThisFrame < 500 // Arbitrary limit to simulate small chunks of work
+          ) {
+            performUnitOfWork();
+            tasksProcessedInThisFrame++;
+            if (isUrgentWorkPending) {
+              // If an urgent task came in, process it immediately and then re-schedule remaining work
+              isUrgentWorkPending = false;
+              statusDisplay.textContent =
+                "Urgent task processed! Rescheduling non-urgent work.";
+              break; // Yield control after urgent task
+            }
+          }
+
+          if (taskQueue.length > 0) {
+            // If there are pending tasks, requestIdleCallback for the next time slice
+            requestIdleCallback(workloop, { timeout: 1000 });
+            statusDisplay.textContent = `Still working... ${taskQueue.length} tasks remaining.`;
+          } else {
+            isPerformingWork = false;
+            statusDisplay.textContent = "All tasks completed!";
+          }
+        };
+
+        // --- Demo Specific Logic ---
+
+        // Simulate a "large render" by adding many small tasks
+        startRenderButton.addEventListener("click", () => {
+          root.innerHTML = "<h2>Starting a large rendering job...</h2>";
+          for (let i = 0; i < 200000; i++) {
+            // Many small tasks
+            scheduleWork(() => {
+              const p = document.createElement("p");
+              p.textContent = `Rendering item ${i + 1}`;
+              root.appendChild(p);
+              // To make the effect more visible, you might want to remove previous content
+              // or only append if root is not too big. For simplicity, we just append.
+            });
+          }
+        });
+
+        // Simulate an "urgent click" that needs immediate response
+        clickMeButton.addEventListener("click", () => {
+          scheduleWork(() => {
+            const urgentMessage = document.createElement("h3");
+            urgentMessage.style.color = "purple";
+            urgentMessage.textContent = `🔥 Click handled immediately! Current time: ${new Date().toLocaleTimeString()}`;
+            root.prepend(urgentMessage); // Prepend to show it clearly
+            // Optionally clear previous urgent messages
+            setTimeout(() => urgentMessage.remove(), 2000); // Remove after a short time
+          }, true); // Mark as urgent
+        });
+
+        // Initial message
+        root.innerHTML = "<h1>React-like Concurrent Scheduling Demo</h1>";
+        statusDisplay.textContent = "Ready to schedule tasks.";
+      </script>
+    </body>
+  </html>

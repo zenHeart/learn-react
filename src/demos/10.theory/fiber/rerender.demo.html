@@ -1,0 +1,69 @@
+<html>
+  <body>
+    <style>
+      .App {
+        font-family: sans-serif;
+        text-align: center;
+      }
+      .text {
+        height: 20px;
+      }
+      .cells {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 50px;
+      }
+      .cell {
+        width: 10px;
+        height: 10px;
+      }
+      .cell.green {
+        background-color: green;
+      }
+      .cell.gray {
+        background-color: #ccc;
+      }
+    </style>
+    <div id="container"></div>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" data-type="module">
+      import React from "https://esm.sh/react@19.0.0?dev";
+      import ReactDOMClient from "https://esm.sh/react-dom@19.0.0/client?dev";
+      function Counter() {
+        const [count, setCount] = React.useState(0);
+        React.useEffect(() => {
+          console.log("useEffect");
+          return () => {
+            console.log("cleanup");
+          };
+        })
+        return (
+          <div>
+            <p>You clicked {count} times</p>
+            <button onClick={() => setCount(count + 1)}>Click me</button>
+          </div>
+        );
+      }
+
+      function App() {
+        return (
+          <div className="App">
+            <h1>React Function Hooks Example</h1>
+            <div className="text">This is a simple counter using React Function Hooks.</div>
+            <div className="cells">
+              {[...Array(100)].map((_, index) => (
+                <div key={index} className={`cell ${index % 2 === 0 ? 'green' : 'gray'}`}></div>
+              ))}
+            </div>
+            <Counter />
+          </div>
+        );
+      }
+
+      const rootElement = document.getElementById("container");
+      ReactDOMClient.createRoot(rootElement).render(<App />);
+      console.log(__REACT_DEVTOOLS_GLOBAL_HOOK__)
+    </script>
+  </body>
+</html>
