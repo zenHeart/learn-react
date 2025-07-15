@@ -23,6 +23,6 @@ git add -A
 git commit -m 'deploy'
 
 # 如果发布到 https://<USERNAME>.github.io
-git push -f ${rep_url} main:gh-pages
+git push -f ${rep_url} master:gh-pages
 
 cd -
