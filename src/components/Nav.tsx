@@ -218,7 +218,7 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
     return items
       .filter(matchesFilter)
       .map(item => {
-        const currentPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+        const currentPath = parentPath ? `${parentPath}/${item.name}` : `/${item.name}`;
         const itemTags = item.tags || [];
         const isExpanded = expandedGroups.includes(currentPath);
 
@@ -264,7 +264,7 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
                 ...styles.navLink,
                 ...(isActive ? styles.navLinkActive : {})
               })}
-              to={{ pathname: currentPath, search: location.search }}
+              to={currentPath}
             >
               {item.name}
               {itemTags.length > 0 && (
@@ -281,7 +281,7 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
 
   const flattenRoutes = (items: NavItem[], parentPath = ''): Array<{ name: string, path: string, component: any, tags: string[], hasMarkdown?: boolean, markdownContent?: string }> => {
     return items.reduce((acc, item) => {
-      const currentPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+      const currentPath = parentPath ? `${parentPath}/${item.name}` : `/${item.name}`;
 
       if (item.children) {
         // Include both the current item (if it has a component) and its children
