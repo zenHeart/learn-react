@@ -1,10 +1,14 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
-import React from "react";
 
 
+performance.mark("Start rendering");
+
+console.group('createRoot')
 const root = createRoot(document.getElementById('root')!)
+console.groupEnd() 
 
+console.group('render')
 root.render(
     new Proxy(<App />, {
       get(target, prop) {
@@ -18,7 +22,8 @@ root.render(
     })
   // </React.StrictMode>
 )
-performance.mark("Start rendering");
+console.groupEnd()
+
 performance.mark("Finish rendering");
 performance.measure("Rendering", "Start rendering", "Finish rendering");
 // @ts-ignore

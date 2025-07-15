@@ -1,0 +1,48 @@
+<script>
+  let taskQueue = [
+    () => {
+      console.log("task1 start");
+      let d = Date.now();
+      while (Date.now() - d < 4);
+      console.log("task1 end");
+    },
+    () => {
+      console.log("task2 start");
+      let d = Date.now();
+      while (Date.now() - d < 20);
+      console.log("task2 end");
+    },
+    () => {
+      console.log("task3 start");
+      let d = Date.now();
+      while (Date.now() - d < 10);
+      console.log("task3 end");
+    },
+  ];
+
+  const performUnitWork = () => {
+    // Retrieve the first task in the first queue for execution
+    taskQueue.shift()();
+  };
+
+  const workloop = (deadline) => {
+    console.log(
+      `The remaining time of this frame: ${deadline.timeRemaining()}`
+    );
+    // If the remaining time is greater than 0 or the defined timeout is reached, the task is executed
+    // If there is no time left, the task is given up and the control returns to the browser
+    while (
+      (deadline.timeRemaining() > 0 || deadline.didTimeout) &&
+      taskQueue.length > 0
+    ) {
+      performUnitWork();
+    }
+    // If there are pending tasks, requestIdleCallback is called to apply for the next time slice
+    if (taskQueue.length > 0) {
+      window.requestIdleCallback(workloop, { timeout: 1000 });
+    }
+  };
+
+  
+  requestIdleCallback(workloop, { timeout: 1000 });
+</script>

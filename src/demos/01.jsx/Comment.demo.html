@@ -1,0 +1,38 @@
+<script type="importmap">
+  {
+    "imports": {
+      "@reduxjs/toolkit": "https://esm.sh/@reduxjs/toolkit?dev",
+      "react": "https://esm.sh/react@19.1.0?dev",
+      "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev"
+    }
+  }
+</script>
+
+<script type="module" src="https://esm.sh/tsx"></script>
+<div id="app"></div>
+<script type="text/babel">
+  import { createRoot } from "react-dom/client";
+  import React from "react";
+
+  const container = document.getElementById("app");
+  const root = createRoot(container);
+  function Demo() {
+    return <h1>hello world</h1>;
+  }
+  const CommentNode = ({ text }) => {
+    return (
+      <div
+        style={{ display: "none" }}
+        dangerouslySetInnerHTML={{ __html: `<!-- ${text} -->` }}
+      />
+    );
+  };
+
+  const B = (
+    <>
+      <CommentNode text="comment node" />
+      <h1>注释节点</h1>
+    </>
+  );
+  root.render(B);
+</script>

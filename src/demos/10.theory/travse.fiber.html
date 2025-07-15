@@ -1,0 +1,200 @@
+<script type="importmap">
+  {
+    "imports": {
+      "@reduxjs/toolkit": "https://esm.sh/@reduxjs/toolkit?dev",
+      "react": "https://esm.sh/react@19.1.0?dev",
+      "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev"
+    }
+  }
+</script>
+
+<script type="module" src="https://esm.sh/tsx"></script>
+<div id="app"></div>
+<script type="text/babel">
+  import { createRoot } from "react-dom/client";
+  import React, { useState, useEffect, useRef } from "react";
+
+  const container = document.getElementById("app");
+  const root = createRoot(container);
+  
+  // Create a ref to access the DOM after rendering
+  const appRef = React.createRef();
+  
+  // Counter Component
+  const Counter = () => {
+    const [count, setCount] = useState(0);
+    
+    return (
+      <div className="counter">
+        <h2>Counter: {count}</h2>
+        <button onClick={() => setCount(count - 1)}>-</button>
+        <button onClick={() => setCount(count + 1)}>+</button>
+      </div>
+    );
+  };
+  
+  // Todo List Component
+  const TodoList = () => {
+    const [todos, setTodos] = useState([
+      { id: 1, text: "Learn React", completed: false },
+      { id: 2, text: "Explore Fiber architecture", completed: false }
+    ]);
+    const [newTodo, setNewTodo] = useState("");
+    
+    const addTodo = () => {
+      if (!newTodo.trim()) return;
+      setTodos([...todos, { 
+        id: Date.now(),
+        text: newTodo,
+        completed: false
+      }]);
+      setNewTodo("");
+    };
+    
+    const toggleTodo = (id) => {
+      setTodos(todos.map(todo => 
+        todo.id === id ? {...todo, completed: !todo.completed} : todo
+      ));
+    };
+    
+    return (
+      <div className="todo-list">
+        <h2>Todo List</h2>
+        <div className="add-todo">
+          <input
+            type="text"
+            value={newTodo}
+            onChange={(e) => setNewTodo(e.target.value)}
+            placeholder="Add a new task"
+          />
+          <button onClick={addTodo}>Add</button>
+        </div>
+        <ul>
+          {todos.map(todo => (
+            <li 
+              key={todo.id} 
+              onClick={() => toggleTodo(todo.id)}
+              style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}
+            >
+              {todo.text}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+  
+  const App = () => {
+    return (
+      <div ref={appRef} className="app-container">
+        <h1>React Fiber Explorer</h1>
+        <Counter />
+        <TodoList />
+      </div>
+    );
+  };
+  
+  // Enhanced function to traverse and log the fiber tree
+  function traverseFiberTree(fiber, depth = 0, isFiberRoot = false) {
+    if (!fiber) return;
+    
+    const indent = '  '.repeat(depth);
+    
+    // Format fiber type for display
+    let typeDisplay = 'unknown';
+    if (typeof fiber.type === 'string') {
+      typeDisplay = fiber.type; // HTML tag
+    } else if (typeof fiber.type === 'function') {
+      typeDisplay = fiber.type.name || 'Anonymous Component';
+    } else if (fiber.type === null) {
+      typeDisplay = 'null';
+    } else if (fiber.type && typeof fiber.type === 'object') {
+      typeDisplay = 'React.Element';
+    }
+    
+    // Node information
+    const nodeType = isFiberRoot ? 'FiberRoot' : 'FiberNode';
+    const stateNode = fiber.stateNode ? `(has stateNode: ${fiber.stateNode.constructor.name})` : '';
+    const effectTag = fiber.effectTag ? `effectTag: ${fiber.effectTag}` : '';
+    const flags = fiber.flags !== undefined ? `flags: ${fiber.flags}` : '';
+    
+    console.log(`${indent}${nodeType}: ${typeDisplay} ${fiber.key ? `key="${fiber.key}"` : ''} ${stateNode} ${effectTag} ${flags}`);
+    
+    // Log additional details about hooks if present
+    if (fiber.memoizedState && fiber.memoizedState.memoizedState !== undefined) {
+      console.log(`${indent}  State: ${JSON.stringify(fiber.memoizedState.memoizedState)}`);
+    }
+    
+    // Traverse child
+    if (fiber.child) {
+      traverseFiberTree(fiber.child, depth + 1);
+    }
+    
+    // Traverse sibling
+    if (fiber.sibling) {
+      traverseFiberTree(fiber.sibling, depth);
+    }
+  }
+  
+  // Log FiberRoot information
+  function logFiberRoot(rootFiber) {
+    console.log('=== FiberRoot Information ===');
+    console.log(`Current: ${rootFiber.current ? 'exists' : 'null'}`);
+    console.log(`containerInfo: ${rootFiber.containerInfo ? rootFiber.containerInfo.tagName : 'null'}`);
+    console.log(`pendingChildren: ${rootFiber.pendingChildren}`);
+    console.log('=== End FiberRoot Information ===\n');
+  }
+  const jsxApp = <App />;
+  window.jsxApp = jsxApp; // Expose app for debugging
+  // Render the component
+  root.render(jsxApp);
+  
+  // Access and log the fiber tree after rendering
+  setTimeout(() => {
+    try {
+      const domNode = appRef.current;
+      if (!domNode) {
+        console.error('Could not get reference to DOM node');
+        return;
+      }
+      
+      // Find fiber property (React internals)
+      const fiberKey = Object.keys(domNode).find(key => 
+        key.startsWith('__reactFiber') || 
+        key === '_reactInternals');
+      
+      const fiber = fiberKey ? domNode[fiberKey] : null;
+      
+      if (fiber) {
+        // Try to access the FiberRoot if possible
+        let fiberRoot = null;
+        if (fiber._internalRoot) {
+          fiberRoot = fiber._internalRoot;
+        } else if (fiber.stateNode && fiber.stateNode._internalRoot) {
+          fiberRoot = fiber.stateNode._internalRoot;
+        } else {
+          // Traverse up to find FiberRoot
+          let current = fiber;
+          while (current && current.return) {
+            current = current.return;
+          }
+          if (current.stateNode && current.stateNode.containerInfo) {
+            fiberRoot = current.stateNode;
+          }
+        }
+        
+        if (fiberRoot) {
+          logFiberRoot(fiberRoot);
+        }
+        
+        console.log('=== Fiber Tree ===');
+        traverseFiberTree(fiber);
+        console.log('=== End of Fiber Tree ===');
+      } else {
+        console.log('Could not access fiber tree');
+      }
+    } catch (error) {
+      console.error('Error accessing fiber tree:', error);
+    }
+  }, 100);
+</script>
