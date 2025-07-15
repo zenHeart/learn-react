@@ -1,12 +1,9 @@
-# 待办事项
+# TODO LIST
 
 
-## 功能实现
 
-## 待读资料
-
+## UNREAD 
 * [ ] 剔除 sandpack 支持任意版本 react 使用
-
 * [ ] HOOKS
     * [ ] 编写示例说明 hooks 的使用场景
     * [ ] 编写 demo 说明 hook rule 的使用
@@ -16,10 +13,8 @@
 * [ ] question:
     * [ ] 如何优雅修改 props 的属性触发函数组件变化
     * [ ] dom 节点之前和之后的插入
-     
     错误处理:
     * [ ] errorbound 无法处理事件中的错误等需要如何优化
-
 * [ ] 未读的官方文档:
     ☐  状态提升 https://reactjs.org/docs/lifting-state-up.html
     ☐  react 开发模式 https://reactjs.org/docs/thinking-in-react.html
