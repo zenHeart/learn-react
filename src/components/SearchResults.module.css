@@ -43,6 +43,10 @@
   animation: spin 1s linear infinite;
 }
 
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
 .searchResultsEmpty {
   display: flex;
   flex-direction: column;
@@ -113,6 +117,11 @@
 
 .searchResultItem:hover,
 .searchResultItem.selected {
+  background: var(--bg-hover);
+  border-left-color: var(--accent-color, #007acc);
+}
+
+.selected {
   background: var(--bg-hover);
   border-left-color: var(--accent-color, #007acc);
 }

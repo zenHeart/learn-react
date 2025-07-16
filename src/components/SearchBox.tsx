@@ -13,7 +13,8 @@ export function SearchBox({ placeholder = 'Search demos and docs...', className 
     search,
     clearSearch,
     searchHistory,
-    isSearching
+    isSearching,
+    results
   } = useSearch();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +41,7 @@ export function SearchBox({ placeholder = 'Search demos and docs...', className 
   };
 
   const handleInputFocus = () => {
-    if (!query && searchHistory.length > 0) {
+    if (!query && searchHistory.length > 0 && results.length === 0) {
       setShowHistory(true);
     }
   };
@@ -133,7 +134,7 @@ export function SearchBox({ placeholder = 'Search demos and docs...', className 
         </div>
 
         {/* 搜索历史 */}
-        {showHistory && searchHistory.length > 0 && (
+        {showHistory && searchHistory.length > 0 && results.length === 0 && (
           <div className={styles.searchHistory}>
             <div className={styles.searchHistoryHeader}>Recent searches</div>
             {searchHistory.slice(0, 5).map((historyQuery, index) => (
