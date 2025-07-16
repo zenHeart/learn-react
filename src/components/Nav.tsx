@@ -413,163 +413,229 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
           if (filteredChildren.length === 0) return null;
 
           return (
-            <div key={currentPath} style={{ paddingLeft: `${level * 16}px` }}>
+            <div key={currentPath}>
               <div
                 style={{
-                  ...styles.navSectionTitle,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 12px',
+                  paddingLeft: `${12 + level * 16}px`,
+                  paddingRight: '12px',
+                  paddingTop: '8px',
+                  paddingBottom: '8px',
+                  margin: '2px 8px',
+                  borderRadius: '6px',
+                  transition: 'all 0.2s ease',
+                  cursor: item.hasDirectoryDoc ? 'default' : 'pointer',
+                  position: 'relative' as const,
+                }}
+                onClick={item.hasDirectoryDoc ? undefined : () => toggleGroup(currentPath)}
+                onMouseEnter={(e) => {
+                  if (!item.hasDirectoryDoc) {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!item.hasDirectoryDoc) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
                 }}
               >
-                {/* 如果目录有文档，则目录名可以点击跳转 */}
-                {item.hasDirectoryDoc ? (
-                  <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                    <NavLink
-                      style={({ isActive }) => ({
-                        ...styles.navLink,
-                        ...(isActive ? styles.navLinkActive : {}),
-                        padding: '6px 8px',
-                        margin: '0',
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        textDecoration: 'none',
-                        borderRadius: '4px',
-                        backgroundColor: isActive ? 'var(--bg-active)' : 'transparent',
-                        border: '1px solid transparent',
-                        transition: 'all 0.2s ease',
-                        fontSize: '0.9375rem',
-                        fontWeight: 500
-                      })}
-                      to={currentPath}
-                      onMouseEnter={(e) => {
-                        if (!e.currentTarget.classList.contains('active')) {
-                          e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-                          e.currentTarget.style.borderColor = 'var(--border-color)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!e.currentTarget.classList.contains('active')) {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.borderColor = 'transparent';
-                        }
-                      }}
-                    >
-                      <span style={{ 
-                        marginRight: '6px', 
-                        fontSize: '0.875em',
-                        opacity: 0.7
-                      }}>📄</span>
+                {/* Folder Icon */}
+                <span style={{ 
+                  marginRight: '8px', 
+                  fontSize: '14px',
+                  opacity: 0.7,
+                  minWidth: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {item.hasDirectoryDoc ? '📄' : '📁'}
+                </span>
+
+                {/* Folder Name and Content */}
+                <div style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  overflow: 'hidden'
+                }}>
+                                     {item.hasDirectoryDoc ? (
+                     <NavLink
+                       style={({ isActive }) => ({
+                         flex: 1,
+                         color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                         textDecoration: 'none',
+                         fontSize: '14px',
+                         fontWeight: 500,
+                         overflow: 'hidden',
+                         textOverflow: 'ellipsis',
+                         whiteSpace: 'nowrap' as const,
+                         padding: '2px 4px',
+                         margin: 0,
+                         display: 'block',
+                         borderRadius: '4px',
+                         transition: 'all 0.2s ease',
+                         backgroundColor: isActive ? 'var(--bg-active)' : 'transparent'
+                       })}
+                       to={currentPath}
+                       onMouseEnter={(e) => {
+                         if (!e.currentTarget.classList.contains('active')) {
+                           e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                           e.currentTarget.style.color = 'var(--text-primary)';
+                         }
+                       }}
+                       onMouseLeave={(e) => {
+                         if (!e.currentTarget.classList.contains('active')) {
+                           e.currentTarget.style.backgroundColor = 'transparent';
+                           e.currentTarget.style.color = 'var(--text-secondary)';
+                         }
+                       }}
+                       onClick={(e) => e.stopPropagation()}
+                     >
+                       {item.name}
+                     </NavLink>
+                  ) : (
+                    <span style={{
+                      flex: 1,
+                      color: 'var(--text-primary)',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap' as const,
+                    }}>
                       {item.name}
-                      {itemTags.length > 0 && (
-                        <span style={{ marginLeft: '8px' }}>
-                          <Tags onClickTag={handleTagChange} tagsColor={tagsColor} tags={itemTags} />
-                        </span>
-                      )}
-                    </NavLink>
-                    <button
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: 'var(--text-secondary)',
-                        marginLeft: '4px',
-                        borderRadius: '4px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleGroup(currentPath);
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-                        e.currentTarget.style.color = 'var(--text-primary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-secondary)';
-                      }}
-                      title={isExpanded ? "Collapse" : "Expand"}
-                    >
-                      <ChevronIcon expanded={isExpanded} />
-                    </button>
-                  </div>
-                ) : (
-                  // 没有文档的目录保持原来的逻辑
-                  <div
-                    style={{
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                      padding: '6px 8px',
-                      borderRadius: '4px',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onClick={() => toggleGroup(currentPath)}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <span style={{ display: 'flex', alignItems: 'center' }}>
-                      <span style={{ 
-                        marginRight: '6px', 
-                        fontSize: '0.875em',
-                        opacity: 0.5
-                      }}>📁</span>
-                      {item.name}
-                      {itemTags.length > 0 && (
-                        <span style={{ marginLeft: '8px' }}>
-                          <Tags onClickTag={handleTagChange} tagsColor={tagsColor} tags={itemTags} />
-                        </span>
-                      )}
                     </span>
-                    <ChevronIcon expanded={isExpanded} />
-                  </div>
-                )}
+                  )}
+
+                  {/* Tags */}
+                  {itemTags.length > 0 && (
+                    <div style={{ 
+                      marginLeft: '8px',
+                      flexShrink: 0
+                    }}>
+                      <Tags onClickTag={handleTagChange} tagsColor={tagsColor} tags={itemTags} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Expand/Collapse Button */}
+                <button
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text-secondary)',
+                    marginLeft: '8px',
+                    borderRadius: '4px',
+                    minWidth: '24px',
+                    height: '24px',
+                    flexShrink: 0,
+                    transition: 'all 0.2s ease'
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleGroup(currentPath);
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-active)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }}
+                  title={isExpanded ? "Collapse" : "Expand"}
+                >
+                  <ChevronIcon expanded={isExpanded} />
+                </button>
               </div>
-              <ul style={{
+
+              {/* Children */}
+              <div style={{
                 display: isExpanded ? 'block' : 'none',
-                margin: 0,
-                padding: 0,
-                listStyle: 'none',
+                marginLeft: '0px',
               }}>
                 {renderNavItems(item.children, currentPath, level + 1)}
-              </ul>
+              </div>
             </div>
           );
         }
 
+        // Regular file/document items
         return (
-          <li key={currentPath} style={{
-            paddingLeft: `${level * 16}px`,
-            listStyle: 'none'
-          }}>
+          <div key={currentPath}>
             <NavLink
               style={({ isActive }) => ({
-                ...styles.navLink,
-                ...(isActive ? styles.navLinkActive : {})
+                display: 'flex',
+                alignItems: 'center',
+                paddingLeft: `${12 + level * 16}px`,
+                paddingRight: '12px',
+                paddingTop: '8px',
+                paddingBottom: '8px',
+                margin: '2px 8px',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                textDecoration: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                transition: 'all 0.2s ease',
+                backgroundColor: isActive ? 'var(--bg-active)' : 'transparent',
+                fontWeight: isActive ? 500 : 400,
               })}
               to={currentPath}
+              onMouseEnter={(e) => {
+                if (!e.currentTarget.classList.contains('active')) {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!e.currentTarget.classList.contains('active')) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }
+              }}
             >
-              {item.name}
+              {/* File Icon */}
+              <span style={{ 
+                marginRight: '8px', 
+                fontSize: '14px',
+                opacity: 0.7,
+                minWidth: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                📄
+              </span>
+
+              {/* File Name */}
+              <span style={{
+                flex: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap' as const,
+              }}>
+                {item.name}
+              </span>
+
+              {/* Tags */}
               {itemTags.length > 0 && (
-                <span style={{ marginLeft: '8px' }}>
+                <div style={{ 
+                  marginLeft: '8px',
+                  flexShrink: 0
+                }}>
                   <Tags onClickTag={handleTagChange} tagsColor={tagsColor} tags={itemTags} />
-                </span>
+                </div>
               )}
             </NavLink>
-          </li>
+          </div>
         );
       })
       .filter(Boolean);
@@ -686,9 +752,9 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
             ...(isSidebarExpanded ? {} : styles.navContentHidden)
           }}
         >
-          <ul>
+          <div style={{ margin: 0, padding: 0 }}>
             {renderNavItems(children)}
-          </ul>
+          </div>
         </div>
       </nav>
       <main style={styles.content}>
@@ -1010,26 +1076,51 @@ styleSheet.textContent = `
     margin-top: 0;
   }
 
+  /* Navigation enhancements */
+  .nav-item {
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    margin: 2px 8px;
+  }
+
+  .nav-item:hover {
+    background-color: var(--bg-hover);
+    transform: translateX(2px);
+  }
+
+  .nav-item.active {
+    background-color: var(--bg-active);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .nav-item.active {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
   /* Custom scrollbar styles */
   .markdown-standalone-container::-webkit-scrollbar,
-  .markdown-content::-webkit-scrollbar {
+  .markdown-content::-webkit-scrollbar,
+  nav::-webkit-scrollbar {
     width: 8px;
   }
 
   .markdown-standalone-container::-webkit-scrollbar-track,
-  .markdown-content::-webkit-scrollbar-track {
+  .markdown-content::-webkit-scrollbar-track,
+  nav::-webkit-scrollbar-track {
     background: var(--bg-secondary);
     border-radius: 4px;
   }
 
   .markdown-standalone-container::-webkit-scrollbar-thumb,
-  .markdown-content::-webkit-scrollbar-thumb {
+  .markdown-content::-webkit-scrollbar-thumb,
+  nav::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 4px;
   }
 
   .markdown-standalone-container::-webkit-scrollbar-thumb:hover,
-  .markdown-content::-webkit-scrollbar-thumb:hover {
+  .markdown-content::-webkit-scrollbar-thumb:hover,
+  nav::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
   }
 
