@@ -59,7 +59,6 @@ const styles = {
     color: 'var(--text-primary)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
-    marginBottom: '0.75rem',
   },
   content: {
     flex: 1,
