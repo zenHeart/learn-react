@@ -1,11 +1,13 @@
 import React from 'react';
+import { parseMarkdownMeta, MarkdownMetadata } from '../utils/markdownMeta';
 
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+  onMetaParsed?: (metadata: MarkdownMetadata) => void;
 }
 
-export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className = '', onMetaParsed }: MarkdownRendererProps) {
   const [html, setHtml] = React.useState('');
   
   // 生成标题ID的函数
@@ -16,11 +18,16 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
   React.useEffect(() => {
     const processMarkdown = async () => {
       try {
+        // 解析 YAML frontmatter
+        const { metadata, content: contentWithoutFrontMatter } = parseMarkdownMeta(content);
+        
+        // 通知父组件 metadata 已解析
+        if (onMetaParsed) {
+          onMetaParsed(metadata);
+        }
+        
         // 动态导入 marked 库，如果安装失败则使用简单解析器
         const { marked } = await import('marked');
-        
-        // 移除 YAML front matter
-        const contentWithoutFrontMatter = content.replace(/^---\n[\s\S]*?\n---\n/, '');
         
         // 配置 marked
         marked.setOptions({
@@ -55,9 +62,16 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         }
       } catch (error) {
         console.warn('Failed to load marked, using simple parser', error);
-        // 使用简单的 markdown 解析器作为后备
-        const contentWithoutFrontMatter = content.replace(/^---\n[\s\S]*?\n---\n/, '');
         
+        // 解析 YAML frontmatter（即使是简单解析器也需要）
+        const { metadata, content: contentWithoutFrontMatter } = parseMarkdownMeta(content);
+        
+        // 通知父组件 metadata 已解析
+        if (onMetaParsed) {
+          onMetaParsed(metadata);
+        }
+        
+        // 使用简单的 markdown 解析器作为后备
         let renderedHtml = contentWithoutFrontMatter
           // 标题（同时添加ID）
           .replace(/^# (.*$)/gm, (match, text) => {

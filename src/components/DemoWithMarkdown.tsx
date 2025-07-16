@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { parseMarkdownMeta, MarkdownMetadata, getReadingTime, formatReadingTime } from '../utils/markdownMeta';
 
 interface DemoWithMarkdownProps {
   demoComponent: React.ComponentType | string;
@@ -16,6 +17,7 @@ export function DemoWithMarkdown({ demoComponent, markdownContent }: DemoWithMar
   const [isMobile, setIsMobile] = useState(false);
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
   const [showToc, setShowToc] = useState(false);
+  const [metadata, setMetadata] = useState<MarkdownMetadata>({});
   
   useEffect(() => {
     const checkMobile = () => {
@@ -30,11 +32,13 @@ export function DemoWithMarkdown({ demoComponent, markdownContent }: DemoWithMar
   // 提取文档标题生成TOC
   useEffect(() => {
     const extractToc = () => {
+      // 使用解析后的内容（无YAML frontmatter）
+      const { content } = parseMarkdownMeta(markdownContent);
       const headingRegex = /^(#{1,6})\s+(.+)$/gm;
       const toc: TocItem[] = [];
       let match;
       
-      while ((match = headingRegex.exec(markdownContent)) !== null) {
+      while ((match = headingRegex.exec(content)) !== null) {
         const level = match[1].length;
         const title = match[2].trim();
         const id = title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
@@ -48,9 +52,24 @@ export function DemoWithMarkdown({ demoComponent, markdownContent }: DemoWithMar
       
       setTocItems(toc);
     };
-    
+
     extractToc();
   }, [markdownContent]);
+
+  const scrollToHeading = (headingId: string) => {
+    const element = document.getElementById(headingId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      setShowToc(false);
+    }
+  };
+
+  const handleMetaParsed = (parsedMetadata: MarkdownMetadata) => {
+    setMetadata(parsedMetadata);
+  };
+
+  const readingTime = getReadingTime(metadata);
+  const formattedReadingTime = formatReadingTime(readingTime);
   
   // 渲染 demo 组件
   const renderDemo = () => {
@@ -172,18 +191,20 @@ export function DemoWithMarkdown({ demoComponent, markdownContent }: DemoWithMar
             <span>Documentation</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{
-              color: 'var(--text-secondary)',
-              fontSize: '0.875em',
-              backgroundColor: 'var(--bg-hover)',
-              padding: '4px 8px',
-              borderRadius: '12px',
-              fontSize: '0.75em',
-              border: '1px solid var(--border-color)'
-            }}>
-              {Math.max(1, Math.ceil(markdownContent.split(' ').length / 200))} min read
-            </span>
-            {tocItems.length > 0 && (
+            {formattedReadingTime && (
+              <span style={{
+                color: 'var(--text-secondary)',
+                fontSize: '0.875em',
+                backgroundColor: 'var(--bg-hover)',
+                padding: '4px 8px',
+                borderRadius: '12px',
+                fontSize: '0.75em',
+                border: '1px solid var(--border-color)'
+              }}>
+                {formattedReadingTime}
+              </span>
+            )}
+          {tocItems.length > 0 && (
               <div style={{ position: 'relative' }}>
                 <button
                   style={tocButtonStyle}
@@ -214,11 +235,7 @@ export function DemoWithMarkdown({ demoComponent, markdownContent }: DemoWithMar
                         e.currentTarget.style.backgroundColor = 'transparent';
                       }}
                       onClick={() => {
-                        const element = document.getElementById(item.id);
-                        if (element) {
-                          element.scrollIntoView({ behavior: 'smooth' });
-                        }
-                        setShowToc(false);
+                        scrollToHeading(item.id);
                       }}
                     >
                       {item.title}
@@ -230,7 +247,7 @@ export function DemoWithMarkdown({ demoComponent, markdownContent }: DemoWithMar
           </div>
         </div>
         <div style={markdownContentStyle}>
-          <MarkdownRenderer content={markdownContent} className="demo-markdown" />
+          <MarkdownRenderer content={markdownContent} className="demo-markdown" onMetaParsed={handleMetaParsed} />
         </div>
       </div>
       <div style={demoSectionStyle}>

@@ -3,6 +3,7 @@ import { NavLink, Route, Routes, useSearchParams, useLocation, Navigate, useNavi
 import Tags from './Tags'
 import { DemoWithMarkdown } from './DemoWithMarkdown'
 import { MarkdownRenderer } from './MarkdownRenderer'
+import { parseMarkdownMeta, MarkdownMetadata, getReadingTime, formatReadingTime } from '../utils/markdownMeta';
 
 const styles = {
   layout: {
@@ -96,15 +97,18 @@ interface NavItem {
 const MarkdownOnlyRenderer = ({ content }: { content: string }) => {
   const [tocItems, setTocItems] = useState<Array<{id: string, title: string, level: number}>>([]);
   const [showToc, setShowToc] = useState(false);
+  const [metadata, setMetadata] = useState<MarkdownMetadata>({});
 
   // 提取文档标题生成TOC
   useEffect(() => {
     const extractToc = () => {
+      // 使用解析后的内容（无YAML frontmatter）
+      const { content: contentWithoutFrontMatter } = parseMarkdownMeta(content);
       const headingRegex = /^(#{1,6})\s+(.+)$/gm;
       const toc: Array<{id: string, title: string, level: number}> = [];
       let match;
       
-      while ((match = headingRegex.exec(content)) !== null) {
+      while ((match = headingRegex.exec(contentWithoutFrontMatter)) !== null) {
         const level = match[1].length;
         const title = match[2].trim();
         const id = title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
@@ -121,6 +125,13 @@ const MarkdownOnlyRenderer = ({ content }: { content: string }) => {
     
     extractToc();
   }, [content]);
+
+  const handleMetaParsed = (parsedMetadata: MarkdownMetadata) => {
+    setMetadata(parsedMetadata);
+  };
+
+  const readingTime = getReadingTime(metadata);
+  const formattedReadingTime = formatReadingTime(readingTime);
 
   const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
     <svg
@@ -151,9 +162,11 @@ const MarkdownOnlyRenderer = ({ content }: { content: string }) => {
           <span>Documentation</span>
         </div>
         <div className="markdown-standalone-meta">
-          <span className="markdown-reading-time">
-            {Math.max(1, Math.ceil(content.split(' ').length / 200))} min read
-          </span>
+          {formattedReadingTime && (
+            <span className="markdown-reading-time">
+              {formattedReadingTime}
+            </span>
+          )}
           {tocItems.length > 0 && (
             <div style={{ position: 'relative' }}>
               <button
@@ -234,7 +247,7 @@ const MarkdownOnlyRenderer = ({ content }: { content: string }) => {
         </div>
       </div>
       <div className="markdown-standalone-content">
-        <MarkdownRenderer content={content} className="standalone-markdown" />
+        <MarkdownRenderer content={content} className="standalone-markdown" onMetaParsed={handleMetaParsed} />
       </div>
     </div>
   );
