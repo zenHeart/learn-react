@@ -104,7 +104,7 @@ export function DemoWithMarkdown({ demoComponent, markdownContent }: DemoWithMar
     top: 0,
     backgroundColor: 'var(--bg-secondary)',
     borderBottom: '1px solid var(--border-color)',
-    padding: '16px 20px',
+    padding: '13px 20px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
