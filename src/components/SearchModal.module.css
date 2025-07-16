@@ -1,0 +1,252 @@
+.searchModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1000;
+  padding: 80px 20px 20px;
+  animation: searchModalFadeIn 0.2s ease-out;
+}
+
+@keyframes searchModalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+}
+
+.searchModalContent {
+  width: 100%;
+  max-width: 700px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: visible;
+  animation: searchModalSlideIn 0.3s ease-out;
+  max-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes searchModalSlideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.searchModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.searchModalTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.searchModalIcon {
+  color: var(--text-secondary);
+}
+
+.searchModalClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.searchModalClose:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.searchModalBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.searchModalInput {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  z-index: 10;
+}
+
+.searchModalResults {
+  flex: 1;
+  overflow: hidden;
+}
+
+.searchModalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.searchModalShortcuts {
+  display: flex;
+  gap: 16px;
+}
+
+.searchShortcut {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.searchShortcut kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 1px 0 var(--border-color);
+}
+
+.searchModalBranding {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .searchModal {
+    padding: 20px 16px;
+    align-items: stretch;
+  }
+
+  .searchModalContent {
+    max-height: 100%;
+    border-radius: 12px;
+  }
+
+  .searchModalHeader {
+    padding: 12px 16px;
+  }
+
+  .searchModalInput {
+    padding: 16px;
+  }
+
+  .searchModalFooter {
+    padding: 8px 16px;
+  }
+
+  .searchModalShortcuts {
+    gap: 12px;
+  }
+
+  .searchShortcut {
+    font-size: 11px;
+  }
+
+  .searchShortcut kbd {
+    min-width: 16px;
+    height: 16px;
+    font-size: 9px;
+  }
+
+  .searchModalBranding {
+    font-size: 10px;
+  }
+}
+
+/* 小屏幕优化 */
+@media (max-width: 480px) {
+  .searchModal {
+    padding: 10px;
+  }
+
+  .searchModalHeader {
+    padding: 10px 12px;
+  }
+
+  .searchModalTitle {
+    font-size: 14px;
+  }
+
+  .searchModalInput {
+    padding: 12px;
+  }
+
+  .searchModalFooter {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 12px;
+  }
+
+  .searchModalShortcuts {
+    gap: 8px;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .searchModalContent {
+    border-width: 2px;
+  }
+
+  .searchModalClose:hover {
+    border: 1px solid var(--text-primary);
+  }
+}
+
+/* 减动效模式支持 */
+@media (prefers-reduced-motion: reduce) {
+  .searchModal,
+  .searchModalContent {
+    animation: none;
+  }
+
+  .searchModal {
+    backdrop-filter: none;
+  }
+} 

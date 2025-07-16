@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearch } from './SearchProvider';
 import { SearchResult } from '../utils/searchEngine';
+import styles from './SearchResults.module.css';
 
 interface SearchResultsProps {
   className?: string;

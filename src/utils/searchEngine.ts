@@ -34,48 +34,46 @@ interface IndexItem {
 }
 
 // Lucene 查询 AST 节点类型
-interface QueryNode {
-  type: 'term' | 'field' | 'wildcard' | 'fuzzy' | 'phrase' | 'boolean' | 'group';
-}
-
-interface TermNode extends QueryNode {
+interface TermNode {
   type: 'term';
   value: string;
 }
 
-interface FieldNode extends QueryNode {
+interface FieldNode {
   type: 'field';
   field: string;
   value: QueryNode;
 }
 
-interface WildcardNode extends QueryNode {
+interface WildcardNode {
   type: 'wildcard';
   pattern: string;
 }
 
-interface FuzzyNode extends QueryNode {
+interface FuzzyNode {
   type: 'fuzzy';
   term: string;
   distance?: number;
 }
 
-interface PhraseNode extends QueryNode {
+interface PhraseNode {
   type: 'phrase';
   phrase: string;
 }
 
-interface BooleanNode extends QueryNode {
+interface BooleanNode {
   type: 'boolean';
   left: QueryNode;
   operator: 'AND' | 'OR' | 'NOT';
   right?: QueryNode;
 }
 
-interface GroupNode extends QueryNode {
+interface GroupNode {
   type: 'group';
   query: QueryNode;
 }
+
+type QueryNode = TermNode | FieldNode | WildcardNode | FuzzyNode | PhraseNode | BooleanNode | GroupNode;
 
 type QueryAST = QueryNode;
 
@@ -118,8 +116,8 @@ export class LuceneSearchEngine {
         title,
         content: content.toLowerCase(),
         tags: component.tags || [],
-        author: metadata.author || '',
-        description: metadata.description || '',
+        author: (metadata as any).author || '',
+        description: (metadata as any).description || '',
         metadata
       };
     });
