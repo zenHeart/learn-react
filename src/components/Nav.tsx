@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { NavLink, Route, Routes, useSearchParams, useLocation, Navigate, useNavigate } from 'react-router'
 import Tags from './Tags'
 import { DemoWithMarkdown } from './DemoWithMarkdown'
+import { MarkdownRenderer } from './MarkdownRenderer'
 
 const styles = {
   layout: {
@@ -86,9 +87,39 @@ interface NavItem {
   children?: NavItem[];
   hasMarkdown?: boolean;
   markdownContent?: string;
+  isStandaloneMarkdown?: boolean;
+  hasDirectoryDoc?: boolean;
+  directoryDocContent?: string;
 }
 
+// 新增：纯 Markdown 渲染器组件
+const MarkdownOnlyRenderer = ({ content }: { content: string }) => {
+  return (
+    <div className="markdown-standalone-container">
+      <div className="markdown-standalone-header">
+        <div className="markdown-standalone-title">
+          <span className="markdown-icon">📝</span>
+          <span>Documentation</span>
+        </div>
+        <div className="markdown-standalone-meta">
+          <span className="markdown-reading-time">
+            {Math.max(1, Math.ceil(content.split(' ').length / 200))} min read
+          </span>
+        </div>
+      </div>
+      <div className="markdown-standalone-content">
+        <MarkdownRenderer content={content} className="standalone-markdown" />
+      </div>
+    </div>
+  );
+};
+
 function formatComponent(component: any, itemMeta?: any) {
+  // 处理独立的 markdown 文件
+  if (itemMeta?.isStandaloneMarkdown && itemMeta?.markdownContent) {
+    return <MarkdownOnlyRenderer content={itemMeta.markdownContent} />;
+  }
+  
   // 检查是否有 markdown 文档
   if (itemMeta?.hasMarkdown && itemMeta?.markdownContent) {
     return (
@@ -231,16 +262,126 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
               <div
                 style={{
                   ...styles.navSectionTitle,
-                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                 }}
-                onClick={() => toggleGroup(currentPath)}
               >
-                {item.name}
-                <ChevronIcon expanded={isExpanded} />
+                {/* 如果目录有文档，则目录名可以点击跳转 */}
+                {item.hasDirectoryDoc ? (
+                  <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                    <NavLink
+                      style={({ isActive }) => ({
+                        ...styles.navLink,
+                        ...(isActive ? styles.navLinkActive : {}),
+                        padding: '6px 8px',
+                        margin: '0',
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        textDecoration: 'none',
+                        borderRadius: '4px',
+                        backgroundColor: isActive ? 'var(--bg-active)' : 'transparent',
+                        border: '1px solid transparent',
+                        transition: 'all 0.2s ease',
+                        fontSize: '0.9375rem',
+                        fontWeight: 500
+                      })}
+                      to={currentPath}
+                      onMouseEnter={(e) => {
+                        if (!e.currentTarget.classList.contains('active')) {
+                          e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                          e.currentTarget.style.borderColor = 'var(--border-color)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!e.currentTarget.classList.contains('active')) {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.borderColor = 'transparent';
+                        }
+                      }}
+                    >
+                      <span style={{ 
+                        marginRight: '6px', 
+                        fontSize: '0.875em',
+                        opacity: 0.7
+                      }}>📄</span>
+                      {item.name}
+                      {itemTags.length > 0 && (
+                        <span style={{ marginLeft: '8px' }}>
+                          <Tags onClickTag={handleTagChange} tagsColor={tagsColor} tags={itemTags} />
+                        </span>
+                      )}
+                    </NavLink>
+                    <button
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'var(--text-secondary)',
+                        marginLeft: '4px',
+                        borderRadius: '4px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleGroup(currentPath);
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                        e.currentTarget.style.color = 'var(--text-primary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                      }}
+                      title={isExpanded ? "Collapse" : "Expand"}
+                    >
+                      <ChevronIcon expanded={isExpanded} />
+                    </button>
+                  </div>
+                ) : (
+                  // 没有文档的目录保持原来的逻辑
+                  <div
+                    style={{
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '6px 8px',
+                      borderRadius: '4px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onClick={() => toggleGroup(currentPath)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <span style={{ 
+                        marginRight: '6px', 
+                        fontSize: '0.875em',
+                        opacity: 0.5
+                      }}>📁</span>
+                      {item.name}
+                      {itemTags.length > 0 && (
+                        <span style={{ marginLeft: '8px' }}>
+                          <Tags onClickTag={handleTagChange} tagsColor={tagsColor} tags={itemTags} />
+                        </span>
+                      )}
+                    </span>
+                    <ChevronIcon expanded={isExpanded} />
+                  </div>
+                )}
               </div>
               <ul style={{
                 display: isExpanded ? 'block' : 'none',
@@ -279,37 +420,43 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
       .filter(Boolean);
   }
 
-  const flattenRoutes = (items: NavItem[], parentPath = ''): Array<{ name: string, path: string, component: any, tags: string[], hasMarkdown?: boolean, markdownContent?: string }> => {
+  const flattenRoutes = (items: NavItem[], parentPath = ''): Array<{ name: string, path: string, component: any, tags: string[], hasMarkdown?: boolean, markdownContent?: string, isStandaloneMarkdown?: boolean, hasDirectoryDoc?: boolean }> => {
     return items.reduce((acc, item) => {
       const currentPath = parentPath ? `${parentPath}/${item.name}` : `/${item.name}`;
 
       if (item.children) {
-        // Include both the current item (if it has a component) and its children
-        // const routes = [...flattenRoutes(item.children, currentPath)];
-        // if (item.component) {
-        //   routes.unshift({
-        //     name: item.name,
-        //     path: currentPath,
-        //     component: item.component,
-        //     tags: item.tags || []
-        //   });
-        // }
-        // return [...acc, ...routes];
+        // 如果目录有文档，添加目录路由
+        if (item.hasDirectoryDoc) {
+          acc.push({
+            name: item.name,
+            path: currentPath,
+            component: item.component,
+            tags: item.tags || [],
+            hasMarkdown: item.hasMarkdown,
+            markdownContent: item.markdownContent || item.directoryDocContent,
+            isStandaloneMarkdown: item.isStandaloneMarkdown,
+            hasDirectoryDoc: item.hasDirectoryDoc
+          });
+        }
+        
+        // 继续处理子项
         return [...acc, ...flattenRoutes(item.children, currentPath)];
       }
 
-      if (item.component) {
+      if (item.component || item.isStandaloneMarkdown) {
         return [...acc, {
           name: item.name,
           path: currentPath,
           component: item.component,
           tags: item.tags || [],
           hasMarkdown: item.hasMarkdown,
-          markdownContent: item.markdownContent
+          markdownContent: item.markdownContent,
+          isStandaloneMarkdown: item.isStandaloneMarkdown,
+          hasDirectoryDoc: item.hasDirectoryDoc
         }];
       }
       return acc;
-    }, [] as Array<{ name: string, path: string, component: any, tags: string[], hasMarkdown?: boolean, markdownContent?: string }>);
+    }, [] as Array<{ name: string, path: string, component: any, tags: string[], hasMarkdown?: boolean, markdownContent?: string, isStandaloneMarkdown?: boolean, hasDirectoryDoc?: boolean }>);
   }
 
   // Update getFirstAvailableRoute to handle filtered routes
@@ -383,11 +530,11 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
       </nav>
       <main style={styles.content}>
         <Routes>
-          {flattenRoutes(children).map(({ path, component, hasMarkdown, markdownContent }) => (
+          {flattenRoutes(children).map(({ path, component, hasMarkdown, markdownContent, isStandaloneMarkdown, hasDirectoryDoc }) => (
             <Route
               key={path}
               path={path}
-              element={formatComponent(component, { hasMarkdown, markdownContent })}
+              element={formatComponent(component, { hasMarkdown, markdownContent, isStandaloneMarkdown, hasDirectoryDoc })}
             />
           ))}
           <Route
@@ -445,87 +592,302 @@ styleSheet.textContent = `
     line-height: 1.6;
     color: var(--text-primary);
     font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   }
 
   .markdown-content h1,
   .markdown-content h2,
   .markdown-content h3,
-  .markdown-content h4 {
+  .markdown-content h4,
+  .markdown-content h5,
+  .markdown-content h6 {
     color: var(--text-primary);
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
+    margin-top: 2em;
+    margin-bottom: 0.75em;
     font-weight: 600;
+    line-height: 1.25;
   }
 
   .markdown-content h1 {
+    font-size: 2em;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5em;
+    margin-top: 0;
+  }
+
+  .markdown-content h2 {
     font-size: 1.5em;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.3em;
   }
 
-  .markdown-content h2 {
-    font-size: 1.3em;
-  }
-
   .markdown-content h3 {
-    font-size: 1.1em;
+    font-size: 1.25em;
   }
 
   .markdown-content h4 {
     font-size: 1em;
+    font-weight: 600;
+  }
+
+  .markdown-content h5 {
+    font-size: 0.875em;
+    font-weight: 600;
+  }
+
+  .markdown-content h6 {
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .markdown-content p {
+    margin-bottom: 1em;
+    color: var(--text-primary);
   }
 
   .markdown-content code {
     background-color: var(--bg-hover);
+    color: var(--text-primary);
     padding: 0.2em 0.4em;
     border-radius: 4px;
-    font-size: 0.9em;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85em;
+    font-family: 'SFMono-Regular', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
+    border: 1px solid var(--border-color);
   }
 
   .markdown-content pre {
     background-color: var(--bg-hover);
     padding: 1em;
-    border-radius: 4px;
+    border-radius: 6px;
     overflow-x: auto;
     border: 1px solid var(--border-color);
+    margin: 1em 0;
   }
 
   .markdown-content pre code {
     background-color: transparent;
     padding: 0;
     border-radius: 0;
+    border: none;
+    font-size: 0.875em;
   }
 
   .markdown-content a {
     color: var(--link-color);
     text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
   }
 
   .markdown-content a:hover {
     text-decoration: underline;
+    opacity: 0.8;
   }
 
   .markdown-content strong {
     font-weight: 600;
+    color: var(--text-primary);
   }
 
   .markdown-content em {
     font-style: italic;
-  }
-
-  .markdown-content p {
-    margin-bottom: 1em;
+    color: var(--text-primary);
   }
 
   .markdown-content ul,
   .markdown-content ol {
     margin-bottom: 1em;
-    padding-left: 1.5em;
+    padding-left: 2em;
   }
 
   .markdown-content li {
     margin-bottom: 0.5em;
+    color: var(--text-primary);
+  }
+
+  .markdown-content blockquote {
+    border-left: 4px solid var(--link-color);
+    padding-left: 1em;
+    margin: 1em 0;
+    background-color: var(--bg-hover);
+    border-radius: 0 4px 4px 0;
+    padding: 0.75em 1em;
+    font-style: italic;
+    color: var(--text-secondary);
+  }
+
+  .markdown-content hr {
+    border: none;
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 2em 0;
+  }
+
+  .markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .markdown-content th,
+  .markdown-content td {
+    border: 1px solid var(--border-color);
+    padding: 0.75em;
+    text-align: left;
+  }
+
+  .markdown-content th {
+    background-color: var(--bg-hover);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .markdown-content td {
+    color: var(--text-primary);
+  }
+
+  .markdown-content tr:nth-child(even) {
+    background-color: var(--bg-hover);
+  }
+
+  /* Demo markdown specific styles */
+  .demo-markdown {
+    font-size: 13px;
+  }
+
+  .demo-markdown h1 {
+    font-size: 1.5em;
+    margin-top: 1em;
+  }
+
+  .demo-markdown h2 {
+    font-size: 1.25em;
+    margin-top: 1.5em;
+  }
+
+  .demo-markdown h3 {
+    font-size: 1.125em;
+    margin-top: 1.25em;
+  }
+
+  .demo-markdown p {
+    margin-bottom: 0.75em;
+  }
+
+  /* New standalone markdown styles */
+  .markdown-standalone-container {
+    padding: 32px;
+    max-width: 900px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+  }
+
+  .dark .markdown-standalone-container {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .markdown-standalone-container {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .markdown-standalone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    padding: 16px 24px;
+    margin: -32px -32px 24px -32px;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .markdown-standalone-title {
+    display: flex;
+    align-items: center;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .markdown-icon {
+    font-size: 1.25em;
+    margin-right: 10px;
+  }
+
+  .markdown-standalone-meta {
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: 0.875em;
+    gap: 12px;
+  }
+
+  .markdown-reading-time {
+    background-color: var(--bg-hover);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    border: 1px solid var(--border-color);
+  }
+
+  .markdown-standalone-content {
+    color: var(--text-primary);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .standalone-markdown h1:first-child {
+    margin-top: 0;
+  }
+
+  /* Custom scrollbar styles */
+  .markdown-standalone-container::-webkit-scrollbar,
+  .markdown-content::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .markdown-standalone-container::-webkit-scrollbar-track,
+  .markdown-content::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+  }
+
+  .markdown-standalone-container::-webkit-scrollbar-thumb,
+  .markdown-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+  }
+
+  .markdown-standalone-container::-webkit-scrollbar-thumb:hover,
+  .markdown-content::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+  }
+
+  /* Responsive design for standalone markdown */
+  @media (max-width: 768px) {
+    .markdown-standalone-container {
+      padding: 16px;
+      margin: 0;
+    }
+    
+    .markdown-standalone-header {
+      margin: -16px -16px 16px -16px;
+      padding: 12px 16px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    
+    .markdown-standalone-content {
+      font-size: 14px;
+    }
   }
 `;
 document.head.appendChild(styleSheet);

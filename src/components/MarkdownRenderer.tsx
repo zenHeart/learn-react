@@ -2,9 +2,10 @@ import React from 'react';
 
 interface MarkdownRendererProps {
   content: string;
+  className?: string;
 }
 
-export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
   const [html, setHtml] = React.useState('');
   
   React.useEffect(() => {
@@ -40,6 +41,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           .replace(/^## (.*$)/gm, '<h2>$1</h2>')
           .replace(/^### (.*$)/gm, '<h3>$1</h3>')
           .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+          .replace(/^##### (.*$)/gm, '<h5>$1</h5>')
+          .replace(/^###### (.*$)/gm, '<h6>$1</h6>')
           // 粗体
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           // 斜体
@@ -49,16 +52,30 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           // 代码块
           .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
           // 链接
-          .replace(/\[([^\]]*)\]\(([^)]*)\)/g, '<a href="$2">$1</a>')
-          // 列表
+          .replace(/\[([^\]]*)\]\(([^)]*)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+          // 水平线
+          .replace(/^---$/gm, '<hr>')
+          // 引用
+          .replace(/^>\s+(.*)$/gm, '<blockquote>$1</blockquote>')
+          // 有序列表
           .replace(/^\d+\.\s+(.*)$/gm, '<li>$1</li>')
-          .replace(/^-\s+(.*)$/gm, '<li>$1</li>')
-          // 换行
+          // 无序列表
+          .replace(/^[-*+]\s+(.*)$/gm, '<li>$1</li>')
+          // 段落（双换行分隔）
+          .replace(/\n\n/g, '</p><p>')
+          // 单换行
           .replace(/\n/g, '<br/>');
         
+        // 包裹段落
+        renderedHtml = `<p>${renderedHtml}</p>`;
+        
         // 包裹列表项
-        renderedHtml = renderedHtml.replace(/(<li>.*<\/li>)+/g, (match) => {
-          return `<ol>${match}</ol>`;
+        renderedHtml = renderedHtml.replace(/(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/g, (match) => {
+          if (match.includes('1.')) {
+            return `<ol>${match}</ol>`;
+          } else {
+            return `<ul>${match}</ul>`;
+          }
         });
         
         setHtml(renderedHtml);
@@ -70,7 +87,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   
   return (
     <div 
-      className="markdown-content"
+      className={`markdown-content ${className}`}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
