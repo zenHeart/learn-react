@@ -4,6 +4,7 @@ import Tags from './Tags'
 import { DemoWithMarkdown } from './DemoWithMarkdown'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { parseMarkdownMeta, MarkdownMetadata, getReadingTime, formatReadingTime } from '../utils/markdownMeta';
+import { useSearch } from './SearchProvider';
 
 const styles = {
   layout: {
@@ -327,6 +328,19 @@ const DarkModeIcon = ({ isDark }: { isDark: boolean }) => (
   </svg>
 );
 
+// Search icon component
+const SearchIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 16 16"
+    fill="currentColor"
+    style={{ marginRight: '6px' }}
+  >
+    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+  </svg>
+);
+
 function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
@@ -343,6 +357,9 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
   const filterTag = searchParams.get('tag');
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Search functionality
+  const { openSearch } = useSearch();
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -642,6 +659,14 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
               >
                 <DarkModeIcon isDark={isDarkMode} />
                 {isDarkMode ? 'Light' : 'Dark'}
+              </button>
+              <button
+                onClick={openSearch}
+                style={buttonStyles.homeButton}
+                title="Search (Ctrl/Cmd + K)"
+              >
+                <SearchIcon />
+                Search
               </button>
             </>
           )}

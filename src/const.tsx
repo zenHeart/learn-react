@@ -364,7 +364,8 @@ export function getFlatComponents(): Component[] {
           // @ts-ignore
           component: componentMetaInfo?.disableSandpack ? DemoComponent : sandpackComponent,
           id: index,
-          tags: componentMetaInfo?.tags || [] // 确保 tags 是数组
+          tags: componentMetaInfo?.tags || [], // 确保 tags 是数组
+          rawContent: rawContent // 添加原始内容用于搜索索引
         });
       } catch (error) {
         console.error('Error processing demo component:', filename, error);
@@ -384,6 +385,6 @@ export function getFlatComponents(): Component[] {
 
   return flatComponents;
 }
-const FLAT_COMPONENTS = getFlatComponents();
+export const FLAT_COMPONENTS = getFlatComponents();
 export const TREE_COMPONENTS = createNestedStructure(FLAT_COMPONENTS);
 export const TAGS_COLOR = createTagsColor(FLAT_COMPONENTS);
