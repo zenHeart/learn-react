@@ -94,6 +94,55 @@ interface NavItem {
 
 // 新增：纯 Markdown 渲染器组件
 const MarkdownOnlyRenderer = ({ content }: { content: string }) => {
+  const [tocItems, setTocItems] = useState<Array<{id: string, title: string, level: number}>>([]);
+  const [showToc, setShowToc] = useState(false);
+
+  // 提取文档标题生成TOC
+  useEffect(() => {
+    const extractToc = () => {
+      const headingRegex = /^(#{1,6})\s+(.+)$/gm;
+      const toc: Array<{id: string, title: string, level: number}> = [];
+      let match;
+      
+      while ((match = headingRegex.exec(content)) !== null) {
+        const level = match[1].length;
+        const title = match[2].trim();
+        const id = title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+        
+        toc.push({
+          id,
+          title,
+          level
+        });
+      }
+      
+      setTocItems(toc);
+    };
+    
+    extractToc();
+  }, [content]);
+
+  const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      style={{
+        transform: expanded ? 'rotate(90deg)' : 'none',
+        transition: 'transform 0.2s ease'
+      }}
+    >
+      <path d="M5.7 13.7L5 13l4.6-4.6L5 3.7 5.7 3l5.3 5.4z" />
+    </svg>
+  );
+
+  const TocIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+    </svg>
+  );
+
   return (
     <div className="markdown-standalone-container">
       <div className="markdown-standalone-header">
@@ -105,6 +154,83 @@ const MarkdownOnlyRenderer = ({ content }: { content: string }) => {
           <span className="markdown-reading-time">
             {Math.max(1, Math.ceil(content.split(' ').length / 200))} min read
           </span>
+          {tocItems.length > 0 && (
+            <div style={{ position: 'relative' }}>
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  color: 'var(--text-secondary)',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.2s ease'
+                }}
+                onClick={() => setShowToc(!showToc)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }}
+                title="Table of Contents"
+              >
+                <TocIcon />
+                TOC
+                <ChevronIcon expanded={showToc} />
+              </button>
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: '0',
+                backgroundColor: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                zIndex: 20,
+                minWidth: '200px',
+                maxHeight: '300px',
+                overflowY: 'auto',
+                display: showToc ? 'block' : 'none'
+              }}>
+                {tocItems.map((item, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      padding: '8px 12px',
+                      paddingLeft: `${12 + (item.level - 1) * 16}px`,
+                      borderBottom: index < tocItems.length - 1 ? '1px solid var(--border-color)' : 'none',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      color: 'var(--text-primary)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                    onClick={() => {
+                      const element = document.getElementById(item.id);
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                      }
+                      setShowToc(false);
+                    }}
+                  >
+                    {item.title}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="markdown-standalone-content">

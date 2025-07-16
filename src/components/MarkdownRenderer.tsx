@@ -8,6 +8,11 @@ interface MarkdownRendererProps {
 export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
   const [html, setHtml] = React.useState('');
   
+  // 生成标题ID的函数
+  const generateHeadingId = (text: string): string => {
+    return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+  };
+  
   React.useEffect(() => {
     const processMarkdown = async () => {
       try {
@@ -26,9 +31,27 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         const renderedHtml = marked(contentWithoutFrontMatter);
         // 如果 marked 返回 Promise，则等待其解析
         if (renderedHtml instanceof Promise) {
-          renderedHtml.then((htmlString) => setHtml(htmlString));
+          renderedHtml.then((htmlString) => {
+            // 为标题添加ID
+            const htmlWithIds = htmlString.replace(
+              /<h([1-6])>(.*?)<\/h[1-6]>/g,
+              (match, level, text) => {
+                const id = generateHeadingId(text);
+                return `<h${level} id="${id}">${text}</h${level}>`;
+              }
+            );
+            setHtml(htmlWithIds);
+          });
         } else {
-          setHtml(renderedHtml);
+          // 为标题添加ID
+          const htmlWithIds = renderedHtml.replace(
+            /<h([1-6])>(.*?)<\/h[1-6]>/g,
+            (match, level, text) => {
+              const id = generateHeadingId(text);
+              return `<h${level} id="${id}">${text}</h${level}>`;
+            }
+          );
+          setHtml(htmlWithIds);
         }
       } catch (error) {
         console.warn('Failed to load marked, using simple parser', error);
@@ -36,13 +59,31 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         const contentWithoutFrontMatter = content.replace(/^---\n[\s\S]*?\n---\n/, '');
         
         let renderedHtml = contentWithoutFrontMatter
-          // 标题
-          .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-          .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-          .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-          .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
-          .replace(/^##### (.*$)/gm, '<h5>$1</h5>')
-          .replace(/^###### (.*$)/gm, '<h6>$1</h6>')
+          // 标题（同时添加ID）
+          .replace(/^# (.*$)/gm, (match, text) => {
+            const id = generateHeadingId(text);
+            return `<h1 id="${id}">${text}</h1>`;
+          })
+          .replace(/^## (.*$)/gm, (match, text) => {
+            const id = generateHeadingId(text);
+            return `<h2 id="${id}">${text}</h2>`;
+          })
+          .replace(/^### (.*$)/gm, (match, text) => {
+            const id = generateHeadingId(text);
+            return `<h3 id="${id}">${text}</h3>`;
+          })
+          .replace(/^#### (.*$)/gm, (match, text) => {
+            const id = generateHeadingId(text);
+            return `<h4 id="${id}">${text}</h4>`;
+          })
+          .replace(/^##### (.*$)/gm, (match, text) => {
+            const id = generateHeadingId(text);
+            return `<h5 id="${id}">${text}</h5>`;
+          })
+          .replace(/^###### (.*$)/gm, (match, text) => {
+            const id = generateHeadingId(text);
+            return `<h6 id="${id}">${text}</h6>`;
+          })
           // 粗体
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           // 斜体
