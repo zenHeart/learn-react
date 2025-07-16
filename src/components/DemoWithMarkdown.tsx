@@ -194,7 +194,6 @@ export function DemoWithMarkdown({ demoComponent, markdownContent }: DemoWithMar
             {formattedReadingTime && (
               <span style={{
                 color: 'var(--text-secondary)',
-                fontSize: '0.875em',
                 backgroundColor: 'var(--bg-hover)',
                 padding: '4px 8px',
                 borderRadius: '12px',

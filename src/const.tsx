@@ -355,7 +355,7 @@ export function getFlatComponents(): Component[] {
         // 记录这个路径已经被 demo 文件占用
         existingDemoPaths.add(name);
         
-        const componentMetaInfo = extractComponentMetaInfo(componentType, DemoComponent, filename);
+        const componentMetaInfo:any = extractComponentMetaInfo(componentType, DemoComponent, filename);
         const sandpackComponent = wrapDemoWithSandpack(componentType, rawContent, filename, rawFilesMap);
         
         flatComponents.push({
