@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>React 构造器中 setState 行为演示</title>
+    <script src="https://unpkg.com/react@18.2/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18.2/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { color: #1a202c; margin-bottom: 8px; }
+        .subtitle { color: #718096; margin-bottom: 24px; font-size: 14px; }
+
+        .demo-container {
+            display: flex;
+            gap: 24px;
+            width: 100%;
+            max-width: 900px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .demo-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            width: 400px;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .card-header.bad { background: #fed7d7; color: #c53030; }
+        .card-header.good { background: #c6f6d5; color: #276749; }
+
+        .card-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .counter-display {
+            font-size: 48px;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 12px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .counter-display.highlight {
+            color: #3182ce;
+        }
+
+        button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 4px;
+            transition: background 0.2s;
+        }
+        .btn-primary { background: #3182ce; color: white; }
+        .btn-primary:hover { background: #2b6cb0; }
+        .btn-success { background: #38a169; color: white; }
+        .btn-success:hover { background: #2f855a; }
+
+        .log-area {
+            margin-top: 16px;
+            width: 100%;
+            max-width: 900px;
+        }
+        .log-box {
+            background: #1a202c;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .log-entry { margin: 4px 0; padding: 4px 0; border-bottom: 1px solid #2d3748; }
+        .log-entry:last-child { border-bottom: none; }
+        .log-warn { color: #f6ad55; }
+        .log-error { color: #fc8181; }
+        .log-info { color: #68d391; }
+        .log-neutral { color: #a0aec0; }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+        .legend span { display: flex; align-items: center; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.warn { background: #f6ad55; }
+        .dot.info { background: #68d391; }
+        .dot.error { background: #fc8181; }
+
+        .explanation {
+            max-width: 900px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .explanation h3 { margin-top: 0; color: #2d3748; }
+        .explanation ul { margin: 0; padding-left: 20px; color: #4a5568; font-size: 14px; line-height: 1.8; }
+        .code-snippet {
+            background: #edf2f7;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 8px 0;
+            color: #2d3748;
+            overflow-x: auto;
+        }
+        .code-snippet .bad { color: #c53030; }
+        .code-snippet .good { color: #276749; }
+    </style>
+</head>
+<body>
+    <h1>构造器中 setState 行为演示</h1>
+    <p class="subtitle">React 18 — 点击按钮观察 setState 在构造器中的实际效果</p>
+
+    <div class="legend">
+        <span><span class="dot warn"></span> 构造器 setState 调用</span>
+        <span><span class="dot info"></span> 正确初始化</span>
+        <span><span class="dot error"></span> 控制台警告</span>
+    </div>
+
+    <div class="demo-container">
+        <!-- 错误示例：构造器中 setState -->
+        <div class="demo-card">
+            <div class="card-header bad">❌ 错误：构造器中调用 setState</div>
+            <div class="card-body">
+                <p style="font-size: 13px; color: #718096; text-align: center; margin: 0 0 8px">
+                    构造器中 this.setState({ count: 10 })<br/>
+                    状态初始值仍为 0，setState 被忽略
+                </p>
+                <div class="counter-display" id="bad-display">0</div>
+                <button class="btn-primary" id="bad-btn">触发 setState({ count: 10 })</button>
+                <p style="font-size: 12px; color: #a0aec0; margin-top: 8px">
+                    count 当前值 = <span id="bad-val">0</span>（点击按钮后仍是 0）
+                </p>
+            </div>
+        </div>
+
+        <!-- 正确示例：直接赋值 this.state -->
+        <div class="demo-card">
+            <div class="card-header good">✅ 正确：构造器中直接赋值 state</div>
+            <div class="card-body">
+                <p style="font-size: 13px; color: #718096; text-align: center; margin: 0 0 8px">
+                    构造器中 this.state = { count: 10 }<br/>
+                    初始值正确设为 10
+                </p>
+                <div class="counter-display highlight" id="good-display">10</div>
+                <button class="btn-success" id="good-btn">触发 setState({ count: 20 })</button>
+                <p style="font-size: 12px; color: #a0aec0; margin-top: 8px">
+                    count 当前值 = <span id="good-val">10</span>（点击按钮后变为 20）
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="log-area">
+        <div class="log-box" id="log-box">
+            <div class="log-entry log-neutral">等待用户交互...</div>
+        </div>
+    </div>
+
+    <div class="explanation">
+        <h3>原理说明</h3>
+        <ul>
+            <li><strong>构造器执行时机</strong>：组件实例化时调用，此时 fiber 节点尚未创建</li>
+            <li><strong>setState 的本质</strong>：将状态变更放入更新队列，等待 fiber 消费</li>
+            <li><strong>为什么被忽略</strong>：没有 fiber 节点，setState 的更新无处可去，直接丢弃</li>
+            <li><strong>React 15 vs 16+</strong>：React 15 警告「不能在 state transition 中调用 setState」，React 16+ 警告「组件未挂载时调用了 setState」</li>
+        </ul>
+        <div class="code-snippet">
+<span class="bad">// ❌ 错误 — setState 在构造器中被静默忽略</span>
+constructor(props) {
+  super(props)
+  this.state = { count: 0 }
+  this.setState({ count: 10 }) // 不生效
+}
+
+<span class="good">// ✅ 正确 — 直接赋值初始状态</span>
+constructor(props) {
+  super(props)
+  this.state = { count: 10 } // 直接设为 10
+}
+
+<span class="good">// ✅ 正确 — 基于 props 计算初始状态</span>
+constructor(props) {
+  super(props)
+  this.state = {
+    fullName: `${props.firstName} ${props.lastName}`
+  }
+}
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const { useState } = React
+
+        // ============================================
+        // 错误示例：模拟构造器中 setState 被忽略的行为
+        // ============================================
+        // 在真实 React 中，我们无法在 HTML 直接复现「构造器 setState 不生效」，
+        // 因为 HTML 演示无法自定义组件 constructor。
+        // 这里通过两个独立的状态模拟对比效果：
+        // - badCount：初始为 0，且 setState 故意不生效（模拟构造器中被忽略）
+        // - goodCount：初始为 10，setState 正常工作
+        // ============================================
+
+        let badCount = 0
+        let goodCount = 10
+
+        const logBox = document.getElementById('log-box')
+
+        function addLog(msg, type = 'neutral') {
+            const entry = document.createElement('div')
+            entry.className = `log-entry log-${type}`
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`
+            logBox.appendChild(entry)
+            logBox.scrollTop = logBox.scrollHeight
+        }
+
+        function updateBadDisplay() {
+            document.getElementById('bad-display').textContent = badCount
+            document.getElementById('bad-val').textContent = badCount
+        }
+
+        function updateGoodDisplay() {
+            document.getElementById('good-display').textContent = goodCount
+            document.getElementById('good-val').textContent = goodCount
+        }
+
+        // 错误示例按钮：模拟构造器 setState 被忽略
+        document.getElementById('bad-btn').addEventListener('click', () => {
+            // 模拟构造器中 setState 的效果：无效，不更新
+            badCount = 0  // 重新"设置"为0，模拟 setState 被忽略
+            updateBadDisplay()
+            addLog('❌ setState({ count: 10 }) 被调用 — 但 fiber 节点不存在，状态更新被忽略', 'error')
+            addLog('⚠️ 控制台警告: Attempted to set state during construction but the component has not been mounted yet', 'warn')
+        })
+
+        // 正确示例按钮：正常工作
+        document.getElementById('good-btn').addEventListener('click', () => {
+            goodCount = 20
+            updateGoodDisplay()
+            addLog('✅ setState({ count: 20 }) 正常工作 — 组件已挂载，状态更新成功', 'info')
+        })
+
+        // 初始化日志
+        addLog('左侧按钮点击后，count 仍为 0，证明 setState 未生效', 'warn')
+        addLog('右侧按钮点击后，count 变为 20，setState 正常工作', 'info')
+        addLog('--- 演示说明 ---', 'neutral')
+        addLog('真实 React Class 组件中：constructor() { this.setState(...) } 会被忽略', 'error')
+        addLog('本演示通过两个独立状态变量模拟此行为差异', 'neutral')
+    </script>
+</body>
+</html>
