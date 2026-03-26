@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>React Navigation replace 生命周期演示</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #334155;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 24px;
+    }
+
+    /* Navigation Stack Visualization */
+    .stack-visual {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .stack-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .stack-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stack-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .stack-item.active {
+      border-color: var(--primary);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .stack-item.new {
+      border-color: var(--success);
+      background: rgba(16, 185, 129, 0.1);
+      animation: slideIn 0.3s ease;
+    }
+
+    .stack-item.removing {
+      border-color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+      animation: fadeOut 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(-20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(20px); opacity: 0; }
+    }
+
+    .stack-item-index {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Lifecycle Log */
+    .lifecycle-log {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .log-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .clear-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .clear-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .log-entries {
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.75rem;
+    }
+
+    .log-entry {
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .log-entry.mount {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 3px solid var(--success);
+    }
+
+    .log-entry.unmount {
+      background: rgba(239, 68, 68, 0.1);
+      border-left: 3px solid var(--danger);
+    }
+
+    .log-entry.render {
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 3px solid var(--primary);
+    }
+
+    .log-entry.info {
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 3px solid var(--warning);
+    }
+
+    .log-time {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .log-message {
+      word-break: break-word;
+    }
+
+    /* Navigation Buttons */
+    .nav-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .nav-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-btn:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .nav-btn:active {
+      transform: translateY(0);
+    }
+
+    .nav-btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .nav-btn.primary:hover {
+      background: #2563eb;
+    }
+
+    .nav-btn.danger {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .nav-btn.danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-icon {
+      font-size: 1.5rem;
+    }
+
+    .btn-label {
+      font-weight: 500;
+    }
+
+    .btn-desc {
+      font-size: 0.625rem;
+      color: var(--text-muted);
+    }
+
+    /* Screen Preview */
+    .screen-preview {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .screen-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .screen-content {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .screen-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .screen-badge {
+      font-size: 0.625rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+
+    .screen-badge.mounting {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+
+    .screen-badge.unmounting {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+    }
+
+    /* Comparison Table */
+    .comparison-table {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .table-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+
+    th, td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .method-name {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .summary-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .summary-label {
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Sequence Diagram */
+    .sequence-diagram {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .diagram-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .sequence-container {
+      display: flex;
+      justify-content: space-around;
+      position: relative;
+      padding: 20px 0;
+    }
+
+    .sequence-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sequence-header {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .sequence-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .sequence-event {
+      position: relative;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      z-index: 2;
+    }
+
+    .sequence-event::before {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .sequence-event.mount {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid var(--success);
+    }
+
+    .sequence-event.mount::before {
+      background: var(--success);
+      left: -16px;
+    }
+
+    .sequence-event.unmount {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid var(--danger);
+    }
+
+    .sequence-event.unmount::before {
+      background: var(--danger);
+      right: -16px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.success {
+      border-color: var(--success);
+    }
+
+    .toast.warning {
+      border-color: var(--warning);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔄 React Navigation</h1>
+    <p class="subtitle">replace vs push vs navigate 生命周期演示</p>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="summary-value" id="stackSize">3</div>
+        <div class="summary-label">栈大小</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value" id="logCount">0</div>
+        <div class="summary-label">日志条数</div>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+      <button class="nav-btn primary" id="btnPush">
+        <span class="btn-icon">📚</span>
+        <span class="btn-label">push</span>
+        <span class="btn-desc">栈 +1</span>
+      </button>
+      <button class="nav-btn" id="btnReplace">
+        <span class="btn-icon">🔄</span>
+        <span class="btn-label">replace</span>
+        <span class="btn-desc">栈不变</span>
+      </button>
+      <button class="nav-btn" id="btnNavigate">
+        <span class="btn-icon">🎯</span>
+        <span class="btn-label">navigate</span>
+        <span class="btn-desc">跳转/添加</span>
+      </button>
+      <button class="nav-btn danger" id="btnGoBack">
+        <span class="btn-icon">⬅️</span>
+        <span class="btn-label">goBack</span>
+        <span class="btn-desc">栈 -1</span>
+      </button>
+    </div>
+
+    <!-- Current Screen Preview -->
+    <div class="screen-preview">
+      <div class="screen-label">当前屏幕</div>
+      <div class="screen-content" id="currentScreen">
+        <div class="screen-name">Home</div>
+        <div class="screen-badge mounting">mount</div>
+      </div>
+    </div>
+
+    <!-- Stack Visualization -->
+    <div class="stack-visual">
+      <div class="stack-title">导航栈 (底部为栈底，顶部为当前)</div>
+      <div class="stack-items" id="stackDisplay"></div>
+    </div>
+
+    <!-- Sequence Diagram -->
+    <div class="sequence-diagram">
+      <div class="diagram-title">replace 生命周期时序</div>
+      <div class="sequence-container">
+        <div class="sequence-line"></div>
+        <div class="sequence-column">
+          <div class="sequence-header">Home</div>
+          <div style="flex:1"></div>
+        </div>
+        <div class="sequence-column">
+          <div class="sequence-header">Dashboard</div>
+          <div style="flex:1"></div>
+        </div>
+        <div class="sequence-column">
+          <div class="sequence-header">Timeline</div>
+          <div style="flex:1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="comparison-table">
+      <div class="table-title">方法对比</div>
+      <table>
+        <thead>
+          <tr>
+            <th>方法</th>
+            <th>行为</th>
+            <th>栈变化</th>
+            <th>可返回</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="method-name">push</td>
+            <td>添加新路由到栈顶</td>
+            <td>+1</td>
+            <td>✅</td>
+          </tr>
+          <tr>
+            <td class="method-name">replace</td>
+            <td>替换当前路由</td>
+            <td>0</td>
+            <td>❌</td>
+          </tr>
+          <tr>
+            <td class="method-name">navigate</td>
+            <td>跳转或添加</td>
+            <td>0 或 +1</td>
+            <td>视情况</td>
+          </tr>
+          <tr>
+            <td class="method-name">goBack</td>
+            <td>返回上一页</td>
+            <td>-1</td>
+            <td>-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Lifecycle Log -->
+    <div class="lifecycle-log">
+      <div class="log-header">
+        <div class="log-title">📋 生命周期日志</div>
+        <button class="clear-btn" id="btnClear">清除</button>
+      </div>
+      <div class="log-entries" id="logEntries"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // Simulated Navigation Stack
+    class NavigationStack {
+      constructor() {
+        this.stack = ['Home', 'Profile', 'Settings'];
+        this.currentIndex = this.stack.length - 1;
+        this.listeners = {
+          mount: [],
+          unmount: [],
+          push: [],
+          replace: [],
+          navigate: [],
+          goBack: []
+        };
+      }
+
+      on(event, callback) {
+        if (this.listeners[event]) {
+          this.listeners[event].push(callback);
+        }
+        return () => {
+          this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+        };
+      }
+
+      emit(event, data) {
+        if (this.listeners[event]) {
+          this.listeners[event].forEach(cb => cb(data));
+        }
+      }
+
+      getStack() {
+        return [...this.stack];
+      }
+
+      getCurrent() {
+        return this.stack[this.currentIndex];
+      }
+
+      getCurrentIndex() {
+        return this.currentIndex;
+      }
+
+      // Simulate async nature of React Navigation
+      async push(screen) {
+        const oldScreen = this.getCurrent();
+        
+        // Emit unmount for current
+        this.emit('unmount', { screen: oldScreen });
+        log(`willUnmount: ${oldScreen}`, 'unmount');
+        
+        // Push to stack
+        this.stack.push(screen);
+        this.currentIndex = this.stack.length - 1;
+        
+        // Simulate async render
+        await this.delay(50);
+        
+        // Emit mount for new
+        this.emit('mount', { screen: screen });
+        log(`mount: ${screen}`, 'mount');
+        log(`push: ${screen} (栈 +1，当前: ${this.stack.length})`, 'info');
+        
+        updateUI();
+      }
+
+      async replace(screen) {
+        const oldScreen = this.getCurrent();
+        
+        // In React Navigation, replace happens in a batch
+        // Sometimes mount can happen before unmount due to async rendering
+        const sequence = Math.random();
+        
+        if (sequence > 0.5) {
+          // Simulate: mount first, then unmount (async batch)
+          await this.delay(30);
+          this.emit('mount', { screen: screen });
+          log(`mount: ${screen}`, 'mount');
+          
+          await this.delay(20);
+          this.emit('unmount', { screen: oldScreen });
+          log(`willUnmount: ${oldScreen}`, 'unmount');
+        } else {
+          // Standard order
+          this.emit('unmount', { screen: oldScreen });
+          log(`willUnmount: ${oldScreen}`, 'unmount');
+          
+          await this.delay(30);
+          this.emit('mount', { screen: screen });
+          log(`mount: ${screen}`, 'mount');
+        }
+        
+        // Update stack
+        this.stack[this.currentIndex] = screen;
+        
+        log(`replace: ${oldScreen} → ${screen} (栈不变: ${this.stack.length})`, 'info');
+        updateUI();
+      }
+
+      async navigate(screen) {
+        const existingIndex = this.stack.indexOf(screen);
+        
+        if (existingIndex !== -1 && existingIndex !== this.currentIndex) {
+          // Jump to existing screen
+          const oldScreen = this.getCurrent();
+          
+          this.emit('unmount', { screen: oldScreen });
+          log(`willUnmount: ${oldScreen}`, 'unmount');
+          
+          await this.delay(30);
+          this.currentIndex = existingIndex;
+          
+          this.emit('mount', { screen: screen });
+          log(`mount: ${screen}`, 'mount');
+          
+          log(`navigate: ${screen} (跳转到已存在，栈: ${this.stack.length})`, 'info');
+        } else if (existingIndex === this.currentIndex) {
+          log(`navigate: ${screen} (已在当前页)`, 'info');
+          return;
+        } else {
+          // Add new screen
+          await this.push(screen);
+          return;
+        }
+        
+        updateUI();
+      }
+
+      async goBack() {
+        if (this.currentIndex <= 0) {
+          log('goBack: 无法返回，已在栈底', 'info');
+          return;
+        }
+        
+        const oldScreen = this.getCurrent();
+        
+        this.emit('unmount', { screen: oldScreen });
+        log(`willUnmount: ${oldScreen}`, 'unmount');
+        
+        await this.delay(30);
+        
+        this.stack.pop();
+        this.currentIndex = this.stack.length - 1;
+        
+        this.emit('mount', { screen: this.getCurrent() });
+        log(`mount: ${this.getCurrent()}`, 'mount');
+        
+        log(`goBack: 返回上一页 (栈 -1，当前: ${this.stack.length})`, 'info');
+        updateUI();
+      }
+
+      delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+    }
+
+    // Initialize navigation
+    const nav = new NavigationStack();
+
+    // DOM Elements
+    const stackDisplay = document.getElementById('stackDisplay');
+    const logEntries = document.getElementById('logEntries');
+    const currentScreen = document.getElementById('currentScreen');
+    const toast = document.getElementById('toast');
+    const stackSizeEl = document.getElementById('stackSize');
+    const logCountEl = document.getElementById('logCount');
+
+    // Available screens for demo
+    const availableScreens = ['Home', 'Profile', 'Settings', 'Dashboard', 'Feed', 'Notifications', 'Messages', 'Search', 'About', 'Help'];
+
+    // Log counter
+    let logCount = 0;
+
+    // Logging function
+    function log(message, type = 'info') {
+      logCount++;
+      const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.innerHTML = `
+        <span class="log-time">${time}</span>
+        <span class="log-message">${message}</span>
+      `;
+      
+      logEntries.insertBefore(entry, logEntries.firstChild);
+      
+      // Update counter
+      logCountEl.textContent = logCount;
+      
+      // Keep only last 50 entries
+      while (logEntries.children.length > 50) {
+        logEntries.removeChild(logEntries.lastChild);
+      }
+    }
+
+    // Show toast
+    function showToast(message, type = 'info') {
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      
+      setTimeout(() => {
+        toast.className = 'toast';
+      }, 2000);
+    }
+
+    // Update UI
+    function updateUI() {
+      const stack = nav.getStack();
+      const current = nav.getCurrent();
+      const currentIdx = nav.getCurrentIndex();
+      
+      // Update stack size
+      stackSizeEl.textContent = stack.length;
+      
+      // Update stack display
+      stackDisplay.innerHTML = '';
+      stack.forEach((screen, idx) => {
+        const item = document.createElement('div');
+        item.className = 'stack-item';
+        if (idx === currentIdx) {
+          item.classList.add('active');
+        }
+        item.innerHTML = `
+          ${screen}
+          <span class="stack-item-index">#${stack.length - idx}</span>
+        `;
+        stackDisplay.appendChild(item);
+      });
+      
+      // Update current screen preview
+      currentScreen.innerHTML = `
+        <div class="screen-name">${current}</div>
+        <div class="screen-badge mounting">mount</div>
+      `;
+    }
+
+    // Get random screen (different from current)
+    function getRandomScreen() {
+      const current = nav.getCurrent();
+      const available = availableScreens.filter(s => s !== current);
+      return available[Math.floor(Math.random() * available.length)];
+    }
+
+    // Event Listeners
+    document.getElementById('btnPush').addEventListener('click', async () => {
+      const screen = getRandomScreen();
+      await nav.push(screen);
+      showToast(`push: ${screen}`, 'info');
+    });
+
+    document.getElementById('btnReplace').addEventListener('click', async () => {
+      const screen = getRandomScreen();
+      await nav.replace(screen);
+      showToast(`replace: ${screen}`, 'warning');
+    });
+
+    document.getElementById('btnNavigate').addEventListener('click', async () => {
+      // Try to navigate to an existing screen or add new
+      const stack = nav.getStack();
+      const existingScreens = stack.filter(s => s !== nav.getCurrent());
+      
+      let target;
+      if (existingScreens.length > 0 && Math.random() > 0.5) {
+        target = existingScreens[Math.floor(Math.random() * existingScreens.length)];
+      } else {
+        target = getRandomScreen();
+      }
+      
+      await nav.navigate(target);
+      showToast(`navigate: ${target}`, 'info');
+    });
+
+    document.getElementById('btnGoBack').addEventListener('click', async () => {
+      if (nav.getCurrentIndex() <= 0) {
+        showToast('已在栈底，无法返回', 'warning');
+        return;
+      }
+      await nav.goBack();
+      showToast('goBack', 'info');
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      logEntries.innerHTML = '';
+      logCount = 0;
+      logCountEl.textContent = '0';
+      showToast('日志已清除', 'success');
+    });
+
+    // Initial UI update
+    updateUI();
+    log('演示初始化完成，当前栈: Home → Profile → Settings', 'info');
+  </script>
+</body>
+</html>
