@@ -1,0 +1,832 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>React Class Component Async Rendering Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: white; text-align: center; margin-bottom: 30px; font-size: 2.5em; }
+    h2 { color: #333; margin-bottom: 15px; font-size: 1.5em; }
+    h3 { color: #667eea; margin-bottom: 10px; font-size: 1.1em; }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .demo-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+    .demo-section { margin-bottom: 20px; }
+    .demo-section p { color: #666; font-size: 0.9em; margin-bottom: 10px; }
+    .counter-display {
+      font-size: 48px;
+      font-weight: bold;
+      text-align: center;
+      color: #667eea;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      font-family: monospace;
+    }
+    .counter-display.success { color: #28a745; background: #e8f5e9; }
+    .counter-display.error { color: #dc3545; background: #ffebee; }
+    .data-display {
+      background: #f8f9fa; border-radius: 8px; padding: 15px;
+      margin: 10px 0; font-family: monospace; font-size: 13px;
+      word-break: break-all; max-height: 150px; overflow-y: auto;
+    }
+    .button-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    button {
+      padding: 12px 24px; font-size: 16px; font-weight: 600;
+      border: none; border-radius: 8px; cursor: pointer; color: white;
+      transition: all 0.2s;
+    }
+    button:hover { transform: scale(1.05); }
+    button:active { transform: scale(0.95); }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .btn-danger { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .btn-success { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #333; }
+    .btn-warning { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #333; }
+    .btn-secondary { background: linear-gradient(135deg, #a8a8a8 0%, #808080 100%); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .log-container {
+      background: #1e1e1e; border-radius: 8px; padding: 15px;
+      margin-top: 15px; max-height: 200px; overflow-y: auto;
+    }
+    .log-entry {
+      font-family: monospace; font-size: 13px; color: #d4d4d4;
+      padding: 4px 0; border-bottom: 1px solid #333;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .log-entry.action { color: #4ec9b0; }
+    .log-entry.render { color: #dcdcaa; }
+    .log-entry.warning { color: #ce9178; }
+    .log-entry.error { color: #f48771; }
+    .log-entry.success { color: #6a9955; }
+    .log-entry .timestamp { color: #6a9955; margin-right: 10px; }
+    .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+    .tab {
+      padding: 10px 20px; background: #e0e0e0; border: none;
+      border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; color: #666;
+    }
+    .tab.active { background: white; color: #667eea; }
+    .tab-content { display: none; background: white; padding: 20px; border-radius: 0 0 12px 12px; }
+    .tab-content.active { display: block; }
+    .info-box {
+      background: #e7f3ff; border-left: 4px solid #667eea;
+      padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0;
+    }
+    .info-box.warning { background: #fff3cd; border-left-color: #ffc107; }
+    .info-box.danger { background: #f8d7da; border-left-color: #dc3545; }
+    .info-box.success { background: #d4edda; border-left-color: #28a745; }
+    .comparison-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    .comparison-table th, .comparison-table td {
+      padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0;
+    }
+    .comparison-table th { background: #f8f9fa; font-weight: 600; color: #667eea; }
+    .comparison-table tr:hover { background: #f8f9fa; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+    .badge-success { background: #d4edda; color: #155724; }
+    .badge-danger { background: #f8d7da; color: #721c24; }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    .code-block { background: #2d2d2d; border-radius: 8px; padding: 15px; margin: 10px 0; overflow-x: auto; }
+    .code-block pre { font-family: monospace; font-size: 13px; color: #ccc; margin: 0; white-space: pre-wrap; }
+    .code-block .keyword { color: #569cd6; }
+    .code-block .string { color: #ce9178; }
+    .code-block .comment { color: #6a9955; }
+    .code-block .function { color: #dcdcaa; }
+    .state-indicator { display: flex; align-items: center; gap: 8px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin: 10px 0; }
+    .state-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .state-dot.mounted { background: #28a745; box-shadow: 0 0 8px rgba(40,167,69,0.5); }
+    .state-dot.unmounted { background: #dc3545; box-shadow: 0 0 8px rgba(220,53,69,0.5); }
+    .visual-flow { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 15px 0; flex-wrap: wrap; }
+    .flow-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 8px; font-weight: 600; text-align: center; min-width: 120px; }
+    .flow-arrow { font-size: 24px; color: #667eea; }
+    .flow-box.async { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .flow-box.setstate { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #333; }
+    .flow-box.render { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #333; }
+    .full-width { grid-column: 1 / -1; }
+    footer { text-align: center; color: white; margin-top: 40px; padding: 20px; opacity: 0.8; }
+    .progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin: 10px 0; }
+    .progress-fill { height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: width 0.3s ease; }
+    .mount-toggle { display: flex; align-items: center; justify-content: center; gap: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; margin: 15px 0; }
+    .toggle-switch { position: relative; width: 60px; height: 30px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: 0.3s; border-radius: 30px; }
+    .toggle-slider::before { position: absolute; content: ''; height: 22px; width: 22px; left: 4px; bottom: 4px; background: white; transition: 0.3s; border-radius: 50%; }
+    .toggle-switch input:checked + .toggle-slider { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(30px); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>React Class Component Async Demo</h1>
+    <p style="text-align: center; color: white; margin-bottom: 30px;">探索 React 类组件异步渲染与状态更新机制</p>
+
+    <div class="demo-grid">
+      <div class="demo-card">
+        <h2>1. setState 回调函数</h2>
+        <div class="demo-section">
+          <h3>状态更新后的回调</h3>
+          <p>setState 的第二个参数是回调函数，在组件重新渲染后执行。</p>
+          <div class="visual-flow">
+            <div class="flow-box async">Async<br>Operation</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box setstate">setState<br>(data, callback)</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box render">Component<br>Re-render</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box" style="background:#28a745;">Callback<br>Executed</div>
+          </div>
+          <div class="counter-display" id="callback-display">Waiting for action...</div>
+          <div class="progress-bar"><div class="progress-fill" id="callback-progress" style="width: 0%"></div></div>
+          <div class="button-group">
+            <button class="btn-primary" onclick="runSetStateCallbackDemo()">Run with Callback</button>
+            <button class="btn-secondary" onclick="runSetStateWithoutCallbackDemo()">Run without Callback</button>
+            <button class="btn-warning" onclick="resetCallbackDemo()">Reset</button>
+          </div>
+          <div class="info-box">
+            <strong>区别:</strong> 使用回调可以确保在读取 <code>this.state</code> 时，状态一定是最新值。
+          </div>
+          <div class="code-block">
+            <pre><span class="comment">// setState 回调用法</span>
+<span class="keyword">this</span>.setState(
+  { data: result },
+  () => {
+    <span class="comment">// 状态已更新完成，此时可以安全读取</span>
+    console.log(<span class="keyword">this</span>.state.data);
+  }
+);</pre>
+          </div>
+        </div>
+        <div class="log-container" id="callback-log"></div>
+      </div>
+
+      <div class="demo-card">
+        <h2>2. 组件卸载防护</h2>
+        <div class="demo-section">
+          <h3>mounted 标志位</h3>
+          <p>在异步操作完成前检查组件是否仍挂载，避免卸载后更新状态。</p>
+          <div class="state-indicator">
+            <div class="state-dot mounted" id="mounted-dot"></div>
+            <span id="mounted-status">Component Mounted: true</span>
+          </div>
+          <div class="mount-toggle">
+            <span>Unmount</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="mount-toggle" checked onchange="toggleMount()">
+              <span class="toggle-slider"></span>
+            </label>
+            <span>Mount</span>
+          </div>
+          <div class="counter-display" id="mounted-display">-</div>
+          <div class="button-group">
+            <button class="btn-primary" onclick="startMountedDemo()">Start Async (3s)</button>
+            <button class="btn-danger" onclick="simulateUnmount()">Force Unmount</button>
+            <button class="btn-warning" onclick="resetMountedDemo()">Reset</button>
+          </div>
+          <div id="mounted-warning" class="info-box danger" style="display:none; margin-top:15px;">
+            <strong>组件已卸载!</strong> 异步操作完成时组件已卸载，更新被忽略。
+          </div>
+          <div id="mounted-success" class="info-box success" style="display:none; margin-top:15px;">
+            <strong>状态已更新!</strong> 异步操作完成时组件仍挂载，状态正常更新。
+          </div>
+        </div>
+        <div class="log-container" id="mounted-log"></div>
+      </div>
+    </div>
+
+    <div class="demo-grid">
+      <div class="demo-card">
+        <h2>3. AbortController 取消请求</h2>
+        <div class="demo-section">
+          <h3>Fetch 请求取消</h3>
+          <p>使用 AbortController 在组件卸载时取消正在进行的网络请求。</p>
+          <div class="counter-display" id="abort-display">Ready</div>
+          <div class="button-group">
+            <button class="btn-primary" onclick="startAbortDemo()">Start Request (5s)</button>
+            <button class="btn-danger" onclick="cancelRequest()">Cancel Request</button>
+            <button class="btn-warning" onclick="resetAbortDemo()">Reset</button>
+          </div>
+          <div id="abort-result" class="info-box" style="display:none; margin-top:15px;"></div>
+          <div class="code-block">
+            <pre><span class="keyword">class</span> DataFetcher <span class="keyword">extends</span> React.Component {
+  <span class="function">componentDidMount</span>() {
+    <span class="keyword">this</span>.controller = <span class="keyword">new</span> AbortController();
+    fetch(url, { signal: <span class="keyword">this</span>.controller.signal })
+      .then(res => res.json())
+      .then(data => <span class="keyword">this</span>.setState({ data }))
+      .catch(err => {
+        <span class="keyword">if</span> (err.name !== <span class="string">'AbortError'</span>) {
+          <span class="comment">// 处理实际错误</span>
+        }
+      });
+  }
+  <span class="function">componentWillUnmount</span>() {
+    <span class="keyword">this</span>.controller?.abort();
+  }
+}</pre>
+          </div>
+        </div>
+        <div class="log-container" id="abort-log"></div>
+      </div>
+
+      <div class="demo-card">
+        <h2>4. 方案对比</h2>
+        <div class="tabs">
+          <button class="tab active" onclick="showComparisonTab('mounted-tab')">mounted 标志</button>
+          <button class="tab" onclick="showComparisonTab('abort-tab')">AbortController</button>
+          <button class="tab" onclick="showComparisonTab('combined-tab')">组合方案</button>
+        </div>
+        <div id="mounted-tab" class="tab-content active">
+          <h3>mounted 标志位方案</h3>
+          <table class="comparison-table">
+            <tr><td><span class="badge badge-success">优点</span></td><td>简单直接，适用于所有异步操作</td></tr>
+            <tr><td><span class="badge badge-danger">缺点</span></td><td>无法取消正在进行的网络请求</td></tr>
+            <tr><td><span class="badge badge-warning">注意</span></td><td>定时器需要单独清理</td></tr>
+          </table>
+          <div class="code-block">
+            <pre>_mounted = <span class="keyword">false</span>;
+<span class="function">componentDidMount</span>() { <span class="keyword">this</span>._mounted = <span class="keyword">true</span>; }
+<span class="function">componentWillUnmount</span>() { <span class="keyword">this</span>._mounted = <span class="keyword">false</span>; }
+<span class="comment">// 异步回调中使用</span>
+fetch(url).then(data => {
+  <span class="keyword">if</span> (<span class="keyword">this</span>._mounted) <span class="keyword">this</span>.setState({ data });
+});</pre>
+          </div>
+        </div>
+        <div id="abort-tab" class="tab-content">
+          <h3>AbortController 方案</h3>
+          <table class="comparison-table">
+            <tr><td><span class="badge badge-success">优点</span></td><td>可取消网络请求，节省带宽</td></tr>
+            <tr><td><span class="badge badge-danger">缺点</span></td><td>不适用于定时器、订阅取消</td></tr>
+            <tr><td><span class="badge badge-warning">注意</span></td><td>需要检查 AbortError</td></tr>
+          </table>
+          <div class="code-block">
+            <pre>_controller = <span class="keyword">null</span>;
+<span class="function">componentDidMount</span>() {
+  <span class="keyword">this</span>._controller = <span class="keyword">new</span> AbortController();
+  fetch(url, { signal: <span class="keyword">this</span>._controller.signal });
+}
+<span class="function">componentWillUnmount</span>() { <span class="keyword">this</span>._controller?.abort(); }</pre>
+          </div>
+        </div>
+        <div id="combined-tab" class="tab-content">
+          <h3>组合方案（推荐）</h3>
+          <table class="comparison-table">
+            <tr><td><span class="badge badge-success">优点</span></td><td>既可取消请求，又有状态更新保护</td></tr>
+            <tr><td><span class="badge badge-warning">注意</span></td><td>需要额外代码，但最安全</td></tr>
+          </table>
+          <div class="info-box" style="margin-top:15px;"><strong>推荐!</strong> 同时使用 mounted 标志和 AbortController</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-grid">
+      <div class="demo-card full-width">
+        <h2>5. 闭包陷阱</h2>
+        <div class="demo-grid">
+          <div class="demo-section">
+            <h3>setInterval 中的闭包问题</h3>
+            <p>setInterval 回调中的 this.state 可能不是最新值（闭包捕获了旧值）。</p>
+            <div class="counter-display" id="closure-counter">0</div>
+            <div style="margin-bottom:10px;">
+              <label>Speed: </label>
+              <select id="interval-speed-select">
+                <option value="1000">1000ms</option>
+                <option value="500">500ms</option>
+                <option value="200">200ms</option>
+              </select>
+            </div>
+            <div class="button-group">
+              <button class="btn-success" onclick="startClosureInterval()">Start (Wrong)</button>
+              <button class="btn-primary" onclick="startClosureIntervalFixed()">Start (Correct)</button>
+              <button class="btn-danger" onclick="stopClosureInterval()">Stop</button>
+            </div>
+            <div id="closure-warning" class="info-box danger" style="display:none; margin-top:15px;">
+              <strong>闭包陷阱!</strong> 计数器停止增长，因为 setInterval 闭包捕获了初始状态。
+            </div>
+          </div>
+          <div class="demo-section">
+            <h3>代码对比</h3>
+            <div class="tabs">
+              <button class="tab active" onclick="showCodeTab('wrong-code')">错误方式</button>
+              <button class="tab" onclick="showCodeTab('correct-code')">正确方式</button>
+            </div>
+            <div id="wrong-code" class="tab-content active">
+              <div class="code-block">
+                <pre><span class="comment">// 错误：闭包捕获了初始 this.state.count</span>
+setInterval(() => {
+  <span class="keyword">this</span>.setState({ count: <span class="keyword">this</span>.state.count + 1 });
+  <span class="comment">// this.state.count 永远是初始值 0!</span>
+}, 1000);</pre>
+              </div>
+            </div>
+            <div id="correct-code" class="tab-content">
+              <div class="code-block">
+                <pre><span class="comment">// 正确：使用函数式更新</span>
+setInterval(() => {
+  <span class="keyword">this</span>.setState(prevState => ({ count: prevState.count + 1 }));
+  <span class="comment">// prevState 是最新状态!</span>
+}, 1000);</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="log-container" id="closure-log" style="max-height:150px;"></div>
+      </div>
+    </div>
+
+    <div class="demo-grid">
+      <div class="demo-card full-width">
+        <h2>6. 完整示例：带生命周期联动的数据获取</h2>
+        <div class="demo-grid">
+          <div class="demo-section">
+            <h3>组件状态</h3>
+            <div class="state-indicator">
+              <div class="state-dot mounted" id="full-demo-mounted"></div>
+              <span>Mounted: <span id="full-demo-mounted-text">true</span></span>
+            </div>
+            <div class="data-display" id="full-demo-data">Click "Fetch Data" to load data...</div>
+            <div class="button-group">
+              <button class="btn-primary" onclick="fetchDataWithLifecycle()">Fetch Data</button>
+              <button class="btn-danger" onclick="unmountFullDemo()">Unmount</button>
+              <button class="btn-success" onclick="mountFullDemo()">Mount</button>
+              <button class="btn-warning" onclick="resetFullDemo()">Reset</button>
+            </div>
+            <div id="full-demo-warning" class="info-box danger" style="display:none; margin-top:15px;">
+              <strong>组件已卸载!</strong> 异步数据返回时被忽略。
+            </div>
+          </div>
+          <div class="demo-section">
+            <h3>模拟代码</h3>
+            <div class="code-block">
+              <pre><span class="keyword">class</span> UserProfile <span class="keyword">extends</span> React.Component {
+  state = { user: <span class="keyword">null</span>, loading: <span class="keyword">true</span>, error: <span class="keyword">null</span> };
+  _mounted = <span class="keyword">false</span>;
+  _controller = <span class="keyword">null</span>;
+
+  <span class="function">componentDidMount</span>() {
+    <span class="keyword">this</span>._mounted = <span class="keyword">true</span>;
+    <span class="keyword">this</span>._controller = <span class="keyword">new</span> AbortController();
+  }
+
+  <span class="function">componentWillUnmount</span>() {
+    <span class="keyword">this</span>._mounted = <span class="keyword">false</span>;
+    <span class="keyword">this</span>._controller?.abort();
+  }
+
+  <span class="function">fetchUser</span>(userId) {
+    <span class="comment">// ... with mounted check</span>
+  }
+}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="log-container" id="full-demo-log"></div>
+      </div>
+    </div>
+
+    <footer>
+      <p>React Class Component Async Rendering Demo | 交互式学习演示</p>
+    </footer>
+  </div>
+
+  <script>    // ==========================================
+    // Demo State
+    // ==========================================
+    const state = {
+      callback: { value: 0, inProgress: false },
+      mounted: { mounted: true, intervalId: null, pendingUpdate: false },
+      abort: { controller: null, inProgress: false },
+      closure: { count: 0, intervalId: null, wrongIntervalId: null, maxWrongCount: null },
+      fullDemo: { mounted: true, controller: null }
+    };
+
+    // ==========================================
+    // Utility Functions
+    // ==========================================
+    function addLog(containerId, message, type = 'info') {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+      entry.innerHTML = `<span class="timestamp">${timestamp}</span>${message}`;
+      container.appendChild(entry);
+      container.scrollTop = container.scrollHeight;
+      while (container.children.length > 50) container.removeChild(container.firstChild);
+    }
+
+    function showComparisonTab(tabId) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[onclick="showComparisonTab('${tabId}')"]`).classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    function showCodeTab(tabId) {
+      document.querySelectorAll('#closure-log ~ .tabs .tab, #closure-log + * .tab').forEach(t => {
+        if (t.onclick.toString().includes('showCodeTab')) {
+          t.classList.remove('active');
+        }
+      });
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(t => {
+        if (t.onclick.toString().includes('showCodeTab')) t.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      const targetTab = Array.from(tabs).find(t => t.onclick.toString().includes(`'${tabId}'`));
+      if (targetTab) targetTab.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // ==========================================
+    // Demo 1: setState Callback
+    // ==========================================
+    function runSetStateCallbackDemo() {
+      if (state.callback.inProgress) return;
+      state.callback.inProgress = true;
+      state.callback.value = 0;
+      const display = document.getElementById('callback-display');
+      const progress = document.getElementById('callback-progress');
+      display.textContent = '0';
+      display.className = 'counter-display';
+      progress.style.width = '0%';
+      addLog('callback-log', 'Starting async operation with setState callback...', 'action');
+      
+      // Simulate async operation
+      setTimeout(() => {
+        const newValue = Math.random() * 100;
+        // Use setState with callback (simulated)
+        state.callback.value = Math.round(newValue);
+        display.textContent = `Loading: ${newValue.toFixed(1)}%`;
+        progress.style.width = `${newValue}%`;
+        addLog('callback-log', `Async complete. Updating state to ${state.callback.value}...`, 'action');
+        
+        // Simulate render delay then callback
+        setTimeout(() => {
+          display.textContent = `Value: ${state.callback.value}`;
+          display.className = 'counter-display success';
+          progress.style.width = '100%';
+          addLog('callback-log', `Callback executed! State is now: ${state.callback.value}`, 'success');
+          addLog('callback-log', `In callback, this.state = ${state.callback.value} (guaranteed latest value)`, 'render');
+          state.callback.inProgress = false;
+        }, 100);
+      }, 1500);
+    }
+
+    function runSetStateWithoutCallbackDemo() {
+      if (state.callback.inProgress) return;
+      state.callback.inProgress = true;
+      state.callback.value = 0;
+      const display = document.getElementById('callback-display');
+      const progress = document.getElementById('callback-progress');
+      display.textContent = '0';
+      display.className = 'counter-display';
+      progress.style.width = '0%';
+      addLog('callback-log', 'Starting async operation WITHOUT setState callback...', 'warning');
+      
+      setTimeout(() => {
+        const newValue = Math.random() * 100;
+        // Update without callback - state might not be ready when we try to read
+        state.callback.value = Math.round(newValue);
+        display.textContent = `Value: ${state.callback.value}`;
+        display.className = 'counter-display';
+        progress.style.width = '100%';
+        addLog('callback-log', `State updated to ${state.callback.value} immediately`, 'render');
+        addLog('callback-log', `But if we read this.state now, it might not be the latest value in real React async batch updates!`, 'warning');
+        state.callback.inProgress = false;
+      }, 1500);
+    }
+
+    function resetCallbackDemo() {
+      state.callback.inProgress = false;
+      state.callback.value = 0;
+      document.getElementById('callback-display').textContent = 'Waiting for action...';
+      document.getElementById('callback-display').className = 'counter-display';
+      document.getElementById('callback-progress').style.width = '0%';
+      document.getElementById('callback-log').innerHTML = '';
+    }
+
+    // ==========================================
+    // Demo 2: Mounted Flag
+    // ==========================================
+    function toggleMount() {
+      state.mounted.mounted = document.getElementById('mount-toggle').checked;
+      updateMountedUI();
+      addLog('mounted-log', `Mount state changed to: ${state.mounted.mounted}`, state.mounted.mounted ? 'success' : 'warning');
+    }
+
+    function simulateUnmount() {
+      state.mounted.mounted = false;
+      document.getElementById('mount-toggle').checked = false;
+      updateMountedUI();
+      addLog('mounted-log', 'Component unmounted (simulated)', 'warning');
+      
+      // If there's a pending update, it will be ignored
+      if (state.mounted.pendingUpdate) {
+        addLog('mounted-log', 'Pending async update will be IGNORED because component is unmounted!', 'error');
+      }
+    }
+
+    function updateMountedUI() {
+      const dot = document.getElementById('mounted-dot');
+      const status = document.getElementById('mounted-status');
+      dot.className = `state-dot ${state.mounted.mounted ? 'mounted' : 'unmounted'}`;
+      status.textContent = `Component Mounted: ${state.mounted.mounted}`;
+    }
+
+    function startMountedDemo() {
+      if (state.mounted.intervalId) clearInterval(state.mounted.intervalId);
+      state.mounted.pendingUpdate = true;
+      const display = document.getElementById('mounted-display');
+      display.textContent = 'Waiting 3s...';
+      display.className = 'counter-display';
+      document.getElementById('mounted-warning').style.display = 'none';
+      document.getElementById('mounted-success').style.display = 'none';
+      addLog('mounted-log', 'Starting 3 second async operation...', 'action');
+      addLog('mounted-log', 'If you unmount before completion, update will be ignored', 'warning');
+      
+      state.mounted.intervalId = setTimeout(() => {
+        state.mounted.pendingUpdate = false;
+        if (state.mounted.mounted) {
+          display.textContent = 'Updated!';
+          display.className = 'counter-display success';
+          document.getElementById('mounted-success').style.display = 'block';
+          addLog('mounted-log', 'Async completed! Component was mounted, state updated.', 'success');
+        } else {
+          display.textContent = 'Ignored!';
+          display.className = 'counter-display error';
+          document.getElementById('mounted-warning').style.display = 'block';
+          addLog('mounted-log', 'Async completed BUT component was unmounted - update IGNORED!', 'error');
+        }
+      }, 3000);
+    }
+
+    function resetMountedDemo() {
+      if (state.mounted.intervalId) {
+        clearTimeout(state.mounted.intervalId);
+        state.mounted.intervalId = null;
+      }
+      state.mounted.mounted = true;
+      state.mounted.pendingUpdate = false;
+      document.getElementById('mount-toggle').checked = true;
+      updateMountedUI();
+      document.getElementById('mounted-display').textContent = '-';
+      document.getElementById('mounted-display').className = 'counter-display';
+      document.getElementById('mounted-warning').style.display = 'none';
+      document.getElementById('mounted-success').style.display = 'none';
+      document.getElementById('mounted-log').innerHTML = '';
+      addLog('mounted-log', 'Demo reset. Component is mounted.', 'action');
+    }
+
+    // ==========================================
+    // Demo 3: AbortController
+    // ==========================================
+    function startAbortDemo() {
+      if (state.abort.inProgress) return;
+      state.abort.inProgress = true;
+      state.abort.controller = new AbortController();
+      const display = document.getElementById('abort-display');
+      const resultBox = document.getElementById('abort-result');
+      display.textContent = 'Requesting... (5s)';
+      display.className = 'counter-display';
+      resultBox.style.display = 'none';
+      addLog('abort-log', 'Starting simulated 5 second request...', 'action');
+      addLog('abort-log', 'Signal is attached. Click "Cancel Request" to abort.', 'warning');
+      
+      // Simulate fetch with AbortController
+      let progress = 0;
+      const intervalId = setInterval(() => {
+        progress += 20;
+        display.textContent = `Progress: ${progress}%`;
+        if (progress >= 100) {
+          clearInterval(intervalId);
+          display.textContent = 'Complete!';
+          display.className = 'counter-display success';
+          resultBox.className = 'info-box success';
+          resultBox.innerHTML = '<strong>Request completed successfully!</strong>';
+          resultBox.style.display = 'block';
+          addLog('abort-log', 'Request completed successfully!', 'success');
+          state.abort.inProgress = false;
+          state.abort.controller = null;
+        }
+      }, 1000);
+      
+      state.abort.controller.intervalId = intervalId;
+    }
+
+    function cancelRequest() {
+      if (state.abort.controller) {
+        state.abort.controller.abort();
+        if (state.abort.controller.intervalId) {
+          clearInterval(state.abort.controller.intervalId);
+        }
+        state.abort.inProgress = false;
+        state.abort.controller = null;
+        const display = document.getElementById('abort-display');
+        display.textContent = 'Cancelled!';
+        display.className = 'counter-display error';
+        const resultBox = document.getElementById('abort-result');
+        resultBox.className = 'info-box danger';
+        resultBox.innerHTML = '<strong>Request was cancelled via AbortController!</strong>';
+        resultBox.style.display = 'block';
+        addLog('abort-log', 'Request ABORTED! AbortController.signal was triggered.', 'error');
+        addLog('abort-log', 'In real fetch, this would throw AbortError', 'warning');
+      }
+    }
+
+    function resetAbortDemo() {
+      if (state.abort.controller) {
+        if (state.abort.controller.intervalId) {
+          clearInterval(state.abort.controller.intervalId);
+        }
+        state.abort.controller = null;
+      }
+      state.abort.inProgress = false;
+      document.getElementById('abort-display').textContent = 'Ready';
+      document.getElementById('abort-display').className = 'counter-display';
+      document.getElementById('abort-result').style.display = 'none';
+      document.getElementById('abort-log').innerHTML = '';
+      addLog('abort-log', 'Demo reset. Ready for new request.', 'action');
+    }
+
+    // ==========================================
+    // Demo 5: Closure Trap
+    // ==========================================
+    function startClosureInterval() {
+      if (state.closure.wrongIntervalId) clearInterval(state.closure.wrongIntervalId);
+      if (state.closure.intervalId) clearInterval(state.closure.intervalId);
+      state.closure.count = 0;
+      state.closure.maxWrongCount = null;
+      document.getElementById('closure-counter').textContent = '0';
+      document.getElementById('closure-counter').className = 'counter-display';
+      document.getElementById('closure-warning').style.display = 'none';
+      document.getElementById('closure-log').innerHTML = '';
+      const speed = parseInt(document.getElementById('interval-speed-select').value);
+      addLog('closure-log', `Starting WRONG interval at ${speed}ms (closure captures initial state)`, 'warning');
+      
+      // Simulate the WRONG way - closure captures initial count
+      const initialCount = 0;
+      let capturedCount = initialCount;
+      
+      state.closure.wrongIntervalId = setInterval(() => {
+        capturedCount = capturedCount + 1;
+        // This simulates the closure problem - using captured initial value
+        state.closure.count = capturedCount;
+        document.getElementById('closure-counter').textContent = capturedCount;
+        addLog('closure-log', `setInterval tick: count = ${capturedCount}`, 'render');
+        
+        // Stop after 5 ticks to show the trap
+        if (capturedCount >= 5 && state.closure.maxWrongCount === null) {
+          clearInterval(state.closure.wrongIntervalId);
+          state.closure.maxWrongCount = capturedCount;
+          document.getElementById('closure-warning').style.display = 'block';
+          addLog('closure-log', `Stopped at ${capturedCount}. Closure captured initial value!`, 'error');
+        }
+      }, speed);
+    }
+
+    function startClosureIntervalFixed() {
+      if (state.closure.wrongIntervalId) clearInterval(state.closure.wrongIntervalId);
+      if (state.closure.intervalId) clearInterval(state.closure.intervalId);
+      state.closure.count = 0;
+      state.closure.maxWrongCount = null;
+      document.getElementById('closure-counter').textContent = '0';
+      document.getElementById('closure-counter').className = 'counter-display';
+      document.getElementById('closure-warning').style.display = 'none';
+      document.getElementById('closure-log').innerHTML = '';
+      const speed = parseInt(document.getElementById('interval-speed-select').value);
+      addLog('closure-log', `Starting CORRECT interval at ${speed}ms (using functional update)`, 'success');
+      
+      // Simulate the CORRECT way - using functional update
+      let currentCount = 0;
+      state.closure.intervalId = setInterval(() => {
+        // This simulates prevState => prevState + 1
+        currentCount = currentCount + 1;
+        state.closure.count = currentCount;
+        document.getElementById('closure-counter').textContent = currentCount;
+        document.getElementById('closure-counter').className = 'counter-display success';
+        addLog('closure-log', `setInterval tick: count = ${currentCount} (always latest!)`, 'render');
+      }, speed);
+    }
+
+    function stopClosureInterval() {
+      if (state.closure.wrongIntervalId) {
+        clearInterval(state.closure.wrongIntervalId);
+        state.closure.wrongIntervalId = null;
+        addLog('closure-log', 'Wrong interval stopped.', 'action');
+      }
+      if (state.closure.intervalId) {
+        clearInterval(state.closure.intervalId);
+        state.closure.intervalId = null;
+        addLog('closure-log', 'Correct interval stopped.', 'action');
+      }
+    }
+
+    // ==========================================
+    // Demo 6: Full Example
+    // ==========================================
+    function updateFullDemoMountUI() {
+      const dot = document.getElementById('full-demo-mounted');
+      const text = document.getElementById('full-demo-mounted-text');
+      dot.className = `state-dot ${state.fullDemo.mounted ? 'mounted' : 'unmounted'}`;
+      text.textContent = state.fullDemo.mounted.toString();
+    }
+
+    function unmountFullDemo() {
+      state.fullDemo.mounted = false;
+      updateFullDemoMountUI();
+      addLog('full-demo-log', 'Component unmounted', 'warning');
+    }
+
+    function mountFullDemo() {
+      state.fullDemo.mounted = true;
+      updateFullDemoMountUI();
+      addLog('full-demo-log', 'Component mounted', 'success');
+    }
+
+    function resetFullDemo() {
+      if (state.fullDemo.controller) {
+        state.fullDemo.controller.abort();
+        state.fullDemo.controller = null;
+      }
+      state.fullDemo.mounted = true;
+      updateFullDemoMountUI();
+      document.getElementById('full-demo-data').textContent = 'Click "Fetch Data" to load data...';
+      document.getElementById('full-demo-warning').style.display = 'none';
+      document.getElementById('full-demo-log').innerHTML = '';
+      addLog('full-demo-log', 'Demo reset. Component is mounted.', 'action');
+    }
+
+    function fetchDataWithLifecycle() {
+      const dataDisplay = document.getElementById('full-demo-data');
+      const warningBox = document.getElementById('full-demo-warning');
+      warningBox.style.display = 'none';
+      dataDisplay.textContent = 'Fetching data...';
+      dataDisplay.style.background = '#fff8e1';
+      addLog('full-demo-log', 'componentDidMount: Creating AbortController, starting fetch', 'action');
+      
+      state.fullDemo.controller = { aborted: false };
+      const controller = state.fullDemo.controller;
+      
+      // Simulate 3 second fetch
+      setTimeout(() => {
+        addLog('full-demo-log', 'Fetch completed!', 'action');
+        
+        if (!state.fullDemo.mounted) {
+          addLog('full-demo-log', 'componentWillUnmount: mounted = false, aborting...', 'warning');
+          addLog('full-demo-log', 'Update ignored! React warning would be shown.', 'error');
+          dataDisplay.textContent = 'Data returned but component unmounted - IGNORED';
+          dataDisplay.style.background = '#ffebee';
+          warningBox.style.display = 'block';
+          return;
+        }
+        
+        const mockData = {
+          id: 12345,
+          name: 'John Doe',
+          email: 'john@example.com',
+          avatar: 'https://via.placeholder.com/100',
+          bio: 'A passionate React developer'
+        };
+        
+        addLog('full-demo-log', 'mounted check passed, calling setState...', 'success');
+        addLog('full-demo-log', 'setState callback: Updating UI with fetched data', 'render');
+        
+        dataDisplay.textContent = JSON.stringify(mockData, null, 2);
+        dataDisplay.style.background = '#e8f5e9';
+        addLog('full-demo-log', 'Render complete! User profile displayed.', 'success');
+        
+        state.fullDemo.controller = null;
+      }, 3000);
+    }
+
+    // ==========================================
+    // Initialize
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      addLog('callback-log', 'Demo initialized. Click buttons to interact.', 'render');
+      addLog('mounted-log', 'Demo initialized. Toggle mount state or start async operation.', 'render');
+      addLog('abort-log', 'Demo initialized. Click "Start Request" to begin.', 'render');
+      addLog('closure-log', 'Demo initialized. Try the wrong way first, then the correct way.', 'render');
+      addLog('full-demo-log', 'Demo initialized. Fetch data with lifecycle protection.', 'render');
+    });
+  </script>
+</body>
+</html>
