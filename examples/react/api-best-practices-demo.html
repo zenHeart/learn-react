@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>React API 最佳实践演示</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    
+    h1 { 
+      text-align: center; 
+      margin-bottom: 30px;
+      color: #333;
+    }
+    
+    .demo-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    .demo-section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .demo-section h2 {
+      color: #61dafb;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+    
+    .demo-section p {
+      color: #666;
+      margin-bottom: 15px;
+      font-size: 0.9em;
+    }
+    
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.85em;
+      overflow-x: auto;
+      margin-bottom: 15px;
+    }
+    
+    .demo-box {
+      border: 2px solid #61dafb;
+      padding: 20px;
+      border-radius: 8px;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    button {
+      background: #61dafb;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    button:hover {
+      background: #4fa8c7;
+      transform: translateY(-1px);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .count-display {
+      font-size: 2em;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .status {
+      font-size: 0.8em;
+      color: #888;
+      padding: 5px 10px;
+      background: #f0f0f0;
+      border-radius: 4px;
+    }
+    
+    .online { color: #4caf50; }
+    .offline { color: #f44336; }
+    
+    .theme-light { background: #fff; color: #333; }
+    .theme-dark { background: #333; color: #fff; }
+    
+    .portal-demo {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+    
+    .memo-info {
+      font-size: 0.8em;
+      color: #888;
+      margin-top: 10px;
+    }
+    
+    .tab-buttons {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+    
+    .tab-btn {
+      padding: 8px 16px;
+      background: #e0e0e0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .tab-btn.active {
+      background: #61dafb;
+      color: white;
+    }
+    
+    .reducer-log {
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 4px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.85em;
+    }
+    
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>React API 最佳实践演示</h1>
+    
+    <!-- 1. useState 最佳实践 -->
+    <div class="demo-section">
+      <h2>1. useState - 函数式更新</h2>
+      <p>当新状态依赖旧状态时，使用函数式更新避免闭包陷阱</p>
+      <div class="code-block">
+// ✅ 推荐：使用函数式更新
+setCount(prev => prev + 1);
+
+// ❌ 不推荐：依赖外部 state 变量
+setCount(count + 1);
+      </div>
+      <div class="demo-box">
+        <div class="count-display" id="count1">0</div>
+        <button onclick="incrementCorrect()">+1 (正确)</button>
+        <button onclick="incrementWrong()">+1 (错误)</button>
+      </div>
+      <div class="memo-info">点击"错误"按钮多次，观察数值是否正确递增</div>
+    </div>
+    
+    <!-- 2. useEffect 清理 -->
+    <div class="demo-section">
+      <h2>2. useEffect - 清理副作用</h2>
+      <p>订阅/定时器等副作用必须在清理函数中释放</p>
+      <div class="code-block">
+useEffect(() => {
+  const timer = setInterval(() => {
+    setSeconds(s => s + 1);
+  }, 1000);
+  
+  // ✅ 清理函数 - 组件卸载时清除定时器
+  return () => clearInterval(timer);
+}, []);
+      </div>
+      <div class="demo-box">
+        <div class="count-display" id="timer">0</div>
+        <button onclick="startTimer()">启动定时器</button>
+        <button onclick="stopTimer()">停止</button>
+      </div>
+    </div>
+    
+    <!-- 3. useCallback -->
+    <div class="demo-section">
+      <h2>3. useCallback - 缓存回调函数</h2>
+      <p>传递给子组件的回调必须使用 useCallback 包装，避免子组件不必要的重渲染</p>
+      <div class="code-block">
+const handleClick = useCallback(() => {
+  doSomething(id);
+}, [id]);
+      </div>
+      <div class="demo-box" id="callback-demo">
+        <div class="status" id="render-count1">渲染次数: 0</div>
+        <button onclick="triggerCallback()">触发回调</button>
+        <button onclick="forceParentRender()">强制父组件重渲染</button>
+      </div>
+    </div>
+    
+    <!-- 4. React.memo -->
+    <div class="demo-section">
+      <h2>4. React.memo - 跳过不必要的重渲染</h2>
+      <p>用 React.memo 包装纯组件，只在 props 变化时重渲染</p>
+      <div class="code-block">
+const PureButton = React.memo(function Button({ onClick, label }) {
+  console.log('Button rendered');
+  return <button onClick={onClick}>{label}</button>;
+});
+      </div>
+      <div class="demo-box" id="memo-demo">
+        <div class="status" id="parent-render">父组件渲染</div>
+        <div class="status" id="child-render">子组件渲染</div>
+        <button onclick="memoParentRender()">父组件重渲染</button>
+        <button onclick="memoChildUpdate()">子组件更新</button>
+      </div>
+    </div>
+    
+    <!-- 5. Context -->
+    <div class="demo-section">
+      <h2>5. Context - 全局状态</h2>
+      <p>主题、用户信息等全局数据通过 Context 共享</p>
+      <div class="code-block">
+const ThemeContext = React.createContext('light');
+
+function App() {
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+      </div>
+      <div class="demo-box theme-light" id="context-demo">
+        <div class="status" id="theme-status">当前主题: light</div>
+        <button onclick="toggleTheme()">切换主题</button>
+      </div>
+    </div>
+    
+    <!-- 6. useReducer -->
+    <div class="demo-section">
+      <h2>6. useReducer - 复杂状态管理</h2>
+      <p>相关联的状态组合使用 useReducer 更清晰</p>
+      <div class="code-block">
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'INCREMENT': return { count: state.count + 1 };
+    case 'TOGGLE': return { ...state, active: !state.active };
+    default: return state;
+  }
+};
+      </div>
+      <div class="demo-box">
+        <div id="reducer-state">
+          <div class="count-display" id="reducer-count">0</div>
+          <div class="status" id="reducer-status">状态: inactive</div>
+        </div>
+        <button onclick="reducerDispatch({ type: 'INCREMENT' })">INCREMENT</button>
+        <button onclick="reducerDispatch({ type: 'TOGGLE' })">TOGGLE</button>
+        <button onclick="reducerDispatch({ type: 'RESET' })">RESET</button>
+      </div>
+      <div class="reducer-log" id="reducer-log">
+        <div class="log-entry">操作日志:</div>
+      </div>
+    </div>
+    
+    <!-- 7. Portals -->
+    <div class="demo-section">
+      <h2>7. Portals - 渲染到其他 DOM 节点</h2>
+      <p>模态框、工具提示等可渲染到 body 而非当前容器</p>
+      <div class="code-block">
+const modal = document.getElementById('modal');
+ReactDOM.createPortal(<Modal />, modal);
+      </div>
+      <div class="demo-box">
+        <button onclick="openPortal()">打开模态框 (Portal)</button>
+        <button onclick="openNormal()">打开普通弹窗</button>
+      </div>
+      <div id="portal-root"></div>
+      <div id="normal-root"></div>
+    </div>
+    
+    <!-- 8. Error Boundary -->
+    <div class="demo-section">
+      <h2>8. Error Boundaries - 错误处理</h2>
+      <p>捕获子组件树中的 JavaScript 错误，显示备用 UI</p>
+      <div class="code-block">
+class ErrorBoundary extends React.Component {
+  state = { hasError: false };
+  
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return <h1>出错了!</h1>;
+    }
+    return this.props.children;
+  }
+}
+      </div>
+      <div class="demo-box">
+        <button onclick="triggerError()">触发错误</button>
+        <div id="error-demo"></div>
+      </div>
+    </div>
+    
+    <!-- 9. Forward Refs -->
+    <div class="demo-section">
+      <h2>9. Forward Refs - 暴露 DOM 引用</h2>
+      <p>让父组件可以访问子组件的 DOM 节点或 React 元素</p>
+      <div class="code-block">
+const FancyInput = React.forwardRef((props, ref) => (
+  <input ref={ref} className="fancy" />
+));
+
+// 父组件中使用
+const ref = useRef();
+<fancyinput ref={ref}>Click me</fancyinput>;
+ref.current.focus();
+      </div>
+      <div class="demo-box">
+        <input type="text" id="forward-input" placeholder="Forward Ref 输入框" />
+        <button onclick="focusForwardInput()">聚焦 (Forward Ref)</button>
+      </div>
+    </div>
+    
+    <!-- 10. Suspense + use() -->
+    <div class="demo-section">
+      <h2>10. Suspense + use() - 数据获取</h2>
+      <p>React 18 新特性，用于优雅地处理异步数据加载</p>
+      <div class="code-block">
+function UserProfile({ userPromise }) {
+  const user = use(userPromise);
+  return <h1>{user.name}</h1>;
+}
+
+<Suspense fallback={<Loading />}>
+  <UserProfile userPromise={fetchUser()} />
+</Suspense>
+      </div>
+      <div class="demo-box" id="suspense-demo">
+        <div class="status" id="suspense-status">等待加载...</div>
+        <button onclick="simulateFetch()">模拟数据加载</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="overlay-root"></div>
+  
+  <script type="module">
+    // 由于这是纯演示页面，我们用原生 JS 模拟 React 行为
+    // 实际 React 项目请使用真实的 React 库
+    
+    // ============ 1. useState 最佳实践 ============
+    let countCorrect = 0;
+    let countWrong = 0;
+    
+    window.incrementCorrect = function() {
+      // 模拟函数式更新
+      countCorrect = (prev) => prev + 1;
+      countCorrect = countCorrect + 1; // 正确：基于最新值
+      document.getElementById('count1').textContent = countCorrect;
+    };
+    
+    window.incrementWrong = function() {
+      // 模拟错误：闭包陷阱
+      const currentCount = countWrong;
+      setTimeout(() => {
+        // 错误：使用闭包中的旧值
+        countWrong = currentCount + 1;
+      }, 100);
+      // 如果快速点击，这里可能还是旧值
+      document.getElementById('count1').textContent = countWrong;
+    };
+    
+    // ============ 2. useEffect 清理 ============
+    let timerInterval = null;
+    let seconds = 0;
+    
+    window.startTimer = function() {
+      if (timerInterval) return;
+      timerInterval = setInterval(() => {
+        seconds++;
+        document.getElementById('timer').textContent = seconds;
+      }, 1000);
+    };
+    
+    window.stopTimer = function() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    };
+    
+    // ============ 3. useCallback ============
+    let renderCount1 = 0;
+    let callbackTriggered = false;
+    
+    function updateCallbackDemo() {
+      renderCount1++;
+      document.getElementById('render-count1').textContent = `渲染次数: ${renderCount1}`;
+      if (callbackTriggered) {
+        console.log('回调被执行');
+        callbackTriggered = false;
+      }
+    }
+    updateCallbackDemo();
+    
+    window.triggerCallback = function() {
+      callbackTriggered = true;
+      console.log('触发回调');
+    };
+    
+    window.forceParentRender = function() {
+      updateCallbackDemo();
+    };
+    
+    // ============ 4. React.memo ============
+    let parentRenderCount = 0;
+    let childRenderCount = 0;
+    
+    function updateMemoDemo() {
+      parentRenderCount++;
+      document.getElementById('parent-render').textContent = `父组件渲染: ${parentRenderCount}`;
+    }
+    
+    function updateChildRender() {
+      childRenderCount++;
+      document.getElementById('child-render').textContent = `子组件渲染: ${childRenderCount}`;
+    }
+    
+    window.memoParentRender = function() {
+      updateMemoDemo();
+      // React.memo 会阻止子组件重渲染
+    };
+    
+    window.memoChildUpdate = function() {
+      updateMemoDemo();
+      updateChildRender();
+    };
+    
+    // ============ 5. Context (Theme) ============
+    let currentTheme = 'light';
+    
+    window.toggleTheme = function() {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      const demo = document.getElementById('context-demo');
+      demo.className = `demo-box theme-${currentTheme}`;
+      document.getElementById('theme-status').textContent = `当前主题: ${currentTheme}`;
+    };
+    
+    // ============ 6. useReducer ============
+    const initialState = { count: 0, active: false };
+    
+    function reducer(state, action) {
+      switch (action.type) {
+        case 'INCREMENT':
+          return { ...state, count: state.count + 1 };
+        case 'DECREMENT':
+          return { ...state, count: state.count - 1 };
+        case 'TOGGLE':
+          return { ...state, active: !state.active };
+        case 'RESET':
+          return initialState;
+        default:
+          return state;
+      }
+    }
+    
+    let reducerState = { ...initialState };
+    
+    function updateReducerUI() {
+      document.getElementById('reducer-count').textContent = reducerState.count;
+      document.getElementById('reducer-status').textContent = 
+        `状态: ${reducerState.active ? 'active' : 'inactive'}`;
+    }
+    
+    function addLog(action) {
+      const log = document.getElementById('reducer-log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = `${new Date().toLocaleTimeString()} - ${JSON.stringify(action)}`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+    
+    window.reducerDispatch = function(action) {
+      reducerState = reducer(reducerState, action);
+      updateReducerUI();
+      addLog(action);
+    };
+    
+    // ============ 7. Portals ============
+    window.openPortal = function() {
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.id = 'modal-overlay';
+      overlay.onclick = closePortal;
+      
+      const modal = document.createElement('div');
+      modal.className = 'portal-demo';
+      modal.innerHTML = `
+        <h2>模态框 (Portal)</h2>
+        <p>这个弹窗通过 Portal 渲染到 #portal-root</p>
+        <button onclick="closePortal()">关闭</button>
+      `;
+      
+      document.getElementById('overlay-root').appendChild(overlay);
+      document.getElementById('portal-root').appendChild(modal);
+    };
+    
+    window.closePortal = function() {
+      const overlay = document.getElementById('modal-overlay');
+      const modal = document.querySelector('.portal-demo');
+      if (overlay) overlay.remove();
+      if (modal) modal.remove();
+    };
+    
+    window.openNormal = function() {
+      alert('这是一个普通的 alert 弹窗，不是 React Portal');
+    };
+    
+    // ============ 8. Error Boundary ============
+    let errorBoundaryTriggered = false;
+    
+    window.triggerError = function() {
+      if (!errorBoundaryTriggered) {
+        errorBoundaryTriggered = true;
+        document.getElementById('error-demo').innerHTML = `
+          <div style="color: red; padding: 10px;">
+            <strong>错误被 Error Boundary 捕获!</strong>
+            <br>
+            <small>这模拟了 React 的错误处理机制</small>
+          </div>
+        `;
+      } else {
+        errorBoundaryTriggered = false;
+        document.getElementById('error-demo').innerHTML = '';
+      }
+    };
+    
+    // ============ 9. Forward Refs ============
+    window.focusForwardInput = function() {
+      const input = document.getElementById('forward-input');
+      if (input) {
+        input.focus();
+        input.style.outline = '2px solid #61dafb';
+        setTimeout(() => input.style.outline = '', 1000);
+      }
+    };
+    
+    // ============ 10. Suspense + use() ============
+    let suspenseResolved = false;
+    
+    window.simulateFetch = function() {
+      document.getElementById('suspense-status').textContent = '加载中...';
+      
+      setTimeout(() => {
+        suspenseResolved = true;
+        document.getElementById('suspense-status').innerHTML = `
+          <span class="online">✓ 加载完成</span>
+          <br>
+          <small>数据: { name: "张三", age: 25 }</small>
+        `;
+      }, 1500);
+    };
+  </script>
+</body>
+</html>
