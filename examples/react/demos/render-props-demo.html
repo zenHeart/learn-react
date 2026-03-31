@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>React 实现 Vue Slot Scope — 交互演示</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    /* ---- Header ---- */
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+    header p {
+      margin-top: 0.4rem;
+      color: var(--text2);
+      font-size: 0.9rem;
+    }
+
+    /* ---- Tab Bar ---- */
+    .tab-bar {
+      display: flex;
+      gap: 0.3rem;
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 0.55rem 0.8rem;
+      background: transparent;
+      border: none;
+      border-radius: 7px;
+      color: var(--text2);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text); background: var(--surface2); }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    /* ---- Panels ---- */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      margin-bottom: 1.2rem;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .card-title .badge {
+      font-size: 0.7rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--accent2);
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    /* ---- Code Block ---- */
+    pre {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #e6edf3;
+      margin-bottom: 0.8rem;
+    }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .comment { color: #8b949e; font-style: italic; }
+    .prop { color: #79c0ff; }
+    .tag { color: #7ee787; }
+    .number { color: #f2cc60; }
+
+    /* ---- Demo Area ---- */
+    .demo-area {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: var(--text2);
+      margin-bottom: 0.8rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .dot-crosshair {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      transition: left 0.05s, top 0.05s;
+      display: none;
+    }
+    .dot-crosshair.visible { display: block; }
+
+    .mouse-info {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+    .hint {
+      text-align: center;
+      color: var(--text2);
+      font-size: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+
+    /* ---- Comparison Table ---- */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-bottom: 0.8rem;
+    }
+    th, td {
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    th { background: var(--surface2); color: var(--accent); }
+    td { color: var(--text2); }
+    .star { color: var(--yellow); }
+
+    /* ---- Mini Demos ---- */
+    .mini-demos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-top: 0.8rem;
+    }
+    .mini-demo {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.8rem;
+      text-align: center;
+    }
+    .mini-demo-label {
+      font-size: 0.75rem;
+      color: var(--text2);
+      margin-bottom: 0.4rem;
+    }
+    .mini-demo-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--green);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ---- Footer ---- */
+    footer {
+      margin-top: 2rem;
+      text-align: center;
+      color: var(--text2);
+      font-size: 0.78rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 600px) {
+      .tab-btn { font-size: 0.75rem; padding: 0.45rem 0.5rem; }
+      .mini-demos { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>React 实现 Vue Slot Scope — 交互演示</h1>
+  <p>5 种等效实现对比 · 在演示区域移动鼠标查看效果</p>
+</header>
+
+<!-- Tab Bar -->
+<div class="tab-bar" id="tabBar">
+  <button class="tab-btn active" data-tab="overview">概述</button>
+  <button class="tab-btn" data-tab="render-props">Render Props</button>
+  <button class="tab-btn" data-tab="hoc">HOC</button>
+  <button class="tab-btn" data-tab="hooks">自定义 Hook</button>
+  <button class="tab-btn" data-tab="cloneelement">cloneElement</button>
+</div>
+
+<!-- ============ Panel: Overview ============ -->
+<div class="panel active" id="panel-overview">
+  <div class="card">
+    <div class="card-title">🎯 Vue Scoped Slot 是什么？</div>
+    <pre><code><span class="comment">// 子组件：暴露内部状态给父组件</span>
+<span class="tag">&lt;template&gt;</span>
+  <span class="tag">&lt;slot</span> <span class="prop">:x</span>=<span class="string">"x"</span> <span class="prop">:y</span>=<span class="string">"y"</span> <span class="tag">/&gt;</span>
+<span class="tag">&lt;/template&gt;</span>
+
+<span class="comment">// 父组件：接收并使用子组件的数据</span>
+<span class="tag">&lt;MouseTracker</span> <span class="prop">v-slot</span>=<span class="string">"{ x, y }"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;div&gt;</span>鼠标位置：{{ x }}, {{ y }}<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/MouseTracker&gt;</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚡ React 5 种等效方案</div>
+    <table>
+      <thead>
+        <tr>
+          <th>方案</th>
+          <th>原理</th>
+          <th>推荐度</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Render Props</strong></td>
+          <td>将渲染逻辑作为函数 prop 传入</td>
+          <td><span class="star">⭐⭐⭐⭐⭐</span></td>
+        </tr>
+        <tr>
+          <td><strong>HOC</strong></td>
+          <td>包装组件，注入额外 props</td>
+          <td><span class="star">⭐⭐⭐</span></td>
+        </tr>
+        <tr>
+          <td><strong>Custom Hooks</strong></td>
+          <td>抽取逻辑为可复用的 Hook</td>
+          <td><span class="star">⭐⭐⭐⭐⭐</span></td>
+        </tr>
+        <tr>
+          <td><strong>Context + Hooks</strong></td>
+          <td>跨组件层级传递状态</td>
+          <td><span class="star">⭐⭐⭐⭐</span></td>
+        </tr>
+        <tr>
+          <td><strong>cloneElement</strong></td>
+          <td>克隆元素并附加 props（已不推荐）</td>
+          <td><span class="star">⭐⭐</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🧩 核心思想图解</div>
+    <pre><code><span class="comment">// Vue: 子组件通过 slot 传递数据 → 父组件通过 v-slot 接收</span>
+<span class="comment">// React: 子组件调用父组件传入的函数 → 父组件控制渲染</span>
+
+<span class="comment">// 共同点：数据来源是子组件，控制渲染是父组件</span>
+<span class="comment">// 这就是「控制反转」— Inversion of Control</span></code></pre>
+  </div>
+</div>
+
+<!-- ============ Panel: Render Props ============ -->
+<div class="panel" id="panel-render-props">
+  <div class="card">
+    <div class="card-title">📦 Render Props 模式 <span class="badge">推荐</span></div>
+    <pre><code><span class="comment">// MouseTracker.jsx</span>
+<span class="keyword">class</span> <span class="func">MouseTracker</span> <span class="keyword">extends</span> React.Component {
+  state = { x: <span class="number">0</span>, y: <span class="number">0</span> }
+
+  handleMouseMove = (e) => {
+    <span class="keyword">this</span>.setState({ x: e.clientX, y: e.clientY })
+  }
+
+  render() {
+    <span class="comment">// 调用父组件传入的 render 函数，传入内部状态</span>
+    <span class="keyword">return</span> (
+      &lt;div onMouseMove={<span class="keyword">this</span>.handleMouseMove}&gt;
+        {<span class="keyword">this</span>.props.render(<span class="keyword">this</span>.state)}
+      &lt;/div&gt;
+    )
+  }
+}
+
+<span class="comment">// 使用处</span>
+&lt;MouseTracker render={({ x, y }) =&gt; (
+  &lt;div&gt;鼠标位置：{x}, {y}&lt;/div&gt;
+)} /&gt;</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🖱️ 实际演示（Render Props）</div>
+    <p class="hint">👆 在下方灰色区域移动鼠标</p>
+    <div class="demo-area" id="demo-render-props">
+      <div class="dot-crosshair" id="dot-rp"></div>
+      <div class="mouse-info" id="info-rp">移动鼠标查看效果</div>
+    </div>
+    <div class="mini-demos">
+      <div class="mini-demo">
+        <div class="mini-demo-label">X 坐标</div>
+        <div class="mini-demo-value" id="rp-x">—</div>
+      </div>
+      <div class="mini-demo">
+        <div class="mini-demo-label">Y 坐标</div>
+        <div class="mini-demo-value" id="rp-y">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✅ 优缺点</div>
+    <pre><code><span class="green">✓</span> 状态来源完全透明，父组件完全控制渲染
+<span class="green">✓</span> 概念清晰，易于理解
+<span class="green">✓</span> 可组合多个 Render Props
+<span class="red">✗</span> 容易形成「包装地狱」（层层嵌套）
+<span class="red">✗</span> 静态分析不如 Hook 直观</code></pre>
+  </div>
+</div>
+
+<!-- ============ Panel: HOC ============ -->
+<div class="panel" id="panel-hoc">
+  <div class="card">
+    <div class="card-title">🎒 HOC（Higher-Order Components）模式</div>
+    <pre><code><span class="comment">// withMousePosition.js</span>
+<span class="keyword">function</span> <span class="func">withMousePosition</span>(WrappedComponent) {
+  <span class="keyword">return</span> <span class="keyword">function</span> <span class="func">EnhancedComponent</span>(props) {
+    <span class="keyword">const</span> [position, setPosition] = useState({ x: <span class="number">0</span>, y: <span class="number">0</span> })
+
+    useEffect(() =&gt; {
+      <span class="keyword">const</span> handleMove = (e) =&gt; setPosition({ x: e.clientX, y: e.clientY })
+      window.addEventListener(<span class="string">'mousemove'</span>, handleMove)
+      <span class="keyword">return</span> () =&gt; window.removeEventListener(<span class="string">'mousemove'</span>, handleMove)
+    }, [])
+
+    <span class="comment">// 将 position 注入到被包装组件的 props 中</span>
+    <span class="keyword">return</span> &lt;WrappedComponent {...props} mousePosition={position} /&gt;
+  }
+}
+
+<span class="comment">// 使用</span>
+<span class="keyword">const</span> EnhancedStatus = withMousePosition(StatusDisplay)
+&lt;EnhancedStatus /&gt;</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🖱️ 实际演示（HOC）</div>
+    <p class="hint">👆 在下方灰色区域移动鼠标</p>
+    <div class="demo-area" id="demo-hoc">
+      <div class="dot-crosshair" id="dot-hoc"></div>
+      <div class="mouse-info" id="info-hoc">移动鼠标查看效果</div>
+    </div>
+    <div class="mini-demos">
+      <div class="mini-demo">
+        <div class="mini-demo-label">注入的 props</div>
+        <div class="mini-demo-value" id="hoc-pos">mousePosition</div>
+      </div>
+      <div class="mini-demo">
+        <div class="mini-demo-label">HOC 增强后</div>
+        <div class="mini-demo-value" id="hoc-status">✅</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✅ 优缺点</div>
+    <pre><code><span class="green">✓</span> 可跨多个组件复用相同逻辑
+<span class="green">✓</span> 不改变原始组件（组合优于继承）
+<span class="green">✓</span> 可使用装饰器语法
+<span class="red">✗</span> props 命名可能冲突
+<span class="red">✗</span> 调试时组件层级多，难以追踪</code></pre>
+  </div>
+</div>
+
+<!-- ============ Panel: Custom Hooks ============ -->
+<div class="panel" id="panel-hooks">
+  <div class="card">
+    <div class="card-title">🪝 自定义 Hooks 模式 <span class="badge">现代主流</span></div>
+    <pre><code><span class="comment">// useMousePosition.js</span>
+<span class="keyword">function</span> <span class="func">useMousePosition</span>() {
+  <span class="keyword">const</span> [position, setPosition] = useState({ x: <span class="number">0</span>, y: <span class="number">0</span> })
+
+  useEffect(() =&gt; {
+    <span class="keyword">const</span> handleMove = (e) =&gt; {
+      setPosition({ x: e.clientX, y: e.clientY })
+    }
+    window.addEventListener(<span class="string">'mousemove'</span>, handleMove)
+    <span class="keyword">return</span> () =&gt; window.removeEventListener(<span class="string">'mousemove'</span>, handleMove)
+  }, [])
+
+  <span class="keyword">return</span> position
+}
+
+<span class="comment">// 使用 — 组件只负责渲染，逻辑全部在 Hook 中</span>
+<span class="keyword">function</span> <span class="func">StatusDisplay</span>() {
+  <span class="keyword">const</span> { x, y } = useMousePosition()
+  <span class="keyword">return</span> &lt;div&gt;鼠标位置：{x}, {y}&lt;/div&gt;
+}</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🖱️ 实际演示（Custom Hooks）</div>
+    <p class="hint">👆 在下方灰色区域移动鼠标</p>
+    <div class="demo-area" id="demo-hooks">
+      <div class="dot-crosshair" id="dot-hooks"></div>
+      <div class="mouse-info" id="info-hooks">移动鼠标查看效果</div>
+    </div>
+    <div class="mini-demos">
+      <div class="mini-demo">
+        <div class="mini-demo-label">X 坐标</div>
+        <div class="mini-demo-value" id="hook-x">—</div>
+      </div>
+      <div class="mini-demo">
+        <div class="mini-demo-label">Y 坐标</div>
+        <div class="mini-demo-value" id="hook-y">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✅ 优缺点</div>
+    <pre><code><span class="green">✓</span> 无嵌套问题，代码扁平
+<span class="green">✓</span> TypeScript 支持极佳（返回类型自动推断）
+<span class="green">✓</span> 可组合多个 Hook
+<span class="green">✓</span> 逻辑复用清晰，测试友好
+<span class="red">✗</span> 需要 React 16.8+</code></pre>
+  </div>
+</div>
+
+<!-- ============ Panel: cloneElement ============ -->
+<div class="panel" id="panel-cloneelement">
+  <div class="card">
+    <div class="card-title">🔧 cloneElement 模式 <span class="badge" style="background:#f87171">已不推荐</span></div>
+    <pre><code><span class="comment">// MouseTracker.jsx</span>
+<span class="keyword">function</span> <span class="func">MouseTracker</span>({ children }) {
+  <span class="keyword">const</span> [position, setPosition] = useState({ x: <span class="number">0</span>, y: <span class="number">0</span> })
+
+  useEffect(() =&gt; {
+    <span class="keyword">const</span> handleMove = (e) =&gt; setPosition({ x: e.clientX, y: e.clientY })
+    window.addEventListener(<span class="string">'mousemove'</span>, handleMove)
+    <span class="keyword">return</span> () =&gt; window.removeEventListener(<span class="string">'mousemove'</span>, handleMove)
+  }, [])
+
+  <span class="comment">// 克隆 children 并注入 mousePosition prop</span>
+  <span class="keyword">const</span> childrenWithProps = React.Children.map(children, (child) =&gt;
+    React.isValidElement(child)
+      ? React.cloneElement(child, { mousePosition: position })
+      : child
+  )
+
+  <span class="keyword">return</span> &lt;div&gt;{childrenWithProps}&lt;/div&gt;
+}
+
+<span class="comment">// 使用 — 类似 Vue slot</span>
+&lt;MouseTracker&gt;
+  &lt;StatusDisplay /&gt;
+&lt;/MouseTracker&gt;
+
+<span class="comment">// StatusDisplay 直接通过 props 接收</span>
+&lt;div&gt;{props.mousePosition?.x}, {props.mousePosition?.y}&lt;/div&gt;</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🖱️ 实际演示（cloneElement）</div>
+    <p class="hint">👆 在下方灰色区域移动鼠标</p>
+    <div class="demo-area" id="demo-cloneelement">
+      <div class="dot-crosshair" id="dot-clone"></div>
+      <div class="mouse-info" id="info-clone">移动鼠标查看效果</div>
+    </div>
+    <div class="mini-demos">
+      <div class="mini-demo">
+        <div class="mini-demo-label">注入方式</div>
+        <div class="mini-demo-value" style="font-size:0.9rem">cloneElement</div>
+      </div>
+      <div class="mini-demo">
+        <div class="mini-demo-label">React 19</div>
+        <div class="mini-demo-value" style="color: var(--red)">已废弃</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✅ 优缺点</div>
+    <pre><code><span class="green">✓</span> 接近 Vue slot 的写法习惯
+<span class="green">✓</span> 可传递任意额外 props
+<span class="red">✗</span> 语法不够直观，隐藏逻辑
+<span class="red">✗</span> 调试困难
+<span class="red">✗</span> React 19 已废弃此模式</code></pre>
+  </div>
+</div>
+
+<footer>
+  <p>📚 <strong>深入学习：</strong>React 官方文档 · Custom Hooks · Render Props · Context</p>
+  <p style="margin-top:0.3rem">项目源码：<a href="https://github.com/zenHeart/learn-react" style="color:var(--accent)">zenHeart/learn-react</a></p>
+</footer>
+
+<script>
+  // ========================
+  // Tab Navigation
+  // ========================
+  const tabBar = document.getElementById('tabBar')
+  const panels = document.querySelectorAll('.panel')
+
+  tabBar.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('tab-btn')) return
+    const tab = e.target.dataset.tab
+
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+    e.target.classList.add('active')
+
+    panels.forEach(p => {
+      p.classList.toggle('active', p.id === `panel-${tab}`)
+    })
+  })
+
+  // ========================
+  // Shared mouse tracking
+  // ========================
+  const demos = {
+    'render-props': { area: document.getElementById('demo-render-props'), dot: document.getElementById('dot-rp'), info: document.getElementById('info-rp'), xEl: document.getElementById('rp-x'), yEl: document.getElementById('rp-y') },
+    'hoc':          { area: document.getElementById('demo-hoc'),          dot: document.getElementById('dot-hoc'),   info: document.getElementById('info-hoc'),   xEl: null, yEl: null },
+    'hooks':        { area: document.getElementById('demo-hooks'),       dot: document.getElementById('dot-hooks'),info: document.getElementById('info-hooks'),xEl: document.getElementById('hook-x'), yEl: document.getElementById('hook-y') },
+    'cloneelement': { area: document.getElementById('demo-cloneelement'),dot: document.getElementById('dot-clone'),info: document.getElementById('info-clone'),xEl: null, yEl: null },
+  }
+
+  function trackMouse(key) {
+    const d = demos[key]
+    if (!d) return
+
+    d.area.addEventListener('mousemove', (e) => {
+      const rect = d.area.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+
+      d.dot.classList.add('visible')
+      d.dot.style.left = x + 'px'
+      d.dot.style.top = y + 'px'
+      d.info.textContent = `(${Math.round(x)}, ${Math.round(y)})`
+
+      if (d.xEl) d.xEl.textContent = Math.round(x)
+      if (d.yEl) d.yEl.textContent = Math.round(y)
+    })
+
+    d.area.addEventListener('mouseleave', () => {
+      d.dot.classList.remove('visible')
+      d.info.textContent = '移动鼠标查看效果'
+      if (d.xEl) d.xEl.textContent = '—'
+      if (d.yEl) d.yEl.textContent = '—'
+    })
+  }
+
+  Object.keys(demos).forEach(trackMouse)
+</script>
+
+</body>
+</html>
