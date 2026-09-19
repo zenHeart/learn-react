@@ -4,7 +4,7 @@
 
 import { lazy, memo, Children, Suspense } from 'react';
 import { AppJSPath, createFileMap } from './createFileMap';
-import './Sandpack.css';
+import './sandpack.css';
 
 const SandpackRoot = lazy(() => import('./SandpackRoot'));
 
