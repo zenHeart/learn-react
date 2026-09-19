@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户引导解决方案 - 交互式演示</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .tab-btn.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+    .demo-box { min-height: 200px; transition: all 0.3s ease; }
+    .highlight-demo .demo-target { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; background: #f8fafc; }
+    .progress-bar { height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s ease; }
+    .feature-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .feature-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+    .code-block { background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 13px; overflow-x: auto; }
+    .code-block .keyword { color: #c084fc; }
+    .code-block .string { color: #4ade80; }
+    .code-block .comment { color: #64748b; }
+    .code-block .function { color: #60a5fa; }
+    .code-block .number { color: #f472b6; }
+    .chart-bar { height: 32px; border-radius: 4px; display: flex; align-items: center; padding: 0 12px; color: white; font-size: 12px; font-weight: 500; }
+    .answer-btn { transition: all 0.2s; }
+    .answer-btn:hover { transform: scale(1.05); }
+    .answer-btn.selected { background: #3b82f6 !important; color: white !important; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <header class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">🎯 用户引导解决方案</h1>
+      <p class="text-lg text-gray-600">四大主流库对比分析 + 交互式演示</p>
+    </header>
+
+    <nav class="flex border-b border-gray-200 mb-8 overflow-x-auto">
+      <button class="tab-btn active px-6 py-3 font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap" data-tab="comparison">📊 库对比</button>
+      <button class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap" data-tab="joyride">⚛️ react-joyride</button>
+      <button class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap" data-tab="driver">🚗 driver.js</button>
+      <button class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap" data-tab="decision">🎯 选型工具</button>
+    </nav>
+
+    <div id="tab-content">
+      <!-- Comparison Tab -->
+      <div id="comparison" class="tab-panel">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+          <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-600">
+            <h2 class="text-xl font-bold text-white">功能对比表</h2>
+          </div>
+          <div class="p-6 overflow-x-auto">
+            <table class="w-full min-w-[600px]">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 font-semibold text-gray-700">特性</th>
+                  <th class="text-center py-3 px-4 font-semibold text-blue-600">react-joyride</th>
+                  <th class="text-center py-3 px-4 font-semibold text-amber-600">driver.js</th>
+                  <th class="text-center py-3 px-4 font-semibold text-purple-600">shepherd.js</th>
+                  <th class="text-center py-3 px-4 font-semibold text-green-600">intro.js</th>
+                </tr>
+              </thead>
+              <tbody class="text-sm">
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-3 px-4 font-medium">Star 数</td><td class="text-center">10k+ ⭐</td><td class="text-center">5k+ ⭐</td><td class="text-center">10k+ ⭐</td><td class="text-center">20k+ ⭐</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-3 px-4 font-medium">框架依赖</td><td class="text-center"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">React</span></td><td class="text-center"><span class="bg-gray-100 px-2 py-1 rounded text-xs">无</span></td><td class="text-center"><span class="bg-gray-100 px-2 py-1 rounded text-xs">无</span></td><td class="text-center"><span class="bg-gray-100 px-2 py-1 rounded text-xs">无</span></td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-3 px-4 font-medium">遮罩+高亮</td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td><td class="text-center"><span class="text-red-400 text-xl">✗</span></td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-3 px-4 font-medium">步骤引导</td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-3 px-4 font-medium">React 18 支持</td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td><td class="text-center">-</td><td class="text-center">-</td><td class="text-center">-</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-3 px-4 font-medium">TypeScript</td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td><td class="text-center"><span class="text-green-500 text-xl">✓</span></td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-3 px-4 font-medium">无障碍支持</td><td class="text-center">基础</td><td class="text-center">基础</td><td class="text-center"><span class="text-green-500 font-medium">良好</span></td><td class="text-center">基础</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-3 px-4 font-medium">包体积</td><td class="text-center">~50KB</td><td class="text-center"><span class="text-green-500 font-medium">~15KB</span></td><td class="text-center">~70KB</td><td class="text-center">~40KB</td></tr>
+                <tr class="hover:bg-gray-50"><td class="py-3 px-4 font-medium">许可证</td><td class="text-center">MIT</td><td class="text-center">MIT</td><td class="text-center">MIT</td><td class="text-center">GPL-3.0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">优缺点对比</h3>
+            <div class="space-y-4">
+              <div class="p-4 bg-blue-50 rounded-lg"><h4 class="font-semibold text-blue-700 mb-2">⚛️ react-joyride</h4><p class="text-sm text-gray-600"><span class="text-green-600">✓</span> React 原生集成最佳</p><p class="text-sm text-gray-600"><span class="text-green-600">✓</span> 功能完整，API 清晰</p><p class="text-sm text-gray-600"><span class="text-red-400">✗</span> 仅支持 React</p></div>
+              <div class="p-4 bg-amber-50 rounded-lg"><h4 class="font-semibold text-amber-700 mb-2">🚗 driver.js</h4><p class="text-sm text-gray-600"><span class="text-green-600">✓</span> 超轻量，零依赖</p><p class="text-sm text-gray-600"><span class="text-green-600">✓</span> 多框架通用</p><p class="text-sm text-gray-600"><span class="text-red-400">✗</span> 功能相对简单</p></div>
+              <div class="p-4 bg-purple-50 rounded-lg"><h4 class="font-semibold text-purple-700 mb-2">🐑 shepherd.js</h4><p class="text-sm text-gray-600"><span class="text-green-600">✓</span> 无障碍支持最好</p><p class="text-sm text-gray-600"><span class="text-green-600">✓</span> 成熟稳定</p><p class="text-sm text-gray-600"><span class="text-red-400">✗</span> 不支持遮罩高亮</p></div>
+              <div class="p-4 bg-green-50 rounded-lg"><h4 class="font-semibold text-green-700 mb-2">🚀 intro.js</h4><p class="text-sm text-gray-600"><span class="text-green-600">✓</span> Star 最多，社区大</p><p class="text-sm text-gray-600"><span class="text-green-600">✓</span> 体积小，功能全</p><p class="text-sm text-gray-600"><span class="text-red-400">✗</span> GPL 许可证</p></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">GitHub Star 对比</h3>
+            <div class="space-y-4">
+              <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">intro.js</span><span class="text-gray-500">20k+</span></div><div class="chart-bar bg-gradient-to-r from-green-500 to-emerald-500" style="width:100%"></div></div>
+              <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">react-joyride</span><span class="text-gray-500">10k+</span></div><div class="chart-bar bg-gradient-to-r from-blue-500 to-indigo-500" style="width:50%"></div></div>
+              <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">shepherd.js</span><span class="text-gray-500">10k+</span></div><div class="chart-bar bg-gradient-to-r from-purple-500 to-pink-500" style="width:50%"></div></div>
+              <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">driver.js</span><span class="text-gray-500">5k+</span></div><div class="chart-bar bg-gradient-to-r from-amber-500 to-orange-500" style="width:25%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- react-joyride Tab -->
+      <div id="joyride" class="tab-panel hidden">
+        <div class="grid lg:grid-cols-2 gap-8">
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">⚛️ react-joyride 演示</h3>
+            <div class="mb-4">
+              <div class="flex justify-between text-sm text-gray-600 mb-2"><span>进度</span><span id="joyride-progress">1 / 3</span></div>
+              <div class="progress-bar"><div class="progress-fill" id="joyride-progress-bar" style="width:33%"></div></div>
+            </div>
+            <div class="demo-box highlight-demo" id="joyride-demo">
+              <nav class="demo-target first-step mb-4"><div class="flex items-center space-x-4"><span class="text-2xl">🏠</span><span class="font-bold">Logo</span><div class="flex-1"></div><span class="hover:bg-gray-100 px-3 py-1 rounded cursor-pointer">首页</span><span class="hover:bg-gray-100 px-3 py-1 rounded cursor-pointer">产品</span><span class="hover:bg-gray-100 px-3 py-1 rounded cursor-pointer">关于</span></div></nav>
+              <div class="demo-target second-step mb-4 p-6"><h4 class="font-semibold mb-2">📊 数据统计</h4><div class="grid grid-cols-3 gap-4"><div class="bg-blue-50 p-3 rounded text-center"><div class="text-2xl font-bold text-blue-600">1.2k</div><div class="text-xs text-gray-500">活跃用户</div></div><div class="bg-green-50 p-3 rounded text-center"><div class="text-2xl font-bold text-green-600">98%</div><div class="text-xs text-gray-500">满意度</div></div><div class="bg-purple-50 p-3 rounded text-center"><div class="text-2xl font-bold text-purple-600">50+</div><div class="text-xs text-gray-500">功能特性</div></div></div></div>
+              <div class="demo-target third-step p-6 bg-gray-50 rounded"><h4 class="font-semibold mb-2">⚡ 快速操作</h4><div class="flex flex-wrap gap-2"><button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">新建</button><button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">编辑</button><button class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">删除</button></div></div>
+            </div>
+            <div class="mt-6 flex gap-3">
+              <button id="joyride-start" class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 font-medium">▶️ 开始引导</button>
+              <button id="joyride-stop" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 font-medium">⏹️ 停止</button>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">📝 代码示例</h3>
+            <div class="code-block overflow-x-auto"><span class="comment">// 基础使用</span><br><span class="keyword">import</span> Joyride, { CallBackProps } <span class="keyword">from</span> <span class="string">'react-joyride'</span>;<br><br><span class="keyword">const</span> steps = [<br>&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'target'</span>: <span class="string">'.first-step'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'content'</span>: <span class="string">'欢迎使用！'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'disableBeacon'</span>: <span class="keyword">true</span>,<br>&nbsp;&nbsp;},<br>&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'target'</span>: <span class="string">'.second-step'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'content'</span>: <span class="string">'查看数据统计'</span>,<br>&nbsp;&nbsp;},<br>];<br><br><span class="keyword">function</span> <span class="function">App</span>() {<br>&nbsp;&nbsp;<span class="keyword">const</span> [run, setRun] = useState(<span class="keyword">false</span>);<br><br>&nbsp;&nbsp;<span class="keyword">return</span> (<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="function">Joyride</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">steps</span>={steps}<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">run</span>={run}<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">continuous</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">showSkipButton</span><br>&nbsp;&nbsp;&nbsp;&nbsp;/&gt;<br>&nbsp;&nbsp;);<br>}</div>
+            <h4 class="text-lg font-semibold text-gray-800 mt-6 mb-3">TypeScript 类型</h4>
+            <div class="code-block"><span class="keyword">interface</span> <span class="function">GuideStep</span> <span class="keyword">extends</span> Step {<br>&nbsp;&nbsp;title?: <span class="keyword">string</span>;<br>&nbsp;&nbsp;icon?: React.ReactNode;<br>}<br><br><span class="keyword">type</span> <span class="function">JoyrideCallback</span> = (data: CallBackProps) => <span class="keyword">void</span>;</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- driver.js Tab -->
+      <div id="driver" class="tab-panel hidden">
+        <div class="grid lg:grid-cols-2 gap-8">
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">🚗 driver.js 演示</h3>
+            <div class="demo-box relative" id="driver-demo">
+              <div class="demo-target p-6 bg-amber-50 rounded-lg mb-4" id="driver-step-1"><div class="flex items-center gap-3"><span class="text-3xl">💡</span><div><h4 class="font-bold">智能提示</h4><p class="text-sm text-gray-600">driver.js 提供优雅的高亮效果</p></div></div></div>
+              <div class="demo-target p-6 bg-blue-50 rounded-lg mb-4" id="driver-step-2"><h4 class="font-bold mb-2">轻量快速</h4><p class="text-sm text-gray-600">仅 ~15KB，零框架依赖</p><div class="mt-2 text-2xl">🚀⚡💨</div></div>
+              <div class="demo-target p-6 bg-green-50 rounded-lg" id="driver-step-3"><h4 class="font-bold mb-2">易于集成</h4><p class="text-sm text-gray-600">几行代码即可完成引导</p></div>
+            </div>
+            <div class="mt-6 flex gap-3">
+              <button id="driver-start" class="flex-1 bg-amber-500 text-white py-2 rounded-lg hover:bg-amber-600 font-medium">▶️ 开始引导</button>
+              <button id="driver-stop" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 font-medium">⏹️ 停止</button>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">📝 代码示例</h3>
+            <div class="code-block overflow-x-auto"><span class="keyword">import</span> Driver <span class="keyword">from</span> <span class="string">'driver.js'</span>;<br><span class="keyword">import</span> <span class="string">'driver.js/dist/driver.min.css'</span>;<br><br><span class="keyword">const</span> driver = <span class="keyword">new</span> <span class="function">Driver</span>({<br>&nbsp;&nbsp;<span class="string">'animate'</span>: <span class="keyword">true</span>,<br>&nbsp;&nbsp;<span class="string">'opacity'</span>: <span class="number">0.75</span>,<br>&nbsp;&nbsp;<span class="string">'padding'</span>: <span class="number">5</span>,<br>&nbsp;&nbsp;<span class="string">'allowClose'</span>: <span class="keyword">true</span>,<br>});<br><br>driver.<span class="function">defineSteps</span>([<br>&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'element'</span>: <span class="string">'#driver-step-1'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'popover'</span>: {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'title'</span>: <span class="string">'智能提示'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'description'</span>: <span class="string">'...'</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;},<br>&nbsp;&nbsp;},<br>]);<br><br>driver.<span class="function">start</span>();</div>
+            <h4 class="text-lg font-semibold text-gray-800 mt-6 mb-3">TypeScript 类型</h4>
+            <div class="code-block"><span class="keyword">import</span> Driver, { DriverOptions } <span class="keyword">from</span> <span class="string">'driver.js'</span>;<br><br><span class="keyword">const</span> options: DriverOptions = {<br>&nbsp;&nbsp;animate: <span class="keyword">true</span>,<br>&nbsp;&nbsp;opacity: <span class="number">0.75</span>,<br>};</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Decision Tool Tab -->
+      <div id="decision" class="tab-panel hidden">
+        <div class="grid lg:grid-cols-2 gap-8">
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">🎯 交互式选型工具</h3>
+            <p class="text-gray-600 mb-6">回答以下问题，获取推荐方案</p>
+            <div id="decision-questions" class="space-y-4">
+              <div class="question-block" id="q1">
+                <p class="font-medium text-gray-800 mb-2">1. 您的项目使用什么框架？</p>
+                <div class="flex flex-wrap gap-2">
+                  <button class="answer-btn px-4 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-sm transition-all" data-q="framework" data-a="react">⚛️ React</button>
+                  <button class="answer-btn px-4 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-sm transition-all" data-q="framework" data-a="vue">💚 Vue</button>
+                  <button class="answer-btn px-4 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-sm transition-all" data-q="framework" data-a="angular">🔷 Angular</button>
+                  <button class="answer-btn px-4 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-sm transition-all" data-q="framework" data-a="other">🌐 其他/原生</button>
+                </div>
+              </div>
+              <div class="question-block hidden" id="q2">
+                <p class="font-medium text-gray-800 mb-2">2. 需要遮罩+高亮效果吗？</p>
+                <div class="flex flex-wrap gap-2">
+                  <button class="answer-btn px-4 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-sm transition-all" data-q="highlight" data-a="yes">✓ 需要</button>
+                  <button class="answer-btn px-4 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-sm transition-all" data-q="highlight" data-a="no">✗ 不需要</button>
+                </div>
+              </div>
+              <div class="question-block hidden" id="q3">
+                <p class="font-medium text-gray-800 mb-2">3. 更看重什么？</p>
+                <div class="flex flex-wrap gap-2">
+                  <button class="answer-btn px-4 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-sm transition-all" data-q="weight" data-a="size">📦 轻量体积</button>
+                  <button class="answer-btn px-4 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-sm transition-all" data-q="weight" data-a="features">✨ 功能丰富</button>
+                  <button class="answer-btn px-4 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-sm transition-all" data-q="weight" data-a="a11y">♿ 无障碍</button>
+                </div>
+              </div>
+            </div>
+            <div id="decision-result" class="hidden mt-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
+              <h4 class="font-bold text-lg mb-2">🎉 推荐方案</h4>
+              <div id="decision-result-content" class="text-gray-700"></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">📋 场景速查表</h3>
+            <div class="space-y-3">
+              <div class="p-4 bg-blue-50 rounded-lg feature-card cursor-pointer" data-rec-title="React + 遮罩高亮" data-rec-content="推荐使用 <strong>react-joyride</strong>，原生 React 集成最佳，功能完整">
+                <div class="flex items-center gap-3"><span class="text-2xl">⚛️</span><div><h5 class="font-semibold">React 项目</h5><p class="text-sm text-gray-600">需要遮罩+高亮引导</p></div></div>
+              </div>
+              <div class="p-4 bg-amber-50 rounded-lg feature-card cursor-pointer" data-rec-title="多框架 + 轻量" data-rec-content="推荐使用 <strong>driver.js</strong>，仅 15KB 零框架依赖">
+                <div class="flex items-center gap-3"><span class="text-2xl">🚗</span><div><h5 class="font-semibold">多框架项目</h5><p class="text-sm text-gray-600">追求轻量快速集成</p></div></div>
+              </div>
+              <div class="p-4 bg-purple-50 rounded-lg feature-card cursor-pointer" data-rec-title="企业级 + 无障碍" data-rec-content="推荐使用 <strong>shepherd.js</strong>，无障碍支持最佳，成熟稳定">
+                <div class="flex items-center gap-3"><span class="text-2xl">🐑</span><div><h5 class="font-semibold">企业级产品</h5><p class="text-sm text-gray-600">重视无障碍和稳定性</p></div></div>
+              </div>
+              <div class="p-4 bg-green-50 rounded-lg feature-card cursor-pointer" data-rec-title="快速集成" data-rec-content="推荐使用 <strong>intro.js</strong>，功能全 Star 最多，社区活跃">
+                <div class="flex items-center gap-3"><span class="text-2xl">🚀</span><div><h5 class="font-semibold">快速集成</h5><p class="text-sm text-gray-600">功能全面，开箱即用</p></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab Navigation
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.remove('hidden');
+      });
+    });
+
+    // Joyride Demo
+    let joyrideStep = 0;
+    const joyrideSteps = ['.first-step', '.second-step', '.third-step'];
+    
+    function runJoyride() {
+      if (joyrideStep >= joyrideSteps.length) {
+        joyrideStep = 0;
+        document.querySelectorAll('.demo-target').forEach(el => el.style.outline = '');
+        document.getElementById('joyride-progress').textContent = '1 / 3';
+        document.getElementById('joyride-progress-bar').style.width = '33%';
+        return;
+      }
+      
+      const target = document.querySelector(joyrideSteps[joyrideStep]);
+      if (target) {
+        document.querySelectorAll('.demo-target').forEach(el => el.style.outline = '');
+        target.style.outline = '3px solid #10b981';
+        target.style.boxShadow = '0 0 0 4px rgba(16, 185, 129, 0.2)';
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        document.getElementById('joyride-progress').textContent = `${joyrideStep + 1} / ${joyrideSteps.length}`;
+        document.getElementById('joyride-progress-bar').style.width = `${((joyrideStep + 1) / joyrideSteps.length) * 100}%`;
+      }
+      joyrideStep++;
+    }
+
+    document.getElementById('joyride-start').addEventListener('click', () => {
+      joyrideStep = 0;
+      runJoyride();
+    });
+
+    document.getElementById('joyride-stop').addEventListener('click', () => {
+      joyrideStep = joyrideSteps.length;
+      document.querySelectorAll('.demo-target').forEach(el => {
+        el.style.outline = '';
+        el.style.boxShadow = '';
+      });
+    });
+
+    // Driver.js Demo
+    let driverStep = 0;
+    const driverSteps = ['#driver-step-1', '#driver-step-2', '#driver-step-3'];
+    
+    function runDriver() {
+      if (driverStep >= driverSteps.length) {
+        driverStep = 0;
+        document.querySelectorAll('#driver-demo .demo-target').forEach(el => {
+          el.style.outline = '';
+          el.style.boxShadow = '';
+        });
+        return;
+      }
+      
+      const target = document.querySelector(driverSteps[driverStep]);
+      if (target) {
+        document.querySelectorAll('#driver-demo .demo-target').forEach(el => {
+          el.style.outline = '';
+          el.style.boxShadow = '';
+        });
+        target.style.outline = '3px solid #f59e0b';
+        target.style.boxShadow = '0 0 0 4px rgba(245, 158, 11, 0.2)';
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      driverStep++;
+    }
+
+    document.getElementById('driver-start').addEventListener('click', () => {
+      driverStep = 0;
+      runDriver();
+    });
+
+    document.getElementById('driver-stop').addEventListener('click', () => {
+      driverStep = driverSteps.length;
+      document.querySelectorAll('#driver-demo .demo-target').forEach(el => {
+        el.style.outline = '';
+        el.style.boxShadow = '';
+      });
+    });
+
+    // Decision Tool
+    const answers = {};
+    
+    document.querySelectorAll('.answer-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const q = btn.dataset.q;
+        const a = btn.dataset.a;
+        answers[q] = a;
+        
+        // Highlight selected
+        btn.parentElement.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        
+        // Show next question or result
+        if (q === 'framework') {
+          document.getElementById('q2').classList.remove('hidden');
+        } else if (q === 'highlight') {
+          document.getElementById('q3').classList.remove('hidden');
+        } else if (q === 'weight') {
+          showResult();
+        }
+      });
+    });
+
+    function showResult() {
+      let title = '', content = '';
+      
+      if (answers.framework === 'react') {
+        title = '🎉 推荐：react-joyride';
+        content = '<p>React 项目最佳选择，原生集成，功能完整。</p><p class="mt-2"><span class="font-semibold">优点
