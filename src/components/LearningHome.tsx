@@ -19,11 +19,11 @@ const stages = [
   { id: 'ecosystem', title: '生态与工具选择', prefixes: ['/04.state-manage/', '/05.router/', '/06.typescript/'],
     outcome: '围绕项目约束选择路由、类型与状态工具，说明替代方案和代价。',
     task: '区分组件本地状态、跨页面状态与服务端缓存，为一个工具选择写出采用和放弃的理由。',
-    picks: [['/05.router/basic', '路由基础'], ['/06.typescript/01.props-types', '组件 Props 的类型边界']] },
+    picks: [['/05.router/typed-routes', '路由与访问控制边界'], ['/06.typescript/01.props-types', '组件 Props 的类型边界']] },
   { id: 'performance', title: '性能与工程验证', prefixes: ['/09.performance/'],
     outcome: '用测量定位问题，用测试和可重复的构建证明改动。',
     task: '记录慢交互的测量条件，比较优化前后的结果，并解释 memo 为什么可能没有帮助。',
-    picks: [['/09.performance/01.memory/memoryNotWorkRefChange', '引用变化与 memo 失效'], ['/09.performance/LazyComponent', '按需加载组件']] },
+    picks: [['/09.performance/measured-list', '可测量的列表优化'], ['/09.performance/LazyComponent', '按需加载组件']] },
   { id: 'mechanism', title: '机制与源码', prefixes: ['/labs/state-mechanism', '/10.theory/'],
     outcome: '从可观察行为追到实现机制，明确教学模型与真实 React 源码的边界。',
     task: '先预测 key 变化对状态的影响，再复现最小机制；阅读固定版本源码，列出模型省略的行为。',
@@ -91,7 +91,7 @@ export default function LearningHome({ lessons }: { lessons: Lesson[] }) {
         </ol>
         <p>示例能运行、读完一篇文档和独立掌握是不同的证据。保留你的作品、失败记录与测试结果，用它们决定下一步。</p>
       </section>
-      <footer className="learning-footer"><a href="https://learn.zenheart.site/pathways/">查看跨系列学习路线 →</a><span>领域知识长期维护，岗位任务按证据更新。</span></footer>
+      <footer className="learning-footer"><Link to="/curriculum">能力矩阵与岗位路线</Link><Link to="/sources">固定版本来源</Link><Link to="/tasks">跨模块任务</Link><a href="https://learn.zenheart.site/pathways/">查看跨系列学习路线 →</a><span>领域知识长期维护，岗位任务按证据更新。</span></footer>
     </div>
   )
 }

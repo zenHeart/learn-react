@@ -23,7 +23,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: node --test scripts/verify-build.test.mjs
+      - run: node --test scripts/verify-build.test.mjs scripts/check-curriculum.test.mjs
       - run: node --test src/demos/08.async/lab/request-latest.test.mjs src/demos/12.business/lab/service.test.mjs src/demos/13.mechanisms/lab/model.test.mjs
       - run: pnpm test
       - run: pnpm build
@@ -32,8 +32,28 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
+  server-case:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    defaults:
+      run:
+        working-directory: cases/ssr-rsc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: cases/ssr-rsc/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test
   deploy:
-    needs: build
+    needs: [build, server-case]
     runs-on: ubuntu-latest
     permissions:
       pages: write

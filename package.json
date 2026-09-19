@@ -6,7 +6,11 @@
     "dev": "vite --host",
     "build": "tsc && vite build && node scripts/write-build-version.mjs",
     "deploy": "./scripts/deploy.sh",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "test:cases": "node --test src/demos/08.async/lab/request-latest.test.mjs src/demos/12.business/lab/service.test.mjs src/demos/13.mechanisms/lab/model.test.mjs",
+    "test:curriculum": "node scripts/check-curriculum.mjs"
   },
   "dependencies": {
     "@babel/core": "^7.28.0",
@@ -32,14 +36,18 @@
     "tailwindcss": "^3.4.15"
   },
   "devDependencies": {
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.9.0",
     "@types/randomcolor": "^0.5.9",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
+    "happy-dom": "20.14.5",
     "typescript": "^5.6.3",
-    "vite": "^5.4.10"
+    "vite": "^5.4.10",
+    "vitest": "3.2.7"
   },
   "engines": {
     "pnpm": ">=9.0.0"

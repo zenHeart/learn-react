@@ -1,0 +1,101 @@
+{
+  "scope": "Convenience sample of three international experienced frontend roles; not representative of China, junior roles or market frequencies",
+  "method": "Employer-linked public Ashby posting API GET, selected exact posting IDs; search snippets not used as verified evidence",
+  "jobs": [
+    {
+      "id": "2b4f6606-1289-4e85-8227-1290fe12f7f4",
+      "source_url": "https://jobs.ashbyhq.com/highbeam/2b4f6606-1289-4e85-8227-1290fe12f7f4",
+      "collection_url": "https://api.ashbyhq.com/posting-api/job-board/highbeam",
+      "employer": "highbeam",
+      "title": "Software Engineer (Frontend)",
+      "location": "New York",
+      "published_at": "2025-09-25T19:47:33.130+00:00",
+      "captured_at": "2026-09-19T11:26:42.796438+00:00",
+      "verified_at": "2026-09-19T11:26:42.796438+00:00",
+      "status_basis": "Employer public posting API isListed; application acceptance and actual vacancy not independently verified",
+      "required": [
+        "TypeScript/React proficiency",
+        "4+ years professional React delivery"
+      ],
+      "preferred": [
+        "Fintech, AI or startup experience"
+      ],
+      "task_evidence": [
+        "Ship usable React features",
+        "Debug frontend problems",
+        "Explain and review AI-produced code"
+      ],
+      "alternatives_or_negation": [],
+      "publication_status": "listed",
+      "hiring_status": "unknown"
+    },
+    {
+      "id": "bb540719-7344-4e98-88b9-92446d58f437",
+      "source_url": "https://jobs.ashbyhq.com/signoz/bb540719-7344-4e98-88b9-92446d58f437",
+      "collection_url": "https://api.ashbyhq.com/posting-api/job-board/signoz",
+      "employer": "signoz",
+      "title": "Senior Software Engineer - Frontend",
+      "location": "India",
+      "published_at": "2026-07-21T12:02:23.088+00:00",
+      "captured_at": "2026-09-19T11:26:42.796438+00:00",
+      "verified_at": "2026-09-19T11:26:42.796438+00:00",
+      "status_basis": "Employer public posting API isListed; application acceptance and actual vacancy not independently verified",
+      "required": [
+        "Production React/TypeScript",
+        "Rendering behavior, profiling and debugging",
+        "Complex data-heavy interfaces"
+      ],
+      "preferred": [
+        "Observability domain experience"
+      ],
+      "task_evidence": [
+        "Own data-heavy product workflows",
+        "Profile slow interactions",
+        "Choose virtualization, caching and progressive loading"
+      ],
+      "alternatives_or_negation": [
+        "Observability experience is helpful, not required"
+      ],
+      "publication_status": "listed",
+      "hiring_status": "unknown"
+    },
+    {
+      "id": "5fafff38-0438-4a6b-afa1-bfcb750b3c9b",
+      "source_url": "https://jobs.ashbyhq.com/sarvam/5fafff38-0438-4a6b-afa1-bfcb750b3c9b",
+      "collection_url": "https://api.ashbyhq.com/posting-api/job-board/sarvam",
+      "employer": "sarvam",
+      "title": "Senior Frontend Engineer - Arya",
+      "location": "Bengaluru",
+      "published_at": "2026-08-10T11:12:15.495+00:00",
+      "captured_at": "2026-09-19T11:26:42.796438+00:00",
+      "verified_at": "2026-09-19T11:26:42.796438+00:00",
+      "status_basis": "Employer public posting API isListed; application acceptance and actual vacancy not independently verified",
+      "required": [
+        "3+ years frontend; React/Next.js production",
+        "Advanced TypeScript",
+        "Performance, accessibility, streaming integration"
+      ],
+      "preferred": [
+        "E2E browser testing",
+        "CI/CD and monitoring"
+      ],
+      "task_evidence": [
+        "Deliver accessible streaming interfaces",
+        "Maintain shared component systems",
+        "Measure bundles and render performance"
+      ],
+      "alternatives_or_negation": [
+        "Turborepo, pnpm workspaces or similar",
+        "shadcn/ui, Radix UI or similar"
+      ],
+      "publication_status": "listed",
+      "hiring_status": "unknown"
+    }
+  ],
+  "curriculum_implications": [
+    "Connect async diagnosis to product delivery and debugging tasks, while treating the detailed exercise as authored teaching design",
+    "Next/RSC is a role-specific branch, not a universal prerequisite",
+    "Keep domain experience and preferred testing/CI requirements distinct from must-have clauses",
+    "No hiring guarantee or learner mastery conclusion from job coverage"
+  ]
+}

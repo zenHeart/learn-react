@@ -1,0 +1,1091 @@
+{
+  "local_series": "learn-react",
+  "capabilities": [
+    {
+      "id": "react-elements-jsx",
+      "title": "理解 React 元素与 JSX 语法",
+      "outcome": "能独立编写 JSX 组件并解释其编译结果与 key 的必要性"
+    },
+    {
+      "id": "component-composition",
+      "title": "组件化与组合",
+      "outcome": "能用函数组件拆分 UI、传递 props 并用 children 实现组合"
+    },
+    {
+      "id": "state-management",
+      "title": "状态管理与提升",
+      "outcome": "能选择合适的状态放置位置，实现状态提升与受控组件"
+    },
+    {
+      "id": "hooks-side-effects",
+      "title": "Hooks 与副作用管理",
+      "outcome": "能正确使用 useState、useEffect、useMemo、useCallback 及自定义 Hook"
+    },
+    {
+      "id": "async-data-fetching",
+      "title": "异步数据获取与竞态处理",
+      "outcome": "能实现数据获取、加载/错误状态处理，并修复竞态条件"
+    },
+    {
+      "id": "error-boundaries",
+      "title": "错误边界与异常处理",
+      "outcome": "能实现错误边界、展示降级 UI，并用 Suspense 处理异步加载"
+    },
+    {
+      "id": "react-router",
+      "title": "路由与导航",
+      "outcome": "能配置 React Router，实现嵌套路由、动态参数、路由守卫与懒加载"
+    },
+    {
+      "id": "forms-validation",
+      "title": "表单与验证",
+      "outcome": "能实现受控/非受控表单、即时验证与复杂表单状态管理"
+    },
+    {
+      "id": "react-typescript",
+      "title": "React + TypeScript 类型安全",
+      "outcome": "能为组件 props、state、事件和自定义 Hook 编写完整类型定义"
+    },
+    {
+      "id": "client-state-alternatives",
+      "title": "状态管理方案选型",
+      "outcome": "能比较 Context、Redux Toolkit、Zustand、TanStack Query 的适用场景"
+    },
+    {
+      "id": "testing-react",
+      "title": "React 组件测试",
+      "outcome": "能用 React Testing Library 编写单元测试和集成测试"
+    },
+    {
+      "id": "accessibility",
+      "title": "可访问性（a11y）实践",
+      "outcome": "能正确使用 ARIA 属性、键盘导航和屏幕阅读器友好模式"
+    },
+    {
+      "id": "performance-optimization",
+      "title": "性能优化",
+      "outcome": "能识别并修复不必要的重渲染，合理使用 memo/lazy/Suspense"
+    },
+    {
+      "id": "ssr-rsc-boundaries",
+      "title": "SSR/RSC 与框架边界",
+      "outcome": "能区分 CSR/SSR/SSG/ISR/RSC，说明 Next.js App Router 模型"
+    },
+    {
+      "id": "react-internals",
+      "title": "React 源码机制",
+      "outcome": "能解释 Fiber 架构、调和算法、批量更新与并发模式"
+    },
+    {
+      "id": "engineering-practice",
+      "title": "工程化与业务交付",
+      "outcome": "能搭建项目脚手架、组织代码结构、配置构建与部署流水线"
+    }
+  ],
+  "sources": [
+    {
+      "id": "react-dev-docs",
+      "url": "https://react.dev/learn/queueing-a-series-of-state-updates",
+      "locator": "updater queue",
+      "accessed_at": "2026-09-19",
+      "scope": "当前官方行为说明，非固定实现版本"
+    },
+    {
+      "id": "react-src",
+      "url": "https://github.com/facebook/react/tree/4a9df08157f001c01b078d259748512211233dcf",
+      "locator": "packages/react-reconciler/src/",
+      "accessed_at": "2026-09-19",
+      "scope": "React v19.1.0 发布源码；已核对队列与身份符号"
+    },
+    {
+      "id": "react-dev-repo",
+      "url": "https://github.com/reactjs/react.dev/tree/b011783fcc7a39da9eefd4274147a1444860a12b",
+      "locator": "fixed checkout; locate relevant docs/API before an implementation claim",
+      "accessed_at": "2026-09-19",
+      "scope": "研究快照；尚未与已安装发布版本逐符号对齐"
+    },
+    {
+      "id": "react-router-docs",
+      "url": "https://github.com/remix-run/react-router/tree/58c47cd0057513939b9f7605792d0aeddd231e0d",
+      "locator": "fixed checkout; locate relevant docs/API before an implementation claim",
+      "accessed_at": "2026-09-19",
+      "scope": "研究快照；尚未与已安装发布版本逐符号对齐"
+    },
+    {
+      "id": "react-router-src",
+      "url": "https://github.com/remix-run/react-router/tree/58c47cd0057513939b9f7605792d0aeddd231e0d",
+      "locator": "fixed checkout; locate relevant docs/API before an implementation claim",
+      "accessed_at": "2026-09-19",
+      "scope": "研究快照；尚未与已安装发布版本逐符号对齐"
+    },
+    {
+      "id": "redux-toolkit-docs",
+      "url": "https://github.com/reduxjs/redux-toolkit/tree/c9dac937d77adc3bf04842a43955e81d0e7a46da",
+      "locator": "fixed checkout; locate relevant docs/API before an implementation claim",
+      "accessed_at": "2026-09-19",
+      "scope": "研究快照；尚未与已安装发布版本逐符号对齐"
+    },
+    {
+      "id": "zustand-docs",
+      "url": "https://github.com/pmndrs/zustand/tree/b57db4f86ef179285da216eeb291266da82c361c",
+      "locator": "fixed checkout; locate relevant docs/API before an implementation claim",
+      "accessed_at": "2026-09-19",
+      "scope": "研究快照；尚未与已安装发布版本逐符号对齐"
+    },
+    {
+      "id": "tanstack-query-docs",
+      "url": "https://github.com/TanStack/query/tree/2a495979b4eefc075fd641bd89a745e99f54a446",
+      "locator": "fixed checkout; locate relevant docs/API before an implementation claim",
+      "accessed_at": "2026-09-19",
+      "scope": "研究快照；尚未与已安装发布版本逐符号对齐"
+    },
+    {
+      "id": "nextjs-docs",
+      "url": "https://nextjs.org/docs/app/api-reference/file-conventions/error",
+      "locator": "error component",
+      "accessed_at": "2026-09-19",
+      "scope": "Next.js 16.3.5 error 边界"
+    },
+    {
+      "id": "typescript-react",
+      "url": "https://www.typescriptlang.org/docs/handbook/react.html",
+      "locator": "Checksheets / React Cheatsheet",
+      "accessed_at": "2026-09-19",
+      "scope": "TypeScript React 类型指南"
+    },
+    {
+      "id": "testing-library-docs",
+      "url": "https://github.com/testing-library/react-testing-library/tree/20ce75f2907ca0e5c5a8ae595c0e9a4e368c7800",
+      "locator": "fixed checkout; locate relevant docs/API before an implementation claim",
+      "accessed_at": "2026-09-19",
+      "scope": "研究快照；尚未与已安装发布版本逐符号对齐"
+    },
+    {
+      "id": "playwright-docs",
+      "url": "https://github.com/microsoft/playwright/tree/07f1a6154795f055f341b8972086533e8e48b36f",
+      "locator": "fixed checkout; locate relevant docs/API before an implementation claim",
+      "accessed_at": "2026-09-19",
+      "scope": "研究快照；尚未与已安装发布版本逐符号对齐"
+    },
+    {
+      "id": "vite-docs",
+      "url": "https://github.com/vitejs/vite/tree/e9078f865cdff6bed77cd729214a7e2868f126b5",
+      "locator": "fixed checkout; locate relevant docs/API before an implementation claim",
+      "accessed_at": "2026-09-19",
+      "scope": "研究快照；尚未与已安装发布版本逐符号对齐"
+    },
+    {
+      "id": "a11y-react",
+      "url": "https://www.w3.org/WAI/tutorials/",
+      "locator": "Forms / Page structure",
+      "accessed_at": "2026-09-19",
+      "scope": "WAI 跨框架教程，非 React 专属规范"
+    },
+    {
+      "id": "bulletproof-react",
+      "url": "https://github.com/alan2207/bulletproof-react/tree/9506629ed003a561c6627735480cce4994244bb4",
+      "locator": "fixed checkout; locate relevant docs/API before an implementation claim",
+      "accessed_at": "2026-09-19",
+      "scope": "研究快照；尚未与已安装发布版本逐符号对齐"
+    },
+    {
+      "id": "web-vitals",
+      "url": "https://web.dev/articles/vitals",
+      "locator": "Core Web Vitals",
+      "accessed_at": "2026-09-19",
+      "scope": "Core Web Vitals 性能指标"
+    },
+    {
+      "id": "job-highbeam",
+      "url": "https://jobs.ashbyhq.com/highbeam/2b4f6606-1289-4e85-8227-1290fe12f7f4",
+      "locator": "2b4f6606-1289-4e85-8227-1290fe12f7f4",
+      "accessed_at": "2026-09-19",
+      "scope": "公开职位内容；挂牌可见，实际招聘状态未知"
+    },
+    {
+      "id": "job-signoz",
+      "url": "https://jobs.ashbyhq.com/signoz/bb540719-7344-4e98-88b9-92446d58f437",
+      "locator": "bb540719-7344-4e98-88b9-92446d58f437",
+      "accessed_at": "2026-09-19",
+      "scope": "公开职位内容；挂牌可见，实际招聘状态未知"
+    },
+    {
+      "id": "job-sarvam",
+      "url": "https://jobs.ashbyhq.com/sarvam/5fafff38-0438-4a6b-afa1-bfcb750b3c9b",
+      "locator": "5fafff38-0438-4a6b-afa1-bfcb750b3c9b",
+      "accessed_at": "2026-09-19",
+      "scope": "公开职位内容；挂牌可见，实际招聘状态未知"
+    }
+  ],
+  "series": [
+    {
+      "id": "learn-react",
+      "repository": "https://github.com/zenHeart/learn-react",
+      "revision": "75a0e77999753614a46b8e1c32747c0b61d7c08d",
+      "entry": "docs/coverage.md",
+      "capability_refs": [
+        "react-elements-jsx",
+        "component-composition",
+        "state-management",
+        "hooks-side-effects",
+        "async-data-fetching",
+        "error-boundaries",
+        "react-router",
+        "forms-validation",
+        "react-typescript",
+        "client-state-alternatives",
+        "testing-react",
+        "accessibility",
+        "performance-optimization",
+        "ssr-rsc-boundaries",
+        "react-internals",
+        "engineering-practice"
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "id": "frontend-dev",
+      "title": "前端开发工程师",
+      "responsibility": "构建可交互的用户界面，管理组件状态，处理用户输入与数据展示",
+      "task_refs": [
+        "basic-component",
+        "form-validation",
+        "async-fetch-error",
+        "routing-nav",
+        "business-delivery",
+        "source-mechanism-deep"
+      ],
+      "requirements": [
+        {
+          "logic": "all",
+          "capability_refs": [
+            "react-elements-jsx",
+            "component-composition",
+            "state-management",
+            "hooks-side-effects",
+            "forms-validation",
+            "react-router",
+            "react-typescript"
+          ],
+          "source_refs": [
+            "react-dev-docs",
+            "react-router-docs"
+          ],
+          "strength": "curriculum-design"
+        },
+        {
+          "logic": "all",
+          "capability_refs": [
+            "async-data-fetching",
+            "error-boundaries",
+            "client-state-alternatives"
+          ],
+          "source_refs": [
+            "tanstack-query-docs",
+            "redux-toolkit-docs"
+          ],
+          "strength": "curriculum-design"
+        }
+      ],
+      "basis": "作者设计的学习路线，不是完整岗位标准；市场证据只支持已标注的任务关联"
+    },
+    {
+      "id": "fullstack-dev",
+      "title": "全栈开发工程师",
+      "responsibility": "前后端协同开发，理解 SSR/RSC 边界，优化全链路性能",
+      "task_refs": [
+        "ssr-rsc-app",
+        "data-fetching-pattern",
+        "perf-audit",
+        "deploy-pipeline"
+      ],
+      "requirements": [
+        {
+          "logic": "all",
+          "capability_refs": [
+            "react-elements-jsx",
+            "state-management",
+            "hooks-side-effects",
+            "react-router",
+            "react-typescript",
+            "ssr-rsc-boundaries",
+            "engineering-practice"
+          ],
+          "source_refs": [
+            "nextjs-docs",
+            "react-dev-docs"
+          ],
+          "strength": "curriculum-design"
+        }
+      ],
+      "basis": "作者设计的学习路线，不是完整岗位标准；市场证据只支持已标注的任务关联"
+    },
+    {
+      "id": "mobile-web-dev",
+      "title": "移动端 Web 开发工程师",
+      "responsibility": "构建响应式、可访问的移动优先界面",
+      "task_refs": [
+        "responsive-ui",
+        "mobile-a11y",
+        "touch-interactions"
+      ],
+      "requirements": [
+        {
+          "logic": "all",
+          "capability_refs": [
+            "react-elements-jsx",
+            "component-composition",
+            "accessibility",
+            "performance-optimization"
+          ],
+          "source_refs": [
+            "a11y-react",
+            "web-vitals"
+          ],
+          "strength": "curriculum-design"
+        }
+      ],
+      "basis": "作者设计的学习路线，不是完整岗位标准；市场证据只支持已标注的任务关联"
+    },
+    {
+      "id": "react-architect",
+      "title": "React 架构师",
+      "responsibility": "设计大型 React 应用架构，制定代码规范与性能策略",
+      "task_refs": [
+        "architecture-review",
+        "source-mechanism-deep",
+        "migration-strategy"
+      ],
+      "requirements": [
+        {
+          "logic": "all",
+          "capability_refs": [
+            "react-internals",
+            "performance-optimization",
+            "client-state-alternatives",
+            "ssr-rsc-boundaries",
+            "engineering-practice",
+            "testing-react"
+          ],
+          "source_refs": [
+            "react-src",
+            "bulletproof-react",
+            "react-src"
+          ],
+          "strength": "curriculum-design"
+        }
+      ],
+      "basis": "作者设计的学习路线，不是完整岗位标准；市场证据只支持已标注的任务关联"
+    }
+  ],
+  "cases": [
+    {
+      "id": "basic-component",
+      "owner": "learn-react",
+      "title": "从零构建可复用计数器组件",
+      "kind": "implementation",
+      "task": "实现支持初始值、步长、增减、重置和变更回调的类型化计数器",
+      "constraints": [
+        "使用函数组件 + TypeScript",
+        "状态提升到最小必要范围",
+        "添加基本的无障碍标签（aria-label）"
+      ],
+      "deliverables": [
+        "Counter.tsx 完整实现",
+        "Counter.test.tsx 至少两个测试",
+        "README.md 解释状态选择理由"
+      ],
+      "acceptance": [
+        "增减按步长更新，重置回初始值",
+        "键盘可聚焦并激活按钮；组件测试覆盖回调与步长"
+      ],
+      "environment": "静态站锁文件：React 19.1.0，Node 22，pnpm 9.15.4；使用合成数据",
+      "entry": "src/demos/test/Counter.demo.tsx",
+      "transfer": "改为todo列表项的增减计数，状态放到列表项组件内",
+      "delayed_check": "24h 后无提示重建，添加清除已完成项功能",
+      "provenance": "designed",
+      "capability_refs": [
+        "react-elements-jsx",
+        "component-composition",
+        "state-management",
+        "react-typescript"
+      ],
+      "source_refs": [
+        "react-dev-docs",
+        "typescript-react"
+      ],
+      "prerequisite_refs": [],
+      "verification": "passed",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立实现",
+        "故障诊断",
+        "迁移",
+        "延迟复测"
+      ],
+      "verification_evidence": "docs/validation.md",
+      "verification_scope": "reference implementation and documented automated/browser checks; not learner mastery"
+    },
+    {
+      "id": "async-fetch-error",
+      "owner": "learn-react",
+      "title": "异步数据获取与竞态修复",
+      "kind": "debugging",
+      "task": "预测并复现旧响应覆盖新请求，再实现 latest-request 防护",
+      "constraints": [
+        "使用可控合成传输，不能依赖公共 API 速度",
+        "同时验证可取消和不可取消传输",
+        "卸载阻断提交并清理模拟计时器"
+      ],
+      "deliverables": [
+        "请求执行器、实验 UI、负向测试、迁移题"
+      ],
+      "acceptance": [
+        "旧成功和旧错误都不能覆盖当前请求",
+        "错误可重试，卸载后无新提交",
+        "通过实际事件和计时器断言清理，而不是看控制台是否警告"
+      ],
+      "environment": "静态站锁文件：React 19.1.0，Node 22，pnpm 9.15.4；使用合成数据",
+      "entry": "src/demos/08.async/lab/README.md",
+      "transfer": "将 fetch 替换为 TanStack Query，对比代码量差异",
+      "delayed_check": "48h 后无提示重写为 useReducer + AbortController",
+      "provenance": "designed",
+      "capability_refs": [
+        "hooks-side-effects",
+        "async-data-fetching",
+        "error-boundaries"
+      ],
+      "source_refs": [
+        "react-dev-docs",
+        "job-highbeam"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "passed",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立实现",
+        "故障诊断",
+        "迁移",
+        "延迟复测"
+      ],
+      "verification_evidence": "docs/validation.md",
+      "verification_scope": "reference implementation and documented automated/browser checks; not learner mastery"
+    },
+    {
+      "id": "routing-nav",
+      "owner": "learn-react",
+      "title": "带路由守卫的多页应用",
+      "kind": "implementation",
+      "task": "构建包含首页、用户详情、设置页的多页应用，设置页需要登录才能访问",
+      "constraints": [
+        "使用锁定 React Router v7",
+        "嵌套 Outlet 与动态参数",
+        "前端跳转不能替代服务端鉴权"
+      ],
+      "deliverables": [
+        "可运行路由示例",
+        "登录/退出与未知路径测试",
+        "权限边界说明"
+      ],
+      "acceptance": [
+        "用户 123 参数正确",
+        "未登录进入设置跳转登录",
+        "退出后重访设置仍受保护",
+        "未知路径显示空态；刷新演示状态按说明重置"
+      ],
+      "environment": "静态站锁文件：React 19.1.0，Node 22，pnpm 9.15.4；使用合成数据",
+      "entry": "src/demos/05.router/typed-routes.demo.tsx",
+      "transfer": "将路由守卫改为基于角色的权限控制（admin/user/guest）",
+      "delayed_check": "24h 后添加路由懒加载和代码分割",
+      "provenance": "designed",
+      "capability_refs": [
+        "react-router",
+        "state-management",
+        "component-composition"
+      ],
+      "source_refs": [
+        "react-router-docs",
+        "react-router-src"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "passed",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立实现",
+        "故障诊断",
+        "迁移",
+        "延迟复测"
+      ],
+      "verification_evidence": "docs/validation.md",
+      "verification_scope": "reference implementation and documented automated/browser checks; not learner mastery"
+    },
+    {
+      "id": "form-validation",
+      "owner": "learn-react",
+      "title": "复杂表单验证系统",
+      "kind": "implementation",
+      "task": "用合成输入实现受控表单和交叉字段验证",
+      "constraints": [
+        "错误由当前数据派生",
+        "blur 后显示，change 时更新",
+        "不回显口令，不发送网络请求"
+      ],
+      "deliverables": [
+        "表单、纯验证函数、交叉字段测试"
+      ],
+      "acceptance": [
+        "无效输入阻止通过",
+        "原口令变化后确认错误同步更新",
+        "字段名称与错误可被辅助技术关联",
+        "本地成功不被描述为服务端接收"
+      ],
+      "environment": "静态站锁文件：React 19.1.0，Node 22，pnpm 9.15.4；使用合成数据",
+      "entry": "src/demos/06.forms/01.controlled-form/index.demo.tsx",
+      "transfer": "添加多步骤表单（wizard）模式",
+      "delayed_check": "48h 后添加文件上传和进度条",
+      "provenance": "designed",
+      "capability_refs": [
+        "forms-validation",
+        "state-management",
+        "hooks-side-effects",
+        "react-typescript"
+      ],
+      "source_refs": [
+        "react-dev-docs"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "passed",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立实现",
+        "故障诊断",
+        "迁移",
+        "延迟复测"
+      ],
+      "verification_evidence": "docs/validation.md",
+      "verification_scope": "reference implementation and documented automated/browser checks; not learner mastery"
+    },
+    {
+      "id": "perf-audit",
+      "owner": "learn-react",
+      "title": "性能诊断与优化",
+      "kind": "debugging",
+      "task": "分析一个有性能问题的列表组件，识别不必要的重渲染并优化",
+      "constraints": [
+        "使用 React DevTools Profiler 分析",
+        "只修改性能相关代码",
+        "测量优化前后的渲染时间"
+      ],
+      "deliverables": [
+        "优化前后的性能对比报告",
+        "修复后的组件代码",
+        "优化策略说明"
+      ],
+      "acceptance": [
+        "保持相同搜索结果",
+        "固定设备与条件记录至少五次测量、中位数和波动",
+        "用 Profiler 证据解释子组件提交差异；不设任意提速比例"
+      ],
+      "environment": "静态站锁文件：React 19.1.0，Node 22，pnpm 9.15.4；使用合成数据",
+      "entry": "src/demos/09.performance/measured-list.demo.tsx",
+      "transfer": "将优化策略应用到另一个有类似问题的组件",
+      "delayed_check": "72h 后识别新的性能瓶颈",
+      "provenance": "designed",
+      "capability_refs": [
+        "performance-optimization",
+        "react-internals",
+        "component-composition"
+      ],
+      "source_refs": [
+        "react-dev-docs",
+        "web-vitals"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "manual",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立实现",
+        "故障诊断",
+        "迁移",
+        "延迟复测"
+      ],
+      "verification_scope": "interactive behavior checked; full profiling/assistive-technology assessment remains manual"
+    },
+    {
+      "id": "ssr-rsc-app",
+      "owner": "learn-react",
+      "title": "Next.js App Router 基础应用",
+      "kind": "implementation",
+      "task": "运行独立服务端课程页与水合点赞，验证公开字段和错误边界",
+      "constraints": [
+        "使用 App Router（不是 Pages Router）",
+        "至少一个服务端组件",
+        "至少一个客户端组件（使用 'use client'）",
+        "基本的数据获取模式"
+      ],
+      "deliverables": [
+        "Next.js 项目脚手架",
+        "服务端渲染的博客列表页",
+        "客户端交互的点赞组件"
+      ],
+      "acceptance": [
+        "初始 HTML 含课程，根页面无 JS 仍可读",
+        "点赞水合无整页导航",
+        "持续故障 reset 不虚假恢复，清除故障后正常",
+        "合成服务端标记不进入 HTML 和客户端文件"
+      ],
+      "environment": "独立锁文件：Node 22、Next.js 16.3.5、React 19.3.0、pnpm 9.15.4；只绑定本地地址",
+      "entry": "cases/ssr-rsc/README.md",
+      "transfer": "添加动态路由和元数据配置",
+      "delayed_check": "72h 后添加 loading.tsx 和 error.tsx",
+      "provenance": "designed",
+      "capability_refs": [
+        "ssr-rsc-boundaries",
+        "component-composition",
+        "async-data-fetching",
+        "react-typescript"
+      ],
+      "source_refs": [
+        "nextjs-docs"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "passed",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立实现",
+        "故障诊断",
+        "迁移",
+        "延迟复测"
+      ],
+      "verification_evidence": "docs/validation.md",
+      "verification_scope": "reference implementation and documented automated/browser checks; not learner mastery"
+    },
+    {
+      "id": "deploy-pipeline",
+      "owner": "learn-react",
+      "title": "Vite + GitHub Pages 部署流水线",
+      "kind": "implementation",
+      "task": "配置 Vite 项目，实现一键构建并部署到 GitHub Pages",
+      "constraints": [
+        "按域名配置 base",
+        "HashRouter 深链",
+        "干净提交构建；扫描公开产物"
+      ],
+      "deliverables": [
+        "可运行的 deploy.sh 脚本",
+        "vite.config.ts 正确配置",
+        "部署验证记录"
+      ],
+      "acceptance": [
+        "构建版本与部署提交一致",
+        "GitHub Actions Pages 成功且实际 HTTPS 可访问",
+        "无私有配置、会话、凭据或本机路径"
+      ],
+      "environment": "静态站锁文件：React 19.1.0，Node 22，pnpm 9.15.4；使用合成数据",
+      "entry": "scripts/deploy.sh",
+      "transfer": "迁移到另一静态托管商，复核 base、HTTPS 与实际版本",
+      "delayed_check": "一周后重新部署并验证",
+      "provenance": "documented-project",
+      "capability_refs": [
+        "engineering-practice",
+        "react-typescript"
+      ],
+      "source_refs": [
+        "vite-docs"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "not-run",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立实现",
+        "故障诊断",
+        "迁移",
+        "延迟复测"
+      ]
+    },
+    {
+      "id": "business-delivery",
+      "title": "可靠工单模块",
+      "owner": "learn-react",
+      "kind": "implementation",
+      "task": "交付表单、幂等重试和版本冲突恢复",
+      "constraints": [
+        "只用合成数据与固定版本",
+        "记录提示依赖、实际运行结果和未覆盖边界"
+      ],
+      "deliverables": [
+        "独立作品、反例测试、证据与取舍说明"
+      ],
+      "acceptance": [
+        "完成入口中的逐项验收",
+        "能解释失败条件并迁移到不同约束；人工评价不得由阅读量替代"
+      ],
+      "environment": "Node 22 / pnpm 9.15.4；具体版本与命令见入口",
+      "entry": "src/demos/12.business/lab/README.md",
+      "transfer": "更换数据规模、失败方式或部署约束，重做并解释变化",
+      "delayed_check": "三天后无提示复做核心任务，记录成功与提示依赖",
+      "provenance": "demand-derived",
+      "capability_refs": [
+        "forms-validation",
+        "async-data-fetching",
+        "engineering-practice"
+      ],
+      "source_refs": [
+        "job-highbeam"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "passed",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立",
+        "排错",
+        "迁移",
+        "复测"
+      ],
+      "verification_evidence": "docs/validation.md",
+      "verification_scope": "reference implementation and documented automated/browser checks; not learner mastery"
+    },
+    {
+      "id": "source-mechanism-deep",
+      "title": "队列与身份源码复现",
+      "owner": "learn-react",
+      "kind": "implementation",
+      "task": "独立实现队列模型并与真实 React 比对，定位固定源码符号",
+      "constraints": [
+        "只用合成数据与固定版本",
+        "记录提示依赖、实际运行结果和未覆盖边界"
+      ],
+      "deliverables": [
+        "独立作品、反例测试、证据与取舍说明"
+      ],
+      "acceptance": [
+        "完成入口中的逐项验收",
+        "能解释失败条件并迁移到不同约束；人工评价不得由阅读量替代"
+      ],
+      "environment": "Node 22 / pnpm 9.15.4；具体版本与命令见入口",
+      "entry": "src/demos/13.mechanisms/lab/README.md",
+      "transfer": "更换数据规模、失败方式或部署约束，重做并解释变化",
+      "delayed_check": "三天后无提示复做核心任务，记录成功与提示依赖",
+      "provenance": "designed",
+      "capability_refs": [
+        "react-internals",
+        "state-management"
+      ],
+      "source_refs": [
+        "react-src"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "passed",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立",
+        "排错",
+        "迁移",
+        "复测"
+      ],
+      "verification_evidence": "docs/validation.md",
+      "verification_scope": "reference implementation and documented automated/browser checks; not learner mastery"
+    },
+    {
+      "id": "data-fetching-pattern",
+      "title": "客户端状态与远端缓存",
+      "owner": "learn-react",
+      "kind": "assessment",
+      "task": "区分本地 UI、共享状态与服务器缓存，为同一任务比较工具边界",
+      "constraints": [
+        "只用合成数据与固定版本",
+        "记录提示依赖、实际运行结果和未覆盖边界"
+      ],
+      "deliverables": [
+        "独立作品、反例测试、证据与取舍说明"
+      ],
+      "acceptance": [
+        "完成入口中的逐项验收",
+        "能解释失败条件并迁移到不同约束；人工评价不得由阅读量替代"
+      ],
+      "environment": "Node 22 / pnpm 9.15.4；具体版本与命令见入口",
+      "entry": "docs/course-tasks.md",
+      "transfer": "更换数据规模、失败方式或部署约束，重做并解释变化",
+      "delayed_check": "三天后无提示复做核心任务，记录成功与提示依赖",
+      "provenance": "designed",
+      "capability_refs": [
+        "client-state-alternatives",
+        "async-data-fetching"
+      ],
+      "source_refs": [
+        "tanstack-query-docs",
+        "redux-toolkit-docs"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "manual",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立",
+        "排错",
+        "迁移",
+        "复测"
+      ]
+    },
+    {
+      "id": "responsive-ui",
+      "title": "响应式业务界面",
+      "owner": "learn-react",
+      "kind": "assessment",
+      "task": "在窄屏与放大条件下完成工单任务，记录溢出与键盘路径",
+      "constraints": [
+        "只用合成数据与固定版本",
+        "记录提示依赖、实际运行结果和未覆盖边界"
+      ],
+      "deliverables": [
+        "独立作品、反例测试、证据与取舍说明"
+      ],
+      "acceptance": [
+        "完成入口中的逐项验收",
+        "能解释失败条件并迁移到不同约束；人工评价不得由阅读量替代"
+      ],
+      "environment": "Node 22 / pnpm 9.15.4；具体版本与命令见入口",
+      "entry": "docs/course-tasks.md",
+      "transfer": "更换数据规模、失败方式或部署约束，重做并解释变化",
+      "delayed_check": "三天后无提示复做核心任务，记录成功与提示依赖",
+      "provenance": "designed",
+      "capability_refs": [
+        "component-composition",
+        "accessibility"
+      ],
+      "source_refs": [
+        "job-sarvam"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "manual",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立",
+        "排错",
+        "迁移",
+        "复测"
+      ]
+    },
+    {
+      "id": "mobile-a11y",
+      "title": "对话框焦点与辅助技术",
+      "owner": "learn-react",
+      "kind": "implementation",
+      "task": "用键盘操作对话框并验证关闭后的焦点恢复",
+      "constraints": [
+        "只用合成数据与固定版本",
+        "记录提示依赖、实际运行结果和未覆盖边界"
+      ],
+      "deliverables": [
+        "独立作品、反例测试、证据与取舍说明"
+      ],
+      "acceptance": [
+        "完成入口中的逐项验收",
+        "能解释失败条件并迁移到不同约束；人工评价不得由阅读量替代"
+      ],
+      "environment": "Node 22 / pnpm 9.15.4；具体版本与命令见入口",
+      "entry": "src/demos/11.accessibility/aria-patterns/index.demo.tsx",
+      "transfer": "更换数据规模、失败方式或部署约束，重做并解释变化",
+      "delayed_check": "三天后无提示复做核心任务，记录成功与提示依赖",
+      "provenance": "designed",
+      "capability_refs": [
+        "accessibility"
+      ],
+      "source_refs": [
+        "a11y-react"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "manual",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立",
+        "排错",
+        "迁移",
+        "复测"
+      ],
+      "verification_scope": "interactive behavior checked; full profiling/assistive-technology assessment remains manual"
+    },
+    {
+      "id": "touch-interactions",
+      "title": "多输入方式任务",
+      "owner": "learn-react",
+      "kind": "assessment",
+      "task": "让同一确认任务支持触控、键盘和屏幕阅读器，不依赖 hover",
+      "constraints": [
+        "只用合成数据与固定版本",
+        "记录提示依赖、实际运行结果和未覆盖边界"
+      ],
+      "deliverables": [
+        "独立作品、反例测试、证据与取舍说明"
+      ],
+      "acceptance": [
+        "完成入口中的逐项验收",
+        "能解释失败条件并迁移到不同约束；人工评价不得由阅读量替代"
+      ],
+      "environment": "Node 22 / pnpm 9.15.4；具体版本与命令见入口",
+      "entry": "docs/course-tasks.md",
+      "transfer": "更换数据规模、失败方式或部署约束，重做并解释变化",
+      "delayed_check": "三天后无提示复做核心任务，记录成功与提示依赖",
+      "provenance": "designed",
+      "capability_refs": [
+        "accessibility",
+        "component-composition"
+      ],
+      "source_refs": [
+        "a11y-react"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "manual",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立",
+        "排错",
+        "迁移",
+        "复测"
+      ]
+    },
+    {
+      "id": "architecture-review",
+      "title": "架构取舍评审",
+      "owner": "learn-react",
+      "kind": "assessment",
+      "task": "提出边界、替代方案、可观测指标与小规模验证",
+      "constraints": [
+        "只用合成数据与固定版本",
+        "记录提示依赖、实际运行结果和未覆盖边界"
+      ],
+      "deliverables": [
+        "独立作品、反例测试、证据与取舍说明"
+      ],
+      "acceptance": [
+        "完成入口中的逐项验收",
+        "能解释失败条件并迁移到不同约束；人工评价不得由阅读量替代"
+      ],
+      "environment": "Node 22 / pnpm 9.15.4；具体版本与命令见入口",
+      "entry": "docs/course-tasks.md",
+      "transfer": "更换数据规模、失败方式或部署约束，重做并解释变化",
+      "delayed_check": "三天后无提示复做核心任务，记录成功与提示依赖",
+      "provenance": "designed",
+      "capability_refs": [
+        "client-state-alternatives",
+        "engineering-practice"
+      ],
+      "source_refs": [
+        "bulletproof-react",
+        "job-signoz"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "manual",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立",
+        "排错",
+        "迁移",
+        "复测"
+      ]
+    },
+    {
+      "id": "migration-strategy",
+      "title": "框架迁移策略",
+      "owner": "learn-react",
+      "kind": "assessment",
+      "task": "制定增量迁移、回滚与缓存正确性验证，不把 RSC 当通用前提",
+      "constraints": [
+        "只用合成数据与固定版本",
+        "记录提示依赖、实际运行结果和未覆盖边界"
+      ],
+      "deliverables": [
+        "独立作品、反例测试、证据与取舍说明"
+      ],
+      "acceptance": [
+        "完成入口中的逐项验收",
+        "能解释失败条件并迁移到不同约束；人工评价不得由阅读量替代"
+      ],
+      "environment": "Node 22 / pnpm 9.15.4；具体版本与命令见入口",
+      "entry": "docs/course-tasks.md",
+      "transfer": "更换数据规模、失败方式或部署约束，重做并解释变化",
+      "delayed_check": "三天后无提示复做核心任务，记录成功与提示依赖",
+      "provenance": "designed",
+      "capability_refs": [
+        "ssr-rsc-boundaries",
+        "engineering-practice"
+      ],
+      "source_refs": [
+        "nextjs-docs"
+      ],
+      "prerequisite_refs": [
+        "component-composition",
+        "state-management"
+      ],
+      "verification": "manual",
+      "scaffolding": [
+        "示范",
+        "补全",
+        "独立",
+        "排错",
+        "迁移",
+        "复测"
+      ]
+    }
+  ],
+  "market_evidence": "docs/market-evidence.json",
+  "measurement_policy": {
+    "job_frequency": "not-estimated",
+    "coverage": "capability-to-entry mapping; not mastery",
+    "content_validation": "per-case verification",
+    "learner_mastery": "requires independent, transfer and delayed evidence; no learner evaluated"
+  }
+}

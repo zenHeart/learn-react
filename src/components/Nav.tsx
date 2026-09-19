@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { NavLink, Route, Routes, useSearchParams, useLocation, Navigate, useNavigate } from 'react-router'
 import Tags from './Tags'
 import LearningHome from './LearningHome'
+import curriculumGuide from '../../docs/coverage.md?raw'
+import sourceGuide from '../../docs/sources.md?raw'
+import taskGuide from '../../docs/course-tasks.md?raw'
 import AsyncRaceLab from '../demos/08.async/lab/AsyncRaceLab'
 import ServiceDeskLab from '../demos/12.business/lab/ServiceDeskLab'
 import StateMechanismLab from '../demos/13.mechanisms/lab/StateMechanismLab'
@@ -760,6 +763,9 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
         <Routes>
           <Route path="/" element={<LearningHome lessons={[...flattenRoutes(children), { name: "请求竞态实验", path: "/labs/async-race" }, { name: "工单交付实验", path: "/labs/service-desk" }, { name: "状态机制实验", path: "/labs/state-mechanism" }]} />} />
           <Route path="/labs/async-race" element={<AsyncRaceLab />} />
+          <Route path="/curriculum" element={<MarkdownOnlyRenderer content={curriculumGuide.replace(/\]\((?!https?:)([^)]+)\)/g, (_, target) => `](${new URL(target, 'https://github.com/zenHeart/learn-react/blob/master/docs/coverage.md').href})`)} />} />
+          <Route path="/sources" element={<MarkdownOnlyRenderer content={sourceGuide.replace(/\]\((?!https?:)([^)]+)\)/g, (_, target) => `](${new URL(target, 'https://github.com/zenHeart/learn-react/blob/master/docs/sources.md').href})`)} />} />
+          <Route path="/tasks" element={<MarkdownOnlyRenderer content={taskGuide} />} />
           <Route path="/labs/service-desk" element={<ServiceDeskLab />} />
           <Route path="/labs/state-mechanism" element={<StateMechanismLab />} />
           {flattenRoutes(children).map(({ path, component, hasMarkdown, markdownContent, isStandaloneMarkdown, hasDirectoryDoc }) => (
