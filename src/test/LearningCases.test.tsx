@@ -13,7 +13,7 @@ describe('teaching examples enforce observable contracts', () => {
     render(<Routing />)
     fireEvent.click(screen.getByRole('link', { name: '用户 123' }))
     expect(screen.getByText('用户详情：123')).toBeDefined()
-    fireEvent.click(screen.getByRole('link', { name: '设置', exact: true }))
+    fireEvent.click(screen.getByRole('link', { name: '设置' }))
     expect(await screen.findByText('请使用演示登录按钮，再进入设置。')).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '演示登录' }))
     expect(await screen.findByRole('heading', { name: '设置页面' })).toBeDefined()
