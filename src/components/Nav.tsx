@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { NavLink, Route, Routes, useSearchParams, useLocation, Navigate, useNavigate } from 'react-router'
 import Tags from './Tags'
 import LearningHome from './LearningHome'
+import AsyncRaceLab from '../demos/08.async/lab/AsyncRaceLab'
 import { DemoWithMarkdown } from './DemoWithMarkdown'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { parseMarkdownMeta, MarkdownMetadata, getReadingTime, formatReadingTime } from '../utils/markdownMeta';
@@ -755,7 +756,8 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
       </nav>
       <main style={styles.content}>
         <Routes>
-          <Route path="/" element={<LearningHome lessons={flattenRoutes(children)} />} />
+          <Route path="/" element={<LearningHome lessons={[...flattenRoutes(children), { name: "请求竞态实验", path: "/labs/async-race" }]} />} />
+          <Route path="/labs/async-race" element={<AsyncRaceLab />} />
           {flattenRoutes(children).map(({ path, component, hasMarkdown, markdownContent, isStandaloneMarkdown, hasDirectoryDoc }) => (
             <Route
               key={path}

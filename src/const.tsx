@@ -124,7 +124,7 @@ function createRawFilesMap(demosRaw: Record<string, string>): Record<string, str
 
   // Then import all files from these directories
   const allFiles = import.meta.glob(
-    ['./demos/**/*.{js,jsx,tsx,ts,html}'],
+    ['./demos/**/*.{js,mjs,jsx,tsx,ts,css,html}'],
     { eager: true, as: 'raw' }
   );
 
