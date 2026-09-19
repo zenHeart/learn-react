@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc && vite build --base=/learn-react/",
+    "build": "tsc && vite build && node scripts/write-build-version.mjs",
     "deploy": "./scripts/deploy.sh",
     "preview": "vite preview"
   },
@@ -43,5 +43,6 @@
   },
   "engines": {
     "pnpm": ">=9.0.0"
-  }
+  },
+  "packageManager": "pnpm@9.15.4"
 }
