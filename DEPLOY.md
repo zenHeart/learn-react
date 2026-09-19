@@ -1,6 +1,6 @@
 # 发布 Learn React
 
-只从已推送的 `master` 发布。`pnpm deploy` 验证干净主线后派发 GitHub Actions；它不重新初始化 dist 的 Git 历史，不强推 gh-pages，也不在命令行传递凭据。
+只从已推送的 `master` 发布。`pnpm run deploy` 验证干净主线后派发 GitHub Actions；它不重新初始化 dist 的 Git 历史，不强推 gh-pages，也不在命令行传递凭据。
 
 CI 执行实际课程测试、构建、版本与隐私检查，再通过 Pages artifact 发布。仓库 Pages 的构建来源须设置为 GitHub Actions。HashRouter 使用 URL fragment，刷新课程不需要把所有 404 伪装成首页。
 

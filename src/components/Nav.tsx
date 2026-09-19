@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { NavLink, Route, Routes, useSearchParams, useLocation, Navigate, useNavigate } from 'react-router'
 import Tags from './Tags'
+import LearningHome from './LearningHome'
 import { DemoWithMarkdown } from './DemoWithMarkdown'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { parseMarkdownMeta, MarkdownMetadata, getReadingTime, formatReadingTime } from '../utils/markdownMeta';
@@ -62,6 +63,7 @@ const styles = {
   },
   content: {
     flex: 1,
+    minWidth: 0,
     backgroundColor: 'var(--bg-primary)',
     height: '100vh',
     overflowY: 'auto' as const,
@@ -343,7 +345,7 @@ const SearchIcon = () => (
 function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => !window.matchMedia('(max-width: 760px)').matches);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check if user has previously set dark mode preference
     const savedMode = localStorage.getItem('darkMode');
@@ -680,15 +682,6 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
     }, [] as Array<{ name: string, path: string, component: any, tags: string[], hasMarkdown?: boolean, markdownContent?: string, isStandaloneMarkdown?: boolean, hasDirectoryDoc?: boolean }>);
   }
 
-  // Update getFirstAvailableRoute to handle filtered routes
-  const getFirstAvailableRoute = () => {
-    const flatRoutes = flattenRoutes(children);
-    const filteredRoutes = filterTag
-      ? flatRoutes.filter(route => route.tags.includes(filterTag))
-      : flatRoutes;
-    return filteredRoutes[0]?.path || '/';
-  };
-
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
   };
@@ -696,7 +689,7 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
   const handleHomeClick = () => {
     setSearchParams({}); // Clear any search params
     setExpandedGroups([]); // Collapse all groups
-    navigate(getFirstAvailableRoute()); // Navigate to first route
+    navigate('/'); // Return to the learner route overview
   };
 
   return (
@@ -713,7 +706,8 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
               <button
                 onClick={handleHomeClick}
                 style={buttonStyles.homeButton}
-                title="Back to home"
+                title="返回学习首页"
+                aria-label="返回学习首页"
               >
                 <HomeIcon />
               </button>
@@ -737,6 +731,8 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
           )}
           <button
             onClick={toggleSidebar}
+            aria-label={isSidebarExpanded ? "收起课程导航" : "展开课程导航"}
+            aria-expanded={isSidebarExpanded}
             style={{
               ...buttonStyles.toggleButton,
               marginLeft: isSidebarExpanded ? 'auto' : 0,
@@ -759,6 +755,7 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
       </nav>
       <main style={styles.content}>
         <Routes>
+          <Route path="/" element={<LearningHome lessons={flattenRoutes(children)} />} />
           {flattenRoutes(children).map(({ path, component, hasMarkdown, markdownContent, isStandaloneMarkdown, hasDirectoryDoc }) => (
             <Route
               key={path}
@@ -768,7 +765,7 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
           ))}
           <Route
             path="*"
-            element={<Navigate to={getFirstAvailableRoute()} replace />}
+            element={<Navigate to="/" replace />}
           />
         </Routes>
       </main>
