@@ -3,6 +3,8 @@ import { NavLink, Route, Routes, useSearchParams, useLocation, Navigate, useNavi
 import Tags from './Tags'
 import LearningHome from './LearningHome'
 import AsyncRaceLab from '../demos/08.async/lab/AsyncRaceLab'
+import ServiceDeskLab from '../demos/12.business/lab/ServiceDeskLab'
+import StateMechanismLab from '../demos/13.mechanisms/lab/StateMechanismLab'
 import { DemoWithMarkdown } from './DemoWithMarkdown'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { parseMarkdownMeta, MarkdownMetadata, getReadingTime, formatReadingTime } from '../utils/markdownMeta';
@@ -756,8 +758,10 @@ function Nav({ children, tagsColor }: { children: NavItem[], tagsColor: any }) {
       </nav>
       <main style={styles.content}>
         <Routes>
-          <Route path="/" element={<LearningHome lessons={[...flattenRoutes(children), { name: "请求竞态实验", path: "/labs/async-race" }]} />} />
+          <Route path="/" element={<LearningHome lessons={[...flattenRoutes(children), { name: "请求竞态实验", path: "/labs/async-race" }, { name: "工单交付实验", path: "/labs/service-desk" }, { name: "状态机制实验", path: "/labs/state-mechanism" }]} />} />
           <Route path="/labs/async-race" element={<AsyncRaceLab />} />
+          <Route path="/labs/service-desk" element={<ServiceDeskLab />} />
+          <Route path="/labs/state-mechanism" element={<StateMechanismLab />} />
           {flattenRoutes(children).map(({ path, component, hasMarkdown, markdownContent, isStandaloneMarkdown, hasDirectoryDoc }) => (
             <Route
               key={path}

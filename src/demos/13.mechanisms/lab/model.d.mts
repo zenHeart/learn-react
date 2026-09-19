@@ -1,0 +1,2 @@
+export function processQueue(initial: number, actions: Array<number | ((state: number) => number)>): { state: number; steps: Array<{ before: number; after: number; kind: string }> };
+export function reconcileIdentity(previous: Array<{ key: string; type: string; state: number }>, next: Array<{ key: string; type: string; initial: number }>): Array<{ key: string; type: string; initial: number; state: number }>;

@@ -1,0 +1,4 @@
+.service-lab input:not([type=checkbox]) { display: block; width: 100%; padding: 10px; font: inherit; color: inherit; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; }
+.service-lab li { margin: 16px 0; overflow-wrap: anywhere; }
+.service-lab [role=alert]:not(:empty) { border-left: 4px solid #ba3c28; padding: 12px; }
+.service-lab ul { padding-left: 20px; }

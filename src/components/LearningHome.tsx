@@ -12,10 +12,10 @@ const stages = [
     outcome: '区分渲染计算、事件处理和与外部系统同步的副作用。',
     task: '预测一次状态更新后的渲染，再为订阅或请求添加清理；说明闭包读取的是哪次渲染的数据。',
     picks: [['/03.hooks/apis/01_useState', '状态更新与渲染'], ['/03.hooks/03_useEffect_clean', 'Effect 的清理与生命周期']] },
-  { id: 'delivery', title: '业务模块交付', prefixes: ['/labs/async-race', '/06.forms', '/07.error-boundary', '/08.async', '/11.accessibility'],
+  { id: 'delivery', title: '业务模块交付', prefixes: ['/labs/service-desk', '/labs/async-race', '/06.forms', '/07.error-boundary', '/08.async', '/11.accessibility'],
     outcome: '把加载、空态、校验、失败恢复和键盘操作一起纳入交付。',
     task: '完成一个可重试的查询表单。故意制造乱序响应，证明旧结果不能覆盖新选择。',
-    picks: [['/06.forms', '表单与校验'], ['/labs/async-race', '异步请求与竞态诊断']] },
+    picks: [['/labs/service-desk', '工单模块交付'], ['/labs/async-race', '异步请求与竞态诊断']] },
   { id: 'ecosystem', title: '生态与工具选择', prefixes: ['/04.state-manage/', '/05.router/', '/06.typescript/'],
     outcome: '围绕项目约束选择路由、类型与状态工具，说明替代方案和代价。',
     task: '区分组件本地状态、跨页面状态与服务端缓存，为一个工具选择写出采用和放弃的理由。',
@@ -24,10 +24,10 @@ const stages = [
     outcome: '用测量定位问题，用测试和可重复的构建证明改动。',
     task: '记录慢交互的测量条件，比较优化前后的结果，并解释 memo 为什么可能没有帮助。',
     picks: [['/09.performance/01.memory/memoryNotWorkRefChange', '引用变化与 memo 失效'], ['/09.performance/LazyComponent', '按需加载组件']] },
-  { id: 'mechanism', title: '机制与源码', prefixes: ['/10.theory/'],
+  { id: 'mechanism', title: '机制与源码', prefixes: ['/labs/state-mechanism', '/10.theory/'],
     outcome: '从可观察行为追到实现机制，明确教学模型与真实 React 源码的边界。',
     task: '先预测 key 变化对状态的影响，再复现最小机制；阅读固定版本源码，列出模型省略的行为。',
-    picks: [['/10.theory/DomDiffKey', 'Key 与节点复用'], ['/10.theory/vdom', '最小虚拟 DOM 模型']] },
+    picks: [['/labs/state-mechanism', '状态队列与身份复现'], ['/10.theory/vdom', '最小虚拟 DOM 模型']] },
 ] as const
 
 const startingPoints = [
