@@ -1,0 +1,301 @@
+<!--
+title: React Navigation replace 生命周期顺序
+tags: [React,Router,生命周期]
+-->
+
+<script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@19.1.0?dev",
+      "react-dom/client": "https://esm.sh/react-dom@19.1.0/client?dev",
+      "react-router": "https://esm.sh/react-router@7?dev"
+    }
+  }
+</script>
+<script type="module" src="https://esm.sh/tsx"></script>
+<div id="root"></div>
+<script type="text/babel">
+  import { createRoot } from "react-dom/client";
+  import React, { useEffect, useState, useRef } from "react";
+  import { HashRouter, Routes, Route, Link, useNavigate, useLocation } from "react-router";
+
+  // ===================== 生命周期追踪组件 =====================
+  function LifeCycleTracker({ name }) {
+    const [logs, setLogs] = useState([]);
+    const [count, setCount] = useState(0);
+    const logRef = useRef(null);
+
+    useEffect(() => {
+      addLog(`${name}: ✅ mounted`);
+      return () => {
+        addLog(`${name}: ❌ unmounting...`);
+        // 模拟 unmount 清理
+        setTimeout(() => {
+          addLog(`${name}: 🗑️ unmounted`);
+        }, 50);
+      };
+    }, [name]);
+
+    // 每次 count 变化时触发 update
+    useEffect(() => {
+      addLog(`${name}: 🔄 updated (count=${count})`);
+    }, [count]);
+
+    const addLog = (msg) => {
+      const time = new Date().toLocaleTimeString('zh-CN', { hour12: false, fractionalSecondDigits: 3 });
+      setLogs(prev => [...prev, { time, msg, id: Date.now() + Math.random() }]);
+    };
+
+    // 自动滚动
+    React.useEffect(() => {
+      if (logRef.current) {
+        logRef.current.scrollTop = logRef.current.scrollHeight;
+      }
+    }, [logs]);
+
+    return (
+      <div style={{
+        border: "1px solid #ddd",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 12,
+        background: "#fafafa"
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <strong>{name}</strong>
+          <button
+            onClick={() => setCount(c => c + 1)}
+            style={{ padding: "4px 12px", cursor: "pointer" }}
+          >
+            更新 (count={count})
+          </button>
+        </div>
+        <div
+          ref={logRef}
+          style={{
+            height: 120,
+            overflowY: "auto",
+            background: "#1e1e1e",
+            color: "#0f0",
+            fontFamily: "monospace",
+            fontSize: 12,
+            padding: 8,
+            borderRadius: 4
+          }}
+        >
+          {logs.map(log => (
+            <div key={log.id}>
+              <span style={{ color: "#888" }}>{log.time}</span>{" "}
+              <span>{log.msg}</span>
+            </div>
+          ))}
+          {logs.length === 0 && (
+            <div style={{ color: "#555" }}>等待生命周期事件...</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ===================== 页面组件 =====================
+  function Home() {
+    return (
+      <div style={{ padding: 16 }}>
+        <h2>🏠 首页</h2>
+        <p>这是首页内容</p>
+        <p style={{ color: "#888", fontSize: 13 }}>点击下方按钮体验 replace vs push 的区别</p>
+      </div>
+    );
+  }
+
+  function PageA() {
+    return (
+      <div style={{ padding: 16 }}>
+        <h2 style={{ color: "#e67e22" }}>📄 页面 A</h2>
+        <p>这是页面 A</p>
+      </div>
+    );
+  }
+
+  function PageB() {
+    return (
+      <div style={{ padding: 16 }}>
+        <h2 style={{ color: "#27ae60" }}>📄 页面 B</h2>
+        <p>这是页面 B</p>
+      </div>
+    );
+  }
+
+  // ===================== 导航控制面板 =====================
+  function NavPanel() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [method, setMethod] = useState("push");
+    const [navCount, setNavCount] = useState(0);
+
+    const doNavigate = () => {
+      const target = method === "replace" ? "/page-a" : "/page-a";
+      setNavCount(c => c + 1);
+      if (method === "replace") {
+        navigate(target, { replace: true });
+      } else if (method === "push") {
+        navigate(target);
+      } else if (method === "back") {
+        navigate(-1);
+      } else {
+        navigate("/page-b");
+      }
+    };
+
+    return (
+      <div style={{
+        background: "#f0f4ff",
+        border: "2px solid #4a90e2",
+        borderRadius: 8,
+        padding: 16,
+        marginBottom: 16
+      }}>
+        <h3 style={{ marginTop: 0 }}>🎮 导航控制面板</h3>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+          <button
+            onClick={() => setMethod("push")}
+            style={{
+              padding: "8px 16px",
+              cursor: "pointer",
+              background: method === "push" ? "#4a90e2" : "#ddd",
+              color: method === "push" ? "#fff" : "#333",
+              border: "none",
+              borderRadius: 4
+            }}
+          >
+            push()
+          </button>
+          <button
+            onClick={() => setMethod("replace")}
+            style={{
+              padding: "8px 16px",
+              cursor: "pointer",
+              background: method === "replace" ? "#e74c3c" : "#ddd",
+              color: method === "replace" ? "#fff" : "#333",
+              border: "none",
+              borderRadius: 4
+            }}
+          >
+            replace()
+          </button>
+          <button
+            onClick={() => setMethod("navigate")}
+            style={{
+              padding: "8px 16px",
+              cursor: "pointer",
+              background: method === "navigate" ? "#27ae60" : "#ddd",
+              color: method === "navigate" ? "#fff" : "#333",
+              border: "none",
+              borderRadius: 4
+            }}
+          >
+            navigate()
+          </button>
+          <button
+            onClick={() => setMethod("back")}
+            style={{
+              padding: "8px 16px",
+              cursor: "pointer",
+              background: method === "back" ? "#8e44ad" : "#ddd",
+              color: method === "back" ? "#fff" : "#333",
+              border: "none",
+              borderRadius: 4
+            }}
+          >
+            goBack()
+          </button>
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <button
+            onClick={doNavigate}
+            style={{
+              padding: "10px 24px",
+              fontSize: 16,
+              cursor: "pointer",
+              background: "#4a90e2",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6
+            }}
+          >
+            执行 {method === "back" ? "返回" : "导航到 /page-a"}
+          </button>
+        </div>
+
+        <div style={{ fontSize: 13, color: "#666" }}>
+          <strong>当前路径:</strong> <code style={{ background: "#e8e8e8", padding: "2px 6px", borderRadius: 3 }}>{location.pathname}</code>
+          {" "}| NaveCount: <strong>{navCount}</strong>
+        </div>
+      </div>
+    );
+  }
+
+  // ===================== 生命周期对比展示 =====================
+  function CompareSection() {
+    return (
+      <div style={{ marginTop: 16 }}>
+        <h3>🔬 生命周期执行顺序（观察 replace vs push）</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div>
+            <h4 style={{ color: "#e67e22" }}>📄 PageA 生命周期</h4>
+            <LifeCycleTracker name="PageA" />
+          </div>
+          <div>
+            <h4 style={{ color: "#27ae60" }}>📄 PageB 生命周期</h4>
+            <LifeCycleTracker name="PageB" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ===================== 主 App =====================
+  function App() {
+    const location = useLocation();
+    return (
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
+        <h1 style={{ borderBottom: "2px solid #4a90e2", paddingBottom: 8 }}>
+          React Navigation — replace vs push 生命周期对比
+        </h1>
+
+        <NavPanel />
+
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/page-a" element={<PageA />} />
+          <Route path="/page-b" element={<PageB />} />
+        </Routes>
+
+        <CompareSection />
+
+        <div style={{ marginTop: 24, padding: 16, background: "#fffbe6", borderRadius: 8, border: "1px solid #ffe58f" }}>
+          <h4 style={{ marginTop: 0, color: "#ad6800" }}>💡 关键结论</h4>
+          <ul style={{ color: "#434343", lineHeight: 1.8 }}>
+            <li><code>replace()</code> — 替换当前路由在栈中的位置，<strong>不增加</strong>历史记录</li>
+            <li><code>push()</code> — 添加新路由到栈顶，<strong>增加</strong>历史记录，可通过 back 返回</li>
+            <li>当从 Home → PageA（replace）时，Home 的 unmount 发生在 PageA mount <strong>之前</strong></li>
+            <li>React 的异步渲染机制可能导致生命周期顺序略有变化，但 unmount 必然在 mount 之前或同时发生</li>
+            <li>连续快速调用 replace 可能导致 <strong>竞态条件</strong>：旧组件 unmount 和新组件 mount 重叠</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
+  function RouterApp() {
+    return (
+      <HashRouter>
+        <App />
+      </HashRouter>
+    );
+  }
+
+  createRoot(root).render(<RouterApp />);
+</script>
