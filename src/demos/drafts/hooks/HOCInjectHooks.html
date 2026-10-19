@@ -1,0 +1,173 @@
+<html>
+  <body>
+    <style>
+      body { font-family: sans-serif; padding: 20px; }
+      .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+      .error { background: #ffe6e6; border-color: #ffcccc; }
+      .success { background: #e6ffe6; border-color: #ccffcc; }
+      h3 { margin-top: 0; color: #333; }
+      code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px; }
+      pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+      button { padding: 8px 16px; margin: 5px; border-radius: 4px; cursor: pointer; }
+      .btn-primary { background: #007bff; color: white; border: none; }
+      .btn-secondary { background: #6c757d; color: white; border: none; }
+      p { line-height: 1.6; }
+    </style>
+
+    <h2>🎯 HOC 模式：将 Hook 注入 Class 组件</h2>
+
+    <p>React Hooks 无法直接在 Class 组件中使用（<code>useXxx</code> 不能在 class 的
+    <code>render</code> 或方法中调用）。</p>
+
+    <p>但可以通过 <strong>高阶组件（HOC）</strong> 模式：</p>
+    <ol>
+      <li>用一个 <code>function Component</code> 包装 <code>class Component</code></li>
+      <li>在 wrapper 中调用 <code>hooks</code></li>
+      <li>将 hook 的返回值通过 <code>props</code> 传给 class 组件</li>
+    </ol>
+
+    <div id="container"></div>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" data-type="module">
+      import React from "https://esm.sh/react@19.0.0?dev";
+      import ReactDOMClient from "https://esm.sh/react-dom@19.0.0/client?dev";
+
+      // ============================================================
+      // 1. 定义一个 Class 组件（假设它是不可修改的第三方组件）
+      // ============================================================
+      class LegacyClassComponent extends React.Component {
+        render() {
+          const { count, onIncrement, label = "计数" } = this.props;
+          return (
+            <div style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
+              <h3>📦 Class 组件（无法直接使用 Hooks）</h3>
+              <p>{label}: <strong>{count}</strong></p>
+              <button className="btn-primary" onClick={onIncrement}>
+                +1
+              </button>
+            </div>
+          );
+        }
+      }
+
+      // ============================================================
+      // 2. 定义 HOC：将 Hooks 注入 Class 组件
+      // ============================================================
+      function withCount(WrappedComponent) {
+        // 返回一个新的 Function 组件
+        return function WrappedWithHooks(props) {
+          // 在这里正常使用所有 Hooks
+          const [count, setCount] = React.useState(0);
+          const [step, setStep] = React.useState(1);
+
+          // useEffect 也能正常使用
+          React.useEffect(() => {
+            console.log('[HOC] count 变化:', count);
+          }, [count]);
+
+          // 将 hook 的值和操作函数作为 props 传递给原始 class 组件
+          return (
+            <WrappedComponent
+              count={count}
+              onIncrement={() => setCount(c => c + step)}
+              step={step}
+              onStepChange={setStep}
+              {...props}
+            />
+          );
+        };
+      }
+
+      // ============================================================
+      // 3. 用 HOC 包装 Class 组件，得到一个"注入了 hook 能力"的新组件
+      // ============================================================
+      const EnhancedComponent = withCount(LegacyClassComponent);
+
+      // 同时演示多 Hook 注入
+      function withTimer(WrappedComponent) {
+        return function WrappedWithTimer(props) {
+          const [time, setTime] = React.useState(new Date().toLocaleTimeString());
+
+          React.useEffect(() => {
+            const id = setInterval(() => {
+              setTime(new Date().toLocaleTimeString());
+            }, 1000);
+            return () => clearInterval(id);
+          }, []);
+
+          return <WrappedComponent currentTime={time} {...props} />;
+        };
+      }
+
+      // 链式包装：同时注入 count 和 timer
+      const FullyEnhanced = withTimer(withCount(LegacyClassComponent));
+
+      // ============================================================
+      // 4. 渲染演示
+      // ============================================================
+      function App() {
+        const [showEnhanced, setShowEnhanced] = React.useState(true);
+        const [showFully, setShowFully] = React.useState(false);
+
+        return (
+          <div>
+            <div className="section">
+              <h3>演示 1：基础 HOC 注入</h3>
+              <p>通过 HOC <code>withCount</code>，Class 组件获得了 <code>count</code> 和 <code>onIncrement</code> props</p>
+              <button className="btn-secondary" onClick={() => setShowEnhanced(!showEnhanced)}>
+                {showEnhanced ? '隐藏' : '显示'}
+              </button>
+              {showEnhanced && (
+                <div style={{ marginTop: '10px' }}>
+                  <EnhancedComponent label="当前计数" />
+                </div>
+              )}
+            </div>
+
+            <div className="section">
+              <h3>演示 2：链式 HOC（多 Hook 注入）</h3>
+              <p>通过 <code>withTimer(withCount(ClassComponent))</code>，同时注入了计数和时间两个 Hook 的能力</p>
+              <button className="btn-secondary" onClick={() => setShowFully(!showFully)}>
+                {showFully ? '隐藏' : '显示'}
+              </button>
+              {showFully && (
+                <div style={{ marginTop: '10px' }}>
+                  <FullyEnhanced label="计时计数" />
+                  <p style={{ marginTop: '10px', color: '#666' }}>
+                    当前时间: <strong>{new Date().toLocaleTimeString()}</strong>
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="section success">
+              <h3>✅ 核心模式总结</h3>
+              <pre>{`// 1. 定义 HOC
+function withXXX(WrappedComponent) {
+  return function(props) {
+    const hookValue = useXXX();        // ✅ 在这里用 Hook
+    return (
+      <WrappedComponent
+        xxx={hookValue}                 // ✅ 传给 class 组件
+        {...props}
+      />
+    );
+  };
+}
+
+// 2. 包装目标 class 组件
+const Enhanced = withXXX(LegacyClassComponent);
+
+// 3. 链式组合多个 HOC
+const FullyEnhanced = withTimer(withCount(LegacyClassComponent));`}</pre>
+            </div>
+          </div>
+        );
+      }
+
+      const rootElement = document.getElementById("container");
+      ReactDOMClient.createRoot(rootElement).render(<App />);
+    </script>
+  </body>
+</html>
